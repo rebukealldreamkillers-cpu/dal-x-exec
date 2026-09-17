@@ -380,6 +380,14 @@ a {
   color: var(--color-text-muted);
 }
 
+.field-description {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin-top: calc(var(--space-1) * -1);
+  margin-bottom: var(--space-2);
+  line-height: 1.5;
+}
+
 .form-control {
   display: block;
   width: 100%;

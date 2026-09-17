@@ -14,7 +14,7 @@ const S9_FIELDS = [
     label:       'Actions the agent may initiate',
     stateKey:    's3.trigger_rules.actions_permitted',
     type:        'textarea',
-    placeholder: 'List the actions this agent is permitted to initiate.',
+    placeholder: 'e.g. read_logs, generate_report, send_internal_alert',
     hint:        null,
   },
   {
@@ -22,7 +22,7 @@ const S9_FIELDS = [
     label:       'Actions requiring standard review',
     stateKey:    's3.trigger_rules.actions_standard_review',
     type:        'textarea',
-    placeholder: 'List actions that must enter the standard reviewer queue.',
+    placeholder: 'e.g. deploy_to_staging, export_records, modify_config',
     hint:        null,
   },
   {
@@ -30,7 +30,7 @@ const S9_FIELDS = [
     label:       'Actions requiring lead review',
     stateKey:    's3.trigger_rules.actions_lead_review',
     type:        'textarea',
-    placeholder: 'List actions that require a lead reviewer decision.',
+    placeholder: 'e.g. deploy_to_production, export_all_customer_records, bulk_delete',
     hint:        null,
   },
   {
@@ -38,7 +38,7 @@ const S9_FIELDS = [
     label:       'Actions that must be blocked',
     stateKey:    's3.trigger_rules.actions_blocked',
     type:        'textarea',
-    placeholder: 'List actions DAL-X must reject without review.',
+    placeholder: 'e.g. drop_database, revoke_all_access, purge_audit_logs',
     hint:        null,
   },
   /* ── Reviewer roles ─────────────────────────────────────────────────── */
@@ -47,7 +47,7 @@ const S9_FIELDS = [
     label:       'Standard reviewer role',
     stateKey:    's3.trigger_rules.standard_reviewer_role',
     type:        'text',
-    placeholder: 'e.g. Operations lead',
+    placeholder: 'e.g. Operations lead, Platform engineering manager',
     hint:        null,
   },
   {
@@ -55,7 +55,7 @@ const S9_FIELDS = [
     label:       'Lead reviewer role',
     stateKey:    's3.trigger_rules.lead_reviewer_role',
     type:        'text',
-    placeholder: 'e.g. CISO',
+    placeholder: 'e.g. CISO, VP Engineering, CTO',
     hint:        null,
   },
   /* ── Policy context ─────────────────────────────────────────────────── */
@@ -64,7 +64,7 @@ const S9_FIELDS = [
     label:       'Applicable policy reference',
     stateKey:    's3.trigger_rules.policy_reference',
     type:        'text',
-    placeholder: 'e.g. SEC-POL-042',
+    placeholder: 'e.g. SEC-POL-042, IT-CHANGE-CTRL-v3, SOC2-CTRL-18',
     hint:        null,
   },
   {
@@ -72,7 +72,7 @@ const S9_FIELDS = [
     label:       'Required submission metadata',
     stateKey:    's3.trigger_rules.required_metadata',
     type:        'textarea',
-    placeholder: 'List any metadata fields the agent submission must include.',
+    placeholder: 'e.g. environment, team, ticket_number, cost_center',
     hint:        null,
   },
 ];

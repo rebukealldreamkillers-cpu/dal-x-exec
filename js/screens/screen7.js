@@ -96,6 +96,7 @@ function renderScreen7() {
   card.appendChild(createDropdown({
     id:              's7-agent',
     label:           'AI agent',
+    description:     'Which AI system is taking this action in your environment? e.g. an infrastructure agent that manages cloud resources',
     options:         S7_AGENT_OPTIONS,
     stateKey:        's2.agent_type',
     customStateKey:  's2.agent_type_custom',
@@ -107,6 +108,7 @@ function renderScreen7() {
   card.appendChild(createDropdown({
     id:              's7-execution',
     label:           'Proposed execution',
+    description:     'What type of action does the agent want to take? e.g. deploy code to production, commit funds, export customer data',
     options:         S7_EXECUTION_OPTIONS,
     stateKey:        's2.proposed_execution',
     customStateKey:  's2.proposed_execution_custom',
@@ -118,6 +120,7 @@ function renderScreen7() {
   card.appendChild(createDropdown({
     id:               's7-downstream',
     label:            'Downstream system',
+    description:      'Which system will the agent act on? e.g. your payment platform, cloud environment, or deployment pipeline',
     options:          S7_DOWNSTREAM_OPTIONS,
     stateKey:         's2.downstream_system',
     customStateKey:   's2.downstream_system_custom',
@@ -131,6 +134,7 @@ function renderScreen7() {
   card.appendChild(createMultiSelect({
     id:               's7-consequence',
     label:            'Consequence',
+    description:      'If this executes without approval, what could change or go wrong? Select all that apply. e.g. funds move, data leaves the building, a system goes down',
     options:          S7_CONSEQUENCE_OPTIONS,
     stateKey:         's2.consequences',
     customStateKey:   's2.consequences_custom',
@@ -143,6 +147,7 @@ function renderScreen7() {
   card.appendChild(createDropdown({
     id:           's7-authority',
     label:        'Missing authority response',
+    description:  'Right now, if your agent acts without obtaining approval first, what happens? e.g. does it stop, proceed with an alert, or is the current behavior unknown?',
     options:      S7_AUTHORITY_OPTIONS,
     stateKey:     's2.missing_authority_response',
     allowCustom:  false,

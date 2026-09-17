@@ -21,7 +21,7 @@ const S10_FIELDS = [
     label:       'Submitter',
     stateKey:    's3.submission.submitter',
     type:        'text',
-    placeholder: 'Identifier of the agent or system submitting this request.',
+    placeholder: 'e.g. infra-agent-v2 or pipeline-job-4892',
     optional:    false,
   },
 
@@ -31,7 +31,7 @@ const S10_FIELDS = [
     label:       'Output content',
     stateKey:    's3.submission.output_content',
     type:        'textarea',
-    placeholder: 'The agent\'s proposed output that requires execution.',
+    placeholder: 'e.g. Increase API timeout to 30s on gateway-prod to reduce timeout errors',
     optional:    false,
   },
   {
@@ -39,7 +39,7 @@ const S10_FIELDS = [
     label:       'Input context',
     stateKey:    's3.submission.input_context',
     type:        'textarea',
-    placeholder: 'Relevant context that informed the agent\'s decision.',
+    placeholder: 'e.g. Timeout error rate exceeded 5% threshold over the past 15 minutes',
     optional:    true,
   },
 
@@ -49,7 +49,7 @@ const S10_FIELDS = [
     label:       'Execution intent: action',
     stateKey:    's3.submission.action',
     type:        'text',
-    placeholder: 'The specific action the agent intends to execute.',
+    placeholder: 'e.g. infrastructure_change',
     optional:    false,
   },
   {
@@ -57,7 +57,7 @@ const S10_FIELDS = [
     label:       'Execution intent: target',
     stateKey:    's3.submission.target',
     type:        'text',
-    placeholder: 'The system or resource the action will be applied to.',
+    placeholder: 'e.g. cloud_infrastructure_api',
     optional:    false,
   },
 
@@ -67,15 +67,15 @@ const S10_FIELDS = [
     label:       'Source identifier',
     stateKey:    's3.submission.source_identifier',
     type:        'text',
-    placeholder: 'Identifier of the workflow or task that produced this submission.',
+    placeholder: 'e.g. workflow-deploy-20241015 or task-id-8823',
     optional:    false,
   },
   {
     id:          's10-idempotency',
-    label:       'Idempotency key',
+    label:       'Request ID',
     stateKey:    's3.submission.idempotency_key',
     type:        'text',
-    placeholder: 'Unique key to prevent duplicate gate evaluations.',
+    placeholder: 'e.g. req-20241015-deploy-001 (a unique ID per submission, prevents duplicate processing)',
     optional:    false,
   },
   {
@@ -83,7 +83,7 @@ const S10_FIELDS = [
     label:       'Metadata',
     stateKey:    's3.submission.metadata',
     type:        'textarea',
-    placeholder: 'Any additional metadata fields required by policy.',
+    placeholder: 'e.g. environment: production\nteam: platform-ops\nticket: OPS-442',
     optional:    false,
   },
 ];

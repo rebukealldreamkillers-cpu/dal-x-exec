@@ -133,6 +133,7 @@ function createDecisionBlock({
 function createDropdown({
   id,
   label,
+  description      = null,
   options          = [],
   stateKey,
   customStateKey,
@@ -152,6 +153,14 @@ function createDropdown({
   lbl.setAttribute('for', `${id}-select`);
   lbl.textContent = label;
   wrapper.appendChild(lbl);
+
+  /* Description hint */
+  if (description) {
+    const desc = document.createElement('p');
+    desc.className = 'field-description';
+    desc.textContent = description;
+    wrapper.appendChild(desc);
+  }
 
   /* Select */
   const select = document.createElement('select');
@@ -273,6 +282,7 @@ function createDropdown({
 function createMultiSelect({
   id,
   label,
+  description      = null,
   options          = [],
   stateKey,
   customStateKey,
@@ -291,6 +301,14 @@ function createMultiSelect({
   lbl.className = 'form-label';
   lbl.textContent = label;
   wrapper.appendChild(lbl);
+
+  /* Description hint */
+  if (description) {
+    const desc = document.createElement('p');
+    desc.className = 'field-description';
+    desc.textContent = description;
+    wrapper.appendChild(desc);
+  }
 
   const group = document.createElement('div');
   group.className = 'check-group';
