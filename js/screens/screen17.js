@@ -18,20 +18,20 @@ function computeMapStatements() {
 
   const statements = [];
 
-  /* Q1 — Submission point */
+  /* Q1: Submission point */
   const q1 = q('q1');
   if (q1 === 'yes')     statements.push({ point: 'Submission point',  text: 'Agent submission path',              style: 'normal'  });
   else if (q1 === 'no') statements.push({ point: 'Submission point',  text: 'Submission point missing',           style: 'missing' });
   else if (q1)          statements.push({ point: 'Submission point',  text: 'Submission point unknown',           style: 'unknown' });
 
-  /* Q2 — Pending execution (not_applicable → suppressed) */
+  /* Q2: Pending execution (not_applicable suppressed) */
   const q2 = q('q2');
   if      (q2 === 'yes')     statements.push({ point: 'Pending execution', text: 'Stored pending execution',          style: 'normal'  });
   else if (q2 === 'no')      statements.push({ point: 'Pending execution', text: 'Pending execution not available',   style: 'missing' });
   else if (q2 === 'unknown') statements.push({ point: 'Pending execution', text: 'Pending execution unknown',         style: 'unknown' });
   /* q2 === 'not_applicable' → do not show pending state */
 
-  /* Q3 — Decision handling */
+  /* Q3: Decision handling */
   const q3 = q('q3');
   if      (q3 === 'webhook')  statements.push({ point: 'Decision handling', text: 'Webhook decision path',             style: 'normal'  });
   else if (q3 === 'polling')  statements.push({ point: 'Decision handling', text: 'Polling path',                      style: 'normal'  });
@@ -39,25 +39,25 @@ function computeMapStatements() {
   else if (q3 === 'neither')  statements.push({ point: 'Decision handling', text: 'Neither webhook nor polling available', style: 'missing' });
   else if (q3 === 'unknown')  statements.push({ point: 'Decision handling', text: 'Decision handling unknown',          style: 'unknown' });
 
-  /* Q4 — Enforcement point */
+  /* Q4: Enforcement point */
   const q4 = q('q4');
   if      (q4 === 'yes') statements.push({ point: 'Enforcement point',  text: 'Enforcement check before downstream system', style: 'normal'  });
   else if (q4 === 'no')  statements.push({ point: 'Enforcement point',  text: 'Enforcement point missing',                  style: 'missing' });
   else if (q4)           statements.push({ point: 'Enforcement point',  text: 'Enforcement point unknown',                  style: 'unknown' });
 
-  /* Q5 — Blocking behavior */
+  /* Q5: Blocking behavior */
   const q5 = q('q5');
   if      (q5 === 'yes') statements.push({ point: 'Blocking behavior',  text: 'Fail closed',                                style: 'normal'  });
   else if (q5 === 'no')  statements.push({ point: 'Blocking behavior',  text: 'Execution may continue after rejection or error', style: 'missing' });
   else if (q5)           statements.push({ point: 'Blocking behavior',  text: 'Blocking behavior unknown',                  style: 'unknown' });
 
-  /* Q6 — Bypass prevention */
+  /* Q6: Bypass prevention */
   const q6 = q('q6');
   if      (q6 === 'yes')     statements.push({ point: 'Bypass prevention', text: 'No alternate path',          style: 'normal'           });
   else if (q6 === 'no')      statements.push({ point: 'Bypass prevention', text: 'Reported bypass',            style: 'bypass-confirmed' });
   else if (q6 === 'unknown') statements.push({ point: 'Bypass prevention', text: 'Unconfirmed bypass',         style: 'bypass-unconfirmed' });
 
-  /* Q10 — Downstream result */
+  /* Q10: Downstream result */
   const q10 = q('q10');
   if      (q10 === 'yes') statements.push({ point: 'Downstream result', text: 'Downstream result connected to enterprise record', style: 'normal'  });
   else if (q10 === 'no')  statements.push({ point: 'Downstream result', text: 'Downstream result recording missing',               style: 'missing' });
@@ -101,7 +101,7 @@ function renderScreen17() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 4 — Technical Review';
+  badge.textContent = 'Surface 4 · Technical Review';
   screen.appendChild(badge);
 
   /* Title */

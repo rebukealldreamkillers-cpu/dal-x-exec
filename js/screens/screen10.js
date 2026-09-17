@@ -171,7 +171,7 @@ function renderScreen10() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 3 — Configured DAL-X Simulation';
+  badge.textContent = 'Surface 3 · Configured DAL-X Simulation';
   screen.appendChild(badge);
 
   /* Title */
@@ -203,7 +203,7 @@ function renderScreen10() {
 
   /* Section indices: 0=Submitter, 1-2=Payload, 3-4=Execution intent, 5-7=Tracking */
   const SECTION_BREAKS = {
-    0: null,          /* first field — no divider, just a section label */
+    0: null,          /* first field: no divider, just a section label */
     1: 'Payload',
     3: 'Execution intent',
     5: 'Tracking',

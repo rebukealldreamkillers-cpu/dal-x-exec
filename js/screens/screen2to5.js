@@ -154,7 +154,7 @@ function renderGateScreen(screenId) {
   badge.textContent = 'Surface 1 · Public Demonstration';
   screen.appendChild(badge);
 
-  /* Scenario context strip — always visible */
+  /* Scenario context strip: always visible */
   screen.appendChild(createScenarioStrip(ex));
 
   /* Title */
@@ -172,7 +172,7 @@ function renderGateScreen(screenId) {
   /* Decision state block */
   screen.appendChild(createDecisionBlock(cfg.decision));
 
-  /* Separation table — Screen 4 only */
+  /* Separation table: Screen 4 only */
   if (cfg.separationTable) {
     const tableCard = document.createElement('div');
     tableCard.className = 'card';
@@ -219,7 +219,7 @@ function renderGateScreen(screenId) {
     screen.appendChild(tableCard);
   }
 
-  /* Without DAL-X context — rejection screens only */
+  /* Without DAL-X context: rejection screens only */
   if (cfg.withoutDalX) {
     const withoutNote = document.createElement('div');
     withoutNote.className = 'callout callout--without';

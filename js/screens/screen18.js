@@ -2,9 +2,9 @@
 
 /*
  * Strict evaluation order (spec-required):
- *   1. Known structural failure  — No/Neither in Q1–Q6
- *   2. Unknown required answer   — any applicable answer is null or 'unknown'
- *   3. Implementation work       — Q7–Q10 pass / no unknowns / one+ Q7–Q10 = no
+ *   1. Known structural failure: No/Neither in Q1-Q6
+ *   2. Unknown required answer: any applicable answer is null or 'unknown'
+ *   3. Implementation work: Q7-Q10 pass / no unknowns / one+ Q7-Q10 = no
  *   4. Technical answers support integration (all clear)
  *
  * null answers are treated as unknown (unanswered = incomplete).
@@ -19,16 +19,16 @@
 /* ── Question labels (used in blocker/unknown lists) ─────────────────────── */
 
 const S18_Q_LABELS = {
-  q1:  'Q1 — Submission point',
-  q2:  'Q2 — Pending execution',
-  q3:  'Q3 — Decision handling',
-  q4:  'Q4 — Enforcement point',
-  q5:  'Q5 — Blocking behavior',
-  q6:  'Q6 — Bypass prevention',
-  q7:  'Q7 — Submission fields',
-  q8:  'Q8 — API key storage',
-  q9:  'Q9 — Data handling',
-  q10: 'Q10 — Downstream result',
+  q1:  'Q1: Submission point',
+  q2:  'Q2: Pending execution',
+  q3:  'Q3: Decision handling',
+  q4:  'Q4: Enforcement point',
+  q5:  'Q5: Blocking behavior',
+  q6:  'Q6: Bypass prevention',
+  q7:  'Q7: Submission fields',
+  q8:  'Q8: API key storage',
+  q9:  'Q9: Data handling',
+  q10: 'Q10: Downstream result',
 };
 
 /* ── Outcome configurations ───────────────────────────────────────────────── */
@@ -165,7 +165,7 @@ function renderScreen18() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 4 — Technical Review';
+  badge.textContent = 'Surface 4 · Technical Review';
   screen.appendChild(badge);
 
   /* Title */

@@ -2,13 +2,13 @@
 
 /*
  * Five fields:
- *   1. AI agent          — single-select dropdown (7 options + Not sure + Enter my own)
- *   2. Proposed execution — single-select dropdown (9 options + Not sure + Enter my own)
- *   3. Downstream system  — single-select dropdown (8 options + Not sure + Enter my own
+ *   1. AI agent: single-select dropdown (7 options + Not sure + Enter my own)
+ *   2. Proposed execution: single-select dropdown (9 options + Not sure + Enter my own)
+ *   3. Downstream system: single-select dropdown (8 options + Not sure + Enter my own
  *                           + "No downstream system")
- *   4. Consequence        — multi-select checkboxes (7 options + Not sure + Enter my own
+ *   4. Consequence: multi-select checkboxes (7 options + Not sure + Enter my own
  *                           + "No consequential effect"); exclusive: not_sure, none
- *   5. Missing authority response — single-select, 3 fixed options only (no custom/not-sure)
+ *   5. Missing authority response: single-select, 3 fixed options only (no custom/not-sure)
  *
  * All selections are written to sessionState.s2 via the component stateKey
  * / customStateKey bindings. Screen 8 reads from s2 to produce its result.
@@ -57,7 +57,7 @@ const S7_CONSEQUENCE_OPTIONS = [
   { value: 'difficult_to_reverse',label: 'Difficult to reverse' },
 ];
 
-/* Three fixed options only — spec does not include Not sure or Enter my own */
+/* Three fixed options only, spec does not include Not sure or Enter my own */
 const S7_AUTHORITY_OPTIONS = [
   { value: 'must_stop',    label: 'Execution must stop'                  },
   { value: 'may_continue', label: 'Execution may continue with an alert' },
@@ -71,7 +71,7 @@ function renderScreen7() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 2 — Guided Business Assessment';
+  badge.textContent = 'Surface 2 · Guided Business Assessment';
   screen.appendChild(badge);
 
   /* Title */
@@ -114,7 +114,7 @@ function renderScreen7() {
     initialCustom:   getState('s2.proposed_execution_custom') || '',
   }));
 
-  /* 3. Downstream system — includes "No downstream system" */
+  /* 3. Downstream system, includes "No downstream system" */
   card.appendChild(createDropdown({
     id:               's7-downstream',
     label:            'Downstream system',
@@ -126,7 +126,7 @@ function renderScreen7() {
     initialCustom:    getState('s2.downstream_system_custom') || '',
   }));
 
-  /* 4. Consequence — multi-select; "Not sure" and "No consequential effect"
+  /* 4. Consequence: multi-select; "Not sure" and "No consequential effect"
      are exclusive (deselect all others when chosen) */
   card.appendChild(createMultiSelect({
     id:               's7-consequence',
@@ -139,7 +139,7 @@ function renderScreen7() {
     initialCustom:    getState('s2.consequences_custom') || '',
   }));
 
-  /* 5. Missing authority response — 3 fixed options, no custom or not-sure */
+  /* 5. Missing authority response: 3 fixed options, no custom or not-sure */
   card.appendChild(createDropdown({
     id:           's7-authority',
     label:        'Missing authority response',

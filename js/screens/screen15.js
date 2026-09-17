@@ -12,21 +12,21 @@
 /* ── Display label helpers ────────────────────────────────────────────────── */
 
 function s15LookupLabel(value, options) {
-  if (!value) return '—';
+  if (!value) return 'N/A';
   const found = (options || []).find(o => o.value === value);
   return found ? found.label : value;
 }
 
 function s15AgentDisplay() {
   const v = getState('s2.agent_type') || '';
-  if (v === 'custom') return getState('s2.agent_type_custom') || '—';
+  if (v === 'custom') return getState('s2.agent_type_custom') || 'N/A';
   if (v === 'not_sure') return 'Not sure';
   return s15LookupLabel(v, typeof S7_AGENT_OPTIONS !== 'undefined' ? S7_AGENT_OPTIONS : []);
 }
 
 function s15ExecutionDisplay() {
   const v = getState('s2.proposed_execution') || '';
-  if (v === 'custom') return getState('s2.proposed_execution_custom') || '—';
+  if (v === 'custom') return getState('s2.proposed_execution_custom') || 'N/A';
   if (v === 'not_sure') return 'Not sure';
   return s15LookupLabel(v, typeof S7_EXECUTION_OPTIONS !== 'undefined' ? S7_EXECUTION_OPTIONS : []);
 }
@@ -34,7 +34,7 @@ function s15ExecutionDisplay() {
 function s15DownstreamDisplay() {
   const v = getState('s2.downstream_system') || '';
   if (v === 'none')   return 'No downstream system';
-  if (v === 'custom') return getState('s2.downstream_system_custom') || '—';
+  if (v === 'custom') return getState('s2.downstream_system_custom') || 'N/A';
   if (v === 'not_sure') return 'Not sure';
   return s15LookupLabel(v, typeof S7_DOWNSTREAM_OPTIONS !== 'undefined' ? S7_DOWNSTREAM_OPTIONS : []);
 }
@@ -54,9 +54,9 @@ function s15ReviewerDecisionDisplay() {
   const decision = getState('s3.reviewer_decision') || '';
   const outcome  = getState('s3.trigger_outcome')   || '';
   if (!decision) {
-    if (outcome === 'auto_approve') return 'None — auto-approved';
-    if (outcome === 'blocked')      return 'None — blocked at trigger';
-    return '—';
+    if (outcome === 'auto_approve') return 'None (auto-approved)';
+    if (outcome === 'blocked')      return 'None (blocked at trigger)';
+    return 'N/A';
   }
   const labels = {
     approved:           'Approved',
@@ -74,10 +74,10 @@ function s15AuthorizationStatus() {
 
   if (authId) return 'Issued';
 
-  if (outcome === 'blocked')      return 'Not issued — blocked';
-  if (decision === 'denied')      return 'Not issued — denied';
-  if (decision === 'escalated')   return 'Not issued — escalated';
-  if (decision === 'revision_requested') return 'Not issued — revision required';
+  if (outcome === 'blocked')      return 'Not issued (blocked)';
+  if (decision === 'denied')      return 'Not issued (denied)';
+  if (decision === 'escalated')   return 'Not issued (escalated)';
+  if (decision === 'revision_requested') return 'Not issued (revision required)';
   return 'Not issued';
 }
 
@@ -90,7 +90,7 @@ const S15_BUSINESS_RESULT_LABELS = {
 
 function s15BusinessFinding() {
   const key = getState('s2.business_result');
-  return S15_BUSINESS_RESULT_LABELS[key] || '—';
+  return S15_BUSINESS_RESULT_LABELS[key] || 'N/A';
 }
 
 /* ── Gate test mini-table ─────────────────────────────────────────────────── */
@@ -150,7 +150,7 @@ function renderScreen15() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 3 — Configured DAL-X Simulation';
+  badge.textContent = 'Surface 3 · Configured DAL-X Simulation';
   screen.appendChild(badge);
 
   /* Title */
@@ -184,7 +184,7 @@ function renderScreen15() {
 
   /* Fields 4–7: DAL-X computed */
   const computedFields = [
-    ['Controlling trigger',  getState('s3.trigger_details.controlling_rule') || '—'],
+    ['Controlling trigger',  getState('s3.trigger_details.controlling_rule') || 'N/A'],
     ['Required authority',   s15RequiredAuthority()],
     ['Reviewer decision',    s15ReviewerDecisionDisplay()],
     ['Authorization status', s15AuthorizationStatus()],
@@ -192,7 +192,7 @@ function renderScreen15() {
   computedFields.forEach(([key, val]) =>
     card.appendChild(createLabelledField(key, val, 'demonstrated')));
 
-  /* Field 8: Gate test results — sub-section with mini-table */
+  /* Field 8: Gate test results, sub-section with mini-table */
   const hr2 = document.createElement('hr');
   hr2.className = 'divider';
   card.appendChild(hr2);
@@ -224,7 +224,7 @@ function renderScreen15() {
   hr3.className = 'divider';
   card.appendChild(hr3);
 
-  /* Field 9: Business fit finding — participant-reported */
+  /* Field 9: Business fit finding, participant-reported */
   card.appendChild(createLabelledField(
     'Business fit finding', s15BusinessFinding(), 'business'));
 

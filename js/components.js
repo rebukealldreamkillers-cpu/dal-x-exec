@@ -1,6 +1,6 @@
 /* ─── components.js ─────────────────────────────────────────────────────────
    Reusable UI components for all 21 screens.
-   All functions return DOM nodes — none write to the DOM directly.
+   All functions return DOM nodes. None write to the DOM directly.
    Requires app.js (setState / getState) to be loaded first.
 ────────────────────────────────────────────────────────────────────────── */
 
@@ -47,10 +47,10 @@ function createEvidenceLabel(type) {
  * Returns the complete four-row decision state card.
  *
  * @param {object} config
- * @param {string} config.state              — Decision state text
- * @param {string} config.reason             — Exact reason
- * @param {string} config.required_response  — Required user response
- * @param {string} config.what_happens_next  — What happens next
+ * @param {string} config.state              - Decision state text
+ * @param {string} config.reason             - Exact reason
+ * @param {string} config.required_response  - Required user response
+ * @param {string} config.what_happens_next  - What happens next
  * @param {'accepted'|'rejected'|'pending'|'neutral'} [config.variant='neutral']
  * @param {string} [config.title='Decision State']
  * @returns {HTMLDivElement}
@@ -89,7 +89,7 @@ function createDecisionBlock({
 
     const val = document.createElement('div');
     val.className = 'decision-block__value';
-    val.textContent = value || '—';
+    val.textContent = value || 'N/A';
 
     row.appendChild(lbl);
     row.appendChild(val);
@@ -117,17 +117,17 @@ function createDecisionBlock({
  *   customStateKey← free text (only populated when stateKey === 'custom')
  *
  * @param {object}   config
- * @param {string}   config.id                 — Element id prefix (must be unique per page)
- * @param {string}   config.label              — Visible label text
- * @param {Array}    config.options             — [{value, label}, ...]
- * @param {string}   [config.stateKey]          — sessionState dot-path for selected value
- * @param {string}   [config.customStateKey]    — sessionState dot-path for custom text
- * @param {boolean}  [config.allowCustom=true]  — Append "Enter my own"
- * @param {boolean}  [config.allowNotSure=true] — Append "Not sure"
- * @param {string}   [config.noSelectionLabel]  — Optional "No X" option (e.g. "No downstream system")
- * @param {string}   [config.initialValue]      — Pre-select this value on render
- * @param {string}   [config.initialCustom]     — Pre-fill custom input on render
- * @param {Function} [config.onChange]          — Callback: (value, customText) => void
+ * @param {string}   config.id                 - Element id prefix (must be unique per page)
+ * @param {string}   config.label              - Visible label text
+ * @param {Array}    config.options             - [{value, label}, ...]
+ * @param {string}   [config.stateKey]          - sessionState dot-path for selected value
+ * @param {string}   [config.customStateKey]    - sessionState dot-path for custom text
+ * @param {boolean}  [config.allowCustom=true]  - Append "Enter my own"
+ * @param {boolean}  [config.allowNotSure=true] - Append "Not sure"
+ * @param {string}   [config.noSelectionLabel]  - Optional "No X" option (e.g. "No downstream system")
+ * @param {string}   [config.initialValue]      - Pre-select this value on render
+ * @param {string}   [config.initialCustom]     - Pre-fill custom input on render
+ * @param {Function} [config.onChange]          - Callback: (value, customText) => void
  * @returns {HTMLDivElement}
  */
 function createDropdown({
@@ -258,16 +258,16 @@ function createDropdown({
  * @param {object}   config
  * @param {string}   config.id
  * @param {string}   config.label
- * @param {Array}    config.options             — [{value, label}, ...]
+ * @param {Array}    config.options             - [{value, label}, ...]
  * @param {string}   [config.stateKey]
  * @param {string}   [config.customStateKey]
  * @param {boolean}  [config.allowCustom=true]
  * @param {boolean}  [config.allowNotSure=true]
- * @param {string}   [config.noSelectionLabel]  — e.g. "No consequential effect"
- * @param {string[]} [config.exclusive]         — Values that deselect all others when checked
- * @param {string[]} [config.initialValues]     — Pre-checked values
+ * @param {string}   [config.noSelectionLabel]  - e.g. "No consequential effect"
+ * @param {string[]} [config.exclusive]         - Values that deselect all others when checked
+ * @param {string[]} [config.initialValues]     - Pre-checked values
  * @param {string}   [config.initialCustom]
- * @param {Function} [config.onChange]          — Callback: (valuesArray, customText) => void
+ * @param {Function} [config.onChange]          - Callback: (valuesArray, customText) => void
  * @returns {HTMLDivElement}
  */
 function createMultiSelect({
@@ -407,9 +407,9 @@ function createMultiSelect({
  * createLabelledField(key, value, evidenceType)
  * Returns a <div class="field-row">.
  *
- * @param {string} key            — Display key (shown in small caps)
- * @param {string} value          — Display value (monospace)
- * @param {string} [evidenceType] — Evidence label type; omit to skip the badge
+ * @param {string} key            - Display key (shown in small caps)
+ * @param {string} value          - Display value (monospace)
+ * @param {string} [evidenceType] - Evidence label type; omit to skip the badge
  * @returns {HTMLDivElement}
  */
 function createLabelledField(key, value, evidenceType) {
@@ -422,7 +422,7 @@ function createLabelledField(key, value, evidenceType) {
 
   const valEl = document.createElement('div');
   valEl.className = 'field-row__value';
-  valEl.textContent = value || '—';
+  valEl.textContent = value || 'N/A';
 
   if (evidenceType) {
     valEl.appendChild(document.createTextNode(' '));
@@ -444,7 +444,7 @@ function createLabelledField(key, value, evidenceType) {
  * Returns a <span class="status-chip status-chip--{state}">.
  *
  * @param {'accepted'|'rejected'|'pending'|'neutral'} state
- * @param {string} [label] — Defaults to capitalised state name
+ * @param {string} [label] - Defaults to capitalised state name
  * @returns {HTMLSpanElement}
  */
 function createStatusChip(state, label) {

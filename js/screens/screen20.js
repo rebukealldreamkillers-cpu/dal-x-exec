@@ -2,11 +2,11 @@
 
 /*
  * Evaluation order (spec-required):
- *   1. remediation_required  — structural failure, enterprise not yet decided
- *   2. not_recommended       — enterprise cannot or will not correct
- *   3. pilot_prerequisites   — structural failure, enterprise will correct
- *   4. setup_tasks           — Q1–Q6 pass, Q7–Q10 incomplete
- *   5. pilot_candidate       — all confirmed and complete
+ *   1. remediation_required: structural failure, enterprise not yet decided
+ *   2. not_recommended: enterprise cannot or will not correct
+ *   3. pilot_prerequisites: structural failure, enterprise will correct
+ *   4. setup_tasks: Q1-Q6 pass, Q7-Q10 incomplete
+ *   5. pilot_candidate: all confirmed and complete
  *
  * Decision 1 shows the enterprise remediation response form. Selecting an
  * option re-evaluates and re-renders the full screen, which may transition
@@ -217,10 +217,10 @@ function buildPrerequisiteRecordForm() {
   scopeNote.style.marginTop = 'var(--space-4)';
   const scopeLines = [
     'The prerequisite record does not include:',
-    '— A target completion date',
-    '— Ongoing status',
-    '— Follow-up assignments for Jochanni Labs',
-    '— Remediation project management',
+    'A target completion date',
+    'Ongoing status',
+    'Follow-up assignments for Jochanni Labs',
+    'Remediation project management',
   ];
   scopeNote.textContent = scopeLines.join('\n');
   card.appendChild(scopeNote);
@@ -336,7 +336,7 @@ function renderScreen20() {
     screen.appendChild(buildPilotOwnerForm());
   }
 
-  /* Evidence label — Decision 4 only */
+  /* Evidence label: Decision 4 only */
   if (cfg.evidenceLabel) {
     const evidenceLine = document.createElement('p');
     evidenceLine.style.cssText =

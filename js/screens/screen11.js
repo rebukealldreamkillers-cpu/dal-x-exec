@@ -99,7 +99,7 @@ function evaluateTrigger() {
 const S11_OUTCOME_CONFIG = {
   auto_approve: { chipState: 'accepted', chipLabel: 'Auto-approved'           },
   needs_review: { chipState: 'pending',  chipLabel: 'Needs review'            },
-  high_risk:    { chipState: 'neutral',  chipLabel: 'High risk — lead review' },
+  high_risk:    { chipState: 'neutral',  chipLabel: 'High risk: lead review' },
   blocked:      { chipState: 'rejected', chipLabel: 'Blocked'                 },
 };
 
@@ -115,7 +115,7 @@ function renderScreen11() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 3 — Configured DAL-X Simulation';
+  badge.textContent = 'Surface 3 · Configured DAL-X Simulation';
   screen.appendChild(badge);
 
   /* Title */
@@ -144,14 +144,14 @@ function renderScreen11() {
   const details = [
     ['Rules evaluated',         String(getState('s3.trigger_details.rules_evaluated') ?? 0)],
     ['Rules matched',           String(getState('s3.trigger_details.rules_matched') ?? 0)],
-    ['Controlling rule',        getState('s3.trigger_details.controlling_rule') || '—'],
-    ['Exact match',             getState('s3.trigger_details.exact_match')      || '—'],
-    ['Policy reference',        getState('s3.trigger_details.policy_reference') || '—'],
-    ['Required reviewer level', getState('s3.trigger_details.required_reviewer_level') || '—'],
+    ['Controlling rule',        getState('s3.trigger_details.controlling_rule') || 'N/A'],
+    ['Exact match',             getState('s3.trigger_details.exact_match')      || 'N/A'],
+    ['Policy reference',        getState('s3.trigger_details.policy_reference') || 'N/A'],
+    ['Required reviewer level', getState('s3.trigger_details.required_reviewer_level') || 'N/A'],
   ];
   details.forEach(([key, val]) => card.appendChild(createLabelledField(key, val)));
 
-  /* Result row — chip instead of text */
+  /* Result row: chip instead of text */
   const resultRow = document.createElement('div');
   resultRow.className = 'field-row';
   const resultKey = document.createElement('div');
@@ -201,7 +201,7 @@ function renderScreen11() {
       if (typeof renderScreen12 === 'function') renderScreen12();
       showScreen('screen-12');
     } else {
-      /* auto_approve or blocked — human review not required */
+      /* auto_approve or blocked, human review not required */
       if (typeof renderScreen13 === 'function') renderScreen13();
       showScreen('screen-13');
     }

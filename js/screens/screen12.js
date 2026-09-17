@@ -79,7 +79,7 @@ function buildS12DecisionArea(selectedKey) {
   });
   area.appendChild(btnGroup);
 
-  /* Decision block — only once a selection is made */
+  /* Decision block: only once a selection is made */
   if (selectedKey && S12_DECISIONS[selectedKey]) {
     area.appendChild(createDecisionBlock(S12_DECISIONS[selectedKey].decision));
   }
@@ -103,7 +103,7 @@ function renderScreen12() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 3 — Configured DAL-X Simulation';
+  badge.textContent = 'Surface 3 · Configured DAL-X Simulation';
   screen.appendChild(badge);
 
   /* Title */

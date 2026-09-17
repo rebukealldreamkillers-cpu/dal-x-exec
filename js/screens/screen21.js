@@ -104,7 +104,7 @@ const S21_BUSINESS_RESULT_LABELS = {
 const S21_TRIGGER_OUTCOME_LABELS = {
   auto_approve: 'Auto-approved',
   needs_review: 'Needs review',
-  high_risk:    'High risk — escalated review',
+  high_risk:    'High risk: escalated review',
   blocked:      'Blocked',
 };
 
@@ -124,16 +124,16 @@ const S21_PILOT_DECISION_LABELS = {
 };
 
 const S21_Q_LABELS = {
-  q1:  'Q1 — Submission point',
-  q2:  'Q2 — Pending execution',
-  q3:  'Q3 — Decision handling',
-  q4:  'Q4 — Enforcement point',
-  q5:  'Q5 — Blocking behavior',
-  q6:  'Q6 — Bypass prevention',
-  q7:  'Q7 — Submission fields',
-  q8:  'Q8 — API key storage',
-  q9:  'Q9 — Data handling',
-  q10: 'Q10 — Downstream result',
+  q1:  'Q1: Submission point',
+  q2:  'Q2: Pending execution',
+  q3:  'Q3: Decision handling',
+  q4:  'Q4: Enforcement point',
+  q5:  'Q5: Blocking behavior',
+  q6:  'Q6: Bypass prevention',
+  q7:  'Q7: Submission fields',
+  q8:  'Q8: API key storage',
+  q9:  'Q9: Data handling',
+  q10: 'Q10: Downstream result',
 };
 
 const S21_Q_VALUE_LABELS = {
@@ -158,21 +158,21 @@ const S21_NEXT_STEPS = {
 /* ── Display helpers ─────────────────────────────────────────────────────── */
 
 function s21LookupLabel(value, options) {
-  if (!value) return '—';
+  if (!value) return 'N/A';
   const found = (options || []).find(o => o.value === value);
   return found ? found.label : value;
 }
 
 function s21AgentDisplay() {
   const v = getState('s2.agent_type') || '';
-  if (v === 'custom')   return getState('s2.agent_type_custom') || '—';
+  if (v === 'custom')   return getState('s2.agent_type_custom') || 'N/A';
   if (v === 'not_sure') return 'Not sure';
   return s21LookupLabel(v, typeof S7_AGENT_OPTIONS !== 'undefined' ? S7_AGENT_OPTIONS : []);
 }
 
 function s21ExecutionDisplay() {
   const v = getState('s2.proposed_execution') || '';
-  if (v === 'custom')   return getState('s2.proposed_execution_custom') || '—';
+  if (v === 'custom')   return getState('s2.proposed_execution_custom') || 'N/A';
   if (v === 'not_sure') return 'Not sure';
   return s21LookupLabel(v, typeof S7_EXECUTION_OPTIONS !== 'undefined' ? S7_EXECUTION_OPTIONS : []);
 }
@@ -180,7 +180,7 @@ function s21ExecutionDisplay() {
 function s21DownstreamDisplay() {
   const v = getState('s2.downstream_system') || '';
   if (v === 'none')     return 'No downstream system';
-  if (v === 'custom')   return getState('s2.downstream_system_custom') || '—';
+  if (v === 'custom')   return getState('s2.downstream_system_custom') || 'N/A';
   if (v === 'not_sure') return 'Not sure';
   return s21LookupLabel(v, typeof S7_DOWNSTREAM_OPTIONS !== 'undefined' ? S7_DOWNSTREAM_OPTIONS : []);
 }
@@ -244,7 +244,7 @@ function buildTableField(keyText, tableEl, evidenceType) {
 function buildTechnicalAnswersTable() {
   const rows = Object.keys(S21_Q_LABELS).map(k => {
     const v       = getState('s4.' + k);
-    const display = S21_Q_VALUE_LABELS[v] || (v == null ? '—' : v);
+    const display = S21_Q_VALUE_LABELS[v] || (v == null ? 'N/A' : v);
     return [S21_Q_LABELS[k], display];
   });
   return buildS21Table(['Question', 'Answer'], rows);
@@ -334,7 +334,7 @@ function buildS21GateTestsTable() {
     empty.textContent = 'Gate tests not yet run.';
     return empty;
   }
-  const rows = tests.map(t => [t.name, t.chipLabel || '—']);
+  const rows = tests.map(t => [t.name, t.chipLabel || 'N/A']);
   return buildS21Table(['Scenario', 'Decision'], rows);
 }
 
@@ -431,14 +431,14 @@ function renderScreen21() {
   const hr3 = document.createElement('hr'); hr3.className = 'divider'; card.appendChild(hr3);
   card.appendChild(createLabelledField(
     'Business fit',
-    S21_BUSINESS_RESULT_LABELS[getState('s2.business_result')] || '—',
+    S21_BUSINESS_RESULT_LABELS[getState('s2.business_result')] || 'N/A',
     'business'));
 
   /* Fields 5–8: demonstrated evidence */
   const hr4 = document.createElement('hr'); hr4.className = 'divider'; card.appendChild(hr4);
   card.appendChild(createLabelledField(
     'Simulated trigger result',
-    S21_TRIGGER_OUTCOME_LABELS[getState('s3.trigger_outcome')] || '—',
+    S21_TRIGGER_OUTCOME_LABELS[getState('s3.trigger_outcome')] || 'N/A',
     'demonstrated'));
 
   const hr5 = document.createElement('hr'); hr5.className = 'divider'; card.appendChild(hr5);
@@ -447,9 +447,9 @@ function renderScreen21() {
   const reviewerDecision = getState('s3.reviewer_decision') || '';
   let reviewerDecisionText;
   if (!reviewerDecision) {
-    if      (triggerOutcome === 'auto_approve') reviewerDecisionText = 'None — auto-approved';
-    else if (triggerOutcome === 'blocked')      reviewerDecisionText = 'None — blocked at trigger';
-    else                                        reviewerDecisionText = '—';
+    if      (triggerOutcome === 'auto_approve') reviewerDecisionText = 'None (auto-approved)';
+    else if (triggerOutcome === 'blocked')      reviewerDecisionText = 'None (blocked at trigger)';
+    else                                        reviewerDecisionText = 'N/A';
   } else {
     reviewerDecisionText = S21_REVIEWER_DECISION_LABELS[reviewerDecision] || reviewerDecision;
   }
@@ -495,13 +495,13 @@ function renderScreen21() {
   const pilotDecisionKey = getState('jl.decision') || '';
   card.appendChild(createLabelledField(
     'Pilot decision',
-    S21_PILOT_DECISION_LABELS[pilotDecisionKey] || '—',
+    S21_PILOT_DECISION_LABELS[pilotDecisionKey] || 'N/A',
     'jl-reviewed'));
 
   const hr14 = document.createElement('hr'); hr14.className = 'divider'; card.appendChild(hr14);
   card.appendChild(createLabelledField(
     'Required next step',
-    S21_NEXT_STEPS[pilotDecisionKey] || '—',
+    S21_NEXT_STEPS[pilotDecisionKey] || 'N/A',
     'jl-reviewed'));
 
   screen.appendChild(card);
@@ -580,7 +580,7 @@ function renderScreen21() {
   pilotSection.appendChild(buildAcceptanceTestCard());
   screen.appendChild(pilotSection);
 
-  /* Nav — Back only (final screen) */
+  /* Nav: Back only (final screen) */
   const nav = document.createElement('nav');
   nav.className = 'screen-nav screen-nav--start';
 

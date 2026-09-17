@@ -166,7 +166,7 @@ function renderScreen14() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 3 — Configured DAL-X Simulation';
+  badge.textContent = 'Surface 3 · Configured DAL-X Simulation';
   screen.appendChild(badge);
 
   /* Title */

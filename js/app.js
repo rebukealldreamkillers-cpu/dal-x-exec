@@ -181,7 +181,7 @@ const sessionState = {
     enterprise_remediation_response: null,
 
     // Screen 20 Decision 2: prerequisite record (structural failure that enterprise will fix)
-    // Spec: contains only these 3 fields — no target dates, no follow-up assignments
+    // Spec: contains only these 3 fields, no target dates, no follow-up assignments
     prerequisite_record: {
       required_correction: '',
       responsible_role:    '',
@@ -189,7 +189,7 @@ const sessionState = {
     },
 
     // Screen 20 Decision 3: setup record (boundary confirmed but implementation incomplete)
-    // Spec: contains only these 3 fields — Jochanni Labs does not track before paid pilot
+    // Spec: contains only these 3 fields. Jochanni Labs does not track before paid pilot
     setup_record: {
       required_work:    '',
       responsible_role: '',
@@ -236,7 +236,7 @@ function getState(path) {
 
 /*
  * resetSurface1()
- * Called by Screen 6 "Replay demonstration" — clears s1 back to defaults
+ * Called by Screen 6 "Replay demonstration": clears s1 back to defaults
  * and resets the screen history so Back does not re-enter the demo mid-flow.
  */
 function resetSurface1() {

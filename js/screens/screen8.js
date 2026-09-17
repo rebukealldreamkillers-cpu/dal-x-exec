@@ -2,10 +2,10 @@
 
 /*
  * Evaluation order (spec-required):
- *   1. DAL-X not required     — agent only recommends, or no downstream, or no consequence
- *   2. Enforcement not established — missing_authority_response === 'may_continue'
- *   3. More information required  — any required field is empty or 'not_sure' / 'unknown'
- *   4. Potential DAL-X use case   — all four requirements confirmed
+ *   1. DAL-X not required: agent only recommends, or no downstream, or no consequence
+ *   2. Enforcement not established: missing_authority_response === 'may_continue'
+ *   3. More information required: any required field is empty or 'not_sure' / 'unknown'
+ *   4. Potential DAL-X use case: all four requirements confirmed
  *
  * The spec ordering places enforcement not established BEFORE more info
  * required: a known blocking answer surfaces before incomplete answers.
@@ -125,7 +125,7 @@ function renderScreen8() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 2 — Guided Business Assessment';
+  badge.textContent = 'Surface 2 · Guided Business Assessment';
   screen.appendChild(badge);
 
   /* Title */
@@ -146,7 +146,7 @@ function renderScreen8() {
   evidenceLine.appendChild(createEvidenceLabel(cfg.evidence));
   screen.appendChild(evidenceLine);
 
-  /* Proceed callout — potential use case only */
+  /* Proceed callout: potential use case only */
   if (cfg.showProceed) {
     const proceedNote = document.createElement('div');
     proceedNote.className = 'callout callout--info';

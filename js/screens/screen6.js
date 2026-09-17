@@ -20,7 +20,7 @@ function renderScreen6() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 1 — Public Demonstration';
+  badge.textContent = 'Surface 1 · Public Demonstration';
   screen.appendChild(badge);
 
   /* Title */
@@ -29,7 +29,7 @@ function renderScreen6() {
   title.textContent = 'Demonstration Result';
   screen.appendChild(title);
 
-  /* Summary sentence — verbatim from spec */
+  /* Summary sentence, verbatim from spec */
   const summary = document.createElement('p');
   summary.style.cssText =
     'font-size:var(--text-base);color:var(--color-text-secondary);'

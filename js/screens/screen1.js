@@ -24,7 +24,7 @@ const EXAMPLES = {
     action:             'data_export',
     wrong_action:       'data_delete',
     target:             'data_warehouse_api',
-    scope:              'Customer records — all regions',
+    scope:              'Customer records, all regions',
     consequence:        'Sensitive data may leave the enterprise perimeter',
     required_authority: 'Data owner',
   },
@@ -57,7 +57,7 @@ const EXAMPLES = {
     action:             'send_communication',
     wrong_action:       'bulk_unsubscribe',
     target:             'communication_platform_api',
-    scope:              'Bulk email — all active customers',
+    scope:              'Bulk email, all active customers',
     consequence:        'Customer-facing message sent at scale',
     required_authority: 'Communications lead',
   },
@@ -68,7 +68,7 @@ const EXAMPLES = {
     action:             'commit_funds',
     wrong_action:       'release_hold',
     target:             'payment_system_api',
-    scope:              'Wire transfer — vendor settlement',
+    scope:              'Wire transfer, vendor settlement',
     consequence:        'Funds committed and transferred',
     required_authority: 'Finance approver',
   },
@@ -81,7 +81,7 @@ function renderScreen1() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 1 — Public Demonstration';
+  badge.textContent = 'Surface 1 · Public Demonstration';
   screen.appendChild(badge);
 
   /* Title */
@@ -94,7 +94,7 @@ function renderScreen1() {
   const framing = document.createElement('p');
   framing.className = 'screen-subtitle';
   framing.textContent =
-    'Each scenario below is a consequential AI execution — an action with real downstream effects. '
+    'Each scenario below is a consequential AI execution, an action with real downstream effects. '
     + 'In every case, an AI agent has proposed the execution. '
     + 'DAL-X is the only thing standing between that proposal and the downstream system.';
   screen.appendChild(framing);
@@ -158,7 +158,7 @@ function renderScreen1() {
 
   screen.appendChild(nav);
 
-  /* Initialize — restore prior selection or default to infrastructure */
+  /* Initialize: restore prior selection or default to infrastructure */
   selectExample(getState('s1.example') || 'infrastructure');
 }
 

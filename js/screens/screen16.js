@@ -34,36 +34,36 @@ const S16_STRUCTURAL = [
   {
     id:       's16-q1',
     stateKey: 's4.q1',
-    label:    'Q1 — Submission point',
+    label:    'Q1: Submission point',
     text:     'Can the agent or calling service submit the proposed execution to DAL-X before execution begins?',
     options:  YES_NO_UNKNOWN,
   },
-  /* Q2 rendered separately — conditional on trigger_outcome */
+  /* Q2 rendered separately, conditional on trigger_outcome */
   {
     id:       's16-q3',
     stateKey: 's4.q3',
-    label:    'Q3 — Decision handling',
+    label:    'Q3: Decision handling',
     text:     'Can the enterprise receive the DAL-X decision through a webhook or retrieve it by polling?',
     options:  Q3_OPTIONS,
   },
   {
     id:       's16-q4',
     stateKey: 's4.q4',
-    label:    'Q4 — Enforcement point',
+    label:    'Q4: Enforcement point',
     text:     'Can the downstream execution service call the DAL-X enforcement endpoint before execution?',
     options:  YES_NO_UNKNOWN,
   },
   {
     id:       's16-q5',
     stateKey: 's4.q5',
-    label:    'Q5 — Blocking behavior',
+    label:    'Q5: Blocking behavior',
     text:     'Can the downstream service block execution whenever DAL-X rejects the request, returns an error, or is unavailable?',
     options:  YES_NO_UNKNOWN,
   },
   {
     id:       's16-q6',
     stateKey: 's4.q6',
-    label:    'Q6 — Bypass prevention',
+    label:    'Q6: Bypass prevention',
     text:     'Can every governed execution be required to pass through the DAL-X enforcement check?',
     options:  YES_NO_UNKNOWN,
   },
@@ -73,28 +73,28 @@ const S16_IMPLEMENTATION = [
   {
     id:       's16-q7',
     stateKey: 's4.q7',
-    label:    'Q7 — Submission fields',
+    label:    'Q7: Submission fields',
     text:     'Can the enterprise provide the documented submission fields and required metadata?',
     options:  YES_NO_UNKNOWN,
   },
   {
     id:       's16-q8',
     stateKey: 's4.q8',
-    label:    'Q8 — API key storage',
+    label:    'Q8: API key storage',
     text:     'Can the enterprise store DAL-X API keys in a secrets manager or equivalent protected configuration?',
     options:  YES_NO_UNKNOWN,
   },
   {
     id:       's16-q9',
     stateKey: 's4.q9',
-    label:    'Q9 — Data handling',
+    label:    'Q9: Data handling',
     text:     'Can sensitive information remain inside the enterprise while DAL-X receives reference identifiers and required metadata?',
     options:  YES_NO_UNKNOWN,
   },
   {
     id:       's16-q10',
     stateKey: 's4.q10',
-    label:    'Q10 — Downstream result',
+    label:    'Q10: Downstream result',
     text:     'Can the enterprise record the downstream system result separately from the DAL-X gate receipt?',
     options:  YES_NO_UNKNOWN,
   },
@@ -162,7 +162,7 @@ function buildQ2Block(triggerOutcome) {
 
   const labelEl = document.createElement('div');
   labelEl.className = 'form-label';
-  labelEl.textContent = 'Q2 — Pending execution';
+  labelEl.textContent = 'Q2: Pending execution';
   group.appendChild(labelEl);
 
   const questionEl = document.createElement('p');
@@ -184,7 +184,7 @@ function buildQ2Block(triggerOutcome) {
   }
 
   if (isNA) {
-    /* Not applicable — read-only callout */
+    /* Not applicable: read-only callout */
     const naNote = document.createElement('div');
     naNote.className = 'callout callout--info';
     naNote.textContent =
@@ -192,7 +192,7 @@ function buildQ2Block(triggerOutcome) {
       + 'this pilot scope is immediately authorized or blocked.';
     group.appendChild(naNote);
   } else {
-    /* Required — info message + radio buttons */
+    /* Required: info message + radio buttons */
     const infoMsg = document.createElement('div');
     infoMsg.className = 'callout callout--info';
     infoMsg.style.marginBottom = 'var(--space-3)';
@@ -239,7 +239,7 @@ function renderScreen16() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 4 — Technical Review';
+  badge.textContent = 'Surface 4 · Technical Review';
   screen.appendChild(badge);
 
   /* Title */
@@ -275,7 +275,7 @@ function renderScreen16() {
   /* Q1 */
   structCard.appendChild(buildRadioGroup(S16_STRUCTURAL[0]));
 
-  /* Q2 — conditional */
+  /* Q2: conditional */
   const q2Divider = document.createElement('hr');
   q2Divider.className = 'divider';
   structCard.appendChild(q2Divider);

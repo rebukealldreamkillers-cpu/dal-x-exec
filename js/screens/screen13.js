@@ -70,8 +70,8 @@ function renderScreen13() {
   const issued    = isAuthorizationIssued();
   const authId    = getState('s3.authorization_id');
   const issuedAt  = getState('s3.authorization_issued');
-  const action    = getState('s3.submission.action') || '—';
-  const target    = getState('s3.submission.target') || '—';
+  const action    = getState('s3.submission.action') || 'N/A';
+  const target    = getState('s3.submission.target') || 'N/A';
   const outcome   = getState('s3.trigger_outcome')   || '';
   const decision  = getState('s3.reviewer_decision') || '';
 
@@ -81,7 +81,7 @@ function renderScreen13() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 3 — Configured DAL-X Simulation';
+  badge.textContent = 'Surface 3 · Configured DAL-X Simulation';
   screen.appendChild(badge);
 
   /* Title */
@@ -164,7 +164,7 @@ function renderScreen13() {
 
     const statusFields = [
       ['Status',            'Not issued'],
-      ['Trigger outcome',   outcome   || '—'],
+      ['Trigger outcome',   outcome   || 'N/A'],
       ...(decision ? [['Reviewer decision', decision]] : []),
       ['Action',            action],
       ['Target',            target],
