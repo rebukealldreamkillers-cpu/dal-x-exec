@@ -81,22 +81,21 @@ function renderScreen1() {
   /* Title */
   const title = document.createElement('h1');
   title.className = 'screen-title';
-  title.textContent = 'Choose an Example';
+  title.textContent = 'Choose a Scenario';
   screen.appendChild(title);
 
-  /* Positioning copy — spec-required text for Screen 1 */
-  const positioning = document.createElement('div');
-  positioning.className = 'callout callout--info';
-  positioning.textContent =
-    'DAL-X controls execution, not model intent. It does not determine why an '
-    + 'AI agent proposed an execution. It checks whether the enterprise authorized '
-    + 'that execution before the downstream system proceeds.';
-  screen.appendChild(positioning);
+  /* Stakes framing */
+  const framing = document.createElement('p');
+  framing.className = 'screen-subtitle';
+  framing.textContent =
+    'Each scenario below is a consequential AI execution — an action with real downstream effects. '
+    + 'In every case, an AI agent has proposed the execution. '
+    + 'DAL-X is the only thing standing between that proposal and the downstream system.';
+  screen.appendChild(framing);
 
   /* Section label */
   const sectionLbl = document.createElement('p');
   sectionLbl.className = 'section-label';
-  sectionLbl.style.marginTop = 'var(--space-6)';
   sectionLbl.textContent = 'Select a use case';
   screen.appendChild(sectionLbl);
 

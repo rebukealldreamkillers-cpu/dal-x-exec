@@ -31,6 +31,10 @@ function gateScreenConfigs() {
         what_happens_next: 'The downstream system is not called.',
         variant:           'rejected',
       },
+      withoutDalX:
+        'Without this gate, the downstream system would execute immediately — with no record '
+        + 'that authorization was ever sought, reviewed, or granted. The action would be done '
+        + 'before anyone knew it was proposed.',
       separationTable: null,
       prev:         'screen-1',
       next:         'screen-3',
@@ -47,6 +51,10 @@ function gateScreenConfigs() {
         what_happens_next: 'The downstream system is not called.',
         variant:           'rejected',
       },
+      withoutDalX:
+        'Without action matching, any valid authorization could be reused for a different '
+        + 'execution than the one it was issued for. A prompt-injected or misconfigured agent '
+        + 'could present a real authorization to execute something the enterprise never approved.',
       separationTable: null,
       prev: 'screen-2',
       next: 'screen-4',
@@ -62,6 +70,7 @@ function gateScreenConfigs() {
         what_happens_next: 'The downstream call may proceed.',
         variant:           'accepted',
       },
+      withoutDalX: null,
       separationTable: {
         rows: [
           { record: 'DAL-X gate',                 result: 'Accepted',  chipState: 'accepted' },
@@ -83,6 +92,10 @@ function gateScreenConfigs() {
         what_happens_next: 'The downstream system is not called.',
         variant:           'rejected',
       },
+      withoutDalX:
+        'Without consumption tracking, the same authorization could be replayed indefinitely — '
+        + 'or captured by a separate process and reused to trigger additional executions '
+        + 'the enterprise never intended to authorize.',
       separationTable: null,
       prev: 'screen-4',
       next: 'screen-6',
@@ -173,6 +186,15 @@ function renderGateScreen(screenId) {
     tableCard.appendChild(tableNote);
 
     screen.appendChild(tableCard);
+  }
+
+  /* Without DAL-X context — shown on rejection screens */
+  if (cfg.withoutDalX) {
+    const withoutNote = document.createElement('div');
+    withoutNote.className = 'callout callout--without';
+    withoutNote.style.marginTop = 'var(--space-4)';
+    withoutNote.innerHTML = '<strong>Without this gate:</strong> ' + cfg.withoutDalX;
+    screen.appendChild(withoutNote);
   }
 
   /* Evidence label */
