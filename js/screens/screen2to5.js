@@ -1,40 +1,38 @@
 /* ─── Screens 2–5: Gate Scenarios ───────────────────────────────────────── */
 
-/*
- * Each screen follows the same structure:
- *   1. Surface badge + title
- *   2. Setup description callout (explains the scenario)
- *   3. Decision state block (from createDecisionBlock)
- *   4. [Screen 4 only] Separation table + downstream note
- *   5. Evidence label (Demonstrated in simulation — all four screens)
- *   6. Back / Next nav
- *
- * Screen 3's setup description is dynamic: it references the action from
- * the example the user selected on Screen 1.
- */
+/* ── Scenario-specific text generators ───────────────────────────────────── */
 
-/* ── Per-screen configuration ─────────────────────────────────────────── */
+function getExampleData() {
+  const key = getState('s1.example') || 'infrastructure';
+  return EXAMPLES[key] || EXAMPLES.infrastructure;
+}
 
-function gateScreenConfigs() {
-  /* Read action now (not at module load time) so Screen 3 reflects the
-     example selected before navigating to the demo. */
-  const action = getState('s1.action') || 'infrastructure_change';
+function buildConfigs(ex) {
+  const a  = ex.action;
+  const wa = ex.wrong_action;
+  const t  = ex.target;
+  const ag = ex.agent;
+  const au = ex.required_authority;
+  const c  = ex.consequence.toLowerCase();
 
   return {
     'screen-2': {
-      title:    'Missing Authorization',
-      setup:    'The downstream gate calls DAL-X without an authorization_id.',
+      title: 'Missing Authorization',
+      setup:
+        `The ${ag} attempts to execute ${a} on ${t}. `
+        + `The downstream system calls the DAL-X enforcement endpoint — `
+        + `but no authorization_id was obtained first.`,
       decision: {
         state:             'Rejected',
         reason:            'No execution authorization was provided.',
-        required_response: 'Submit the proposed execution for DAL-X evaluation.',
+        required_response: 'Submit the proposed execution to DAL-X for evaluation.',
         what_happens_next: 'The downstream system is not called.',
         variant:           'rejected',
       },
       withoutDalX:
-        'Without this gate, the downstream system would execute immediately — with no record '
-        + 'that authorization was ever sought, reviewed, or granted. The action would be done '
-        + 'before anyone knew it was proposed.',
+        `Without this gate, ${c}. `
+        + `This would have proceeded with no record that authorization was ever requested, `
+        + `reviewed, or granted — and no way to stop it.`,
       separationTable: null,
       prev:         'screen-1',
       next:         'screen-3',
@@ -43,7 +41,10 @@ function gateScreenConfigs() {
 
     'screen-3': {
       title: 'Wrong Action',
-      setup: `The approved action is ${action}. The attempted action is different.`,
+      setup:
+        `Authorization was issued for ${a}. `
+        + `The agent now presents that authorization while attempting ${wa} — `
+        + `a different action on the same target.`,
       decision: {
         state:             'Rejected',
         reason:            'The attempted action does not match the authorized action.',
@@ -52,9 +53,9 @@ function gateScreenConfigs() {
         variant:           'rejected',
       },
       withoutDalX:
-        'Without action matching, any valid authorization could be reused for a different '
-        + 'execution than the one it was issued for. A prompt-injected or misconfigured agent '
-        + 'could present a real authorization to execute something the enterprise never approved.',
+        `Without action matching, an authorization for ${a} could be reused to execute `
+        + `${wa} instead. The ${au} approved one specific action — `
+        + `not every action the agent might attempt on ${t}.`,
       separationTable: null,
       prev: 'screen-2',
       next: 'screen-4',
@@ -62,7 +63,10 @@ function gateScreenConfigs() {
 
     'screen-4': {
       title: 'Valid Authorization',
-      setup: 'The correct authorization_id, action, and target are submitted before expiration.',
+      setup:
+        `The ${au} reviewed the submission and approved it. `
+        + `The correct authorization_id, action (${a}), and target (${t}) `
+        + `are presented to the enforcement endpoint before expiration.`,
       decision: {
         state:             'Accepted',
         reason:            'The authorization is active and the action and target match.',
@@ -84,7 +88,9 @@ function gateScreenConfigs() {
 
     'screen-5': {
       title: 'Reused Authorization',
-      setup: 'The same authorization_id is submitted again.',
+      setup:
+        `The authorization for ${a} was consumed when the gate accepted the first request. `
+        + `The same authorization_id is now submitted again for a second attempt on ${t}.`,
       decision: {
         state:             'Rejected',
         reason:            'The execution authorization has already been consumed.',
@@ -93,9 +99,9 @@ function gateScreenConfigs() {
         variant:           'rejected',
       },
       withoutDalX:
-        'Without consumption tracking, the same authorization could be replayed indefinitely — '
-        + 'or captured by a separate process and reused to trigger additional executions '
-        + 'the enterprise never intended to authorize.',
+        `Without consumption tracking, the same authorization could trigger `
+        + `additional ${a} executions on ${t} — `
+        + `each one beyond what the ${au} ever intended to approve.`,
       separationTable: null,
       prev: 'screen-4',
       next: 'screen-6',
@@ -103,11 +109,40 @@ function gateScreenConfigs() {
   };
 }
 
-/* ── Generic renderer ─────────────────────────────────────────────────── */
+/* ── Scenario context strip ───────────────────────────────────────────────── */
+
+function createScenarioStrip(ex) {
+  const strip = document.createElement('div');
+  strip.className = 'scenario-strip';
+
+  const icon = document.createElement('span');
+  icon.className = 'scenario-strip__icon';
+  icon.textContent = ex.icon;
+
+  const info = document.createElement('div');
+  info.className = 'scenario-strip__info';
+
+  const label = document.createElement('div');
+  label.className = 'scenario-strip__label';
+  label.textContent = ex.label;
+
+  const meta = document.createElement('div');
+  meta.className = 'scenario-strip__meta';
+  meta.textContent =
+    `${ex.agent}  ·  ${ex.action}  →  ${ex.target}  ·  At risk: ${ex.consequence}`;
+
+  info.appendChild(label);
+  info.appendChild(meta);
+  strip.appendChild(icon);
+  strip.appendChild(info);
+  return strip;
+}
+
+/* ── Generic renderer ─────────────────────────────────────────────────────── */
 
 function renderGateScreen(screenId) {
-  const configs = gateScreenConfigs();
-  const cfg     = configs[screenId];
+  const ex  = getExampleData();
+  const cfg = buildConfigs(ex)[screenId];
   if (!cfg) return;
 
   const screen = document.getElementById(screenId);
@@ -119,11 +154,13 @@ function renderGateScreen(screenId) {
   badge.textContent = 'Surface 1 — Public Demonstration';
   screen.appendChild(badge);
 
-  /* Screen number + title */
-  const screenNum = screenId.replace('screen-', '');
+  /* Scenario context strip — always visible */
+  screen.appendChild(createScenarioStrip(ex));
+
+  /* Title */
   const title = document.createElement('h1');
   title.className = 'screen-title';
-  title.textContent = `Screen ${screenNum}: ${cfg.title}`;
+  title.textContent = cfg.title;
   screen.appendChild(title);
 
   /* Setup description */
@@ -133,8 +170,7 @@ function renderGateScreen(screenId) {
   screen.appendChild(setup);
 
   /* Decision state block */
-  const block = createDecisionBlock(cfg.decision);
-  screen.appendChild(block);
+  screen.appendChild(createDecisionBlock(cfg.decision));
 
   /* Separation table — Screen 4 only */
   if (cfg.separationTable) {
@@ -163,32 +199,27 @@ function renderGateScreen(screenId) {
     const tbody = document.createElement('tbody');
     cfg.separationTable.rows.forEach(({ record, result, chipState }) => {
       const tr = document.createElement('tr');
-
       const tdRecord = document.createElement('td');
       tdRecord.textContent = record;
       tr.appendChild(tdRecord);
-
       const tdResult = document.createElement('td');
       tdResult.appendChild(createStatusChip(chipState, result));
       tr.appendChild(tdResult);
-
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
     tableCard.appendChild(table);
 
-    /* Note below table */
     const tableNote = document.createElement('p');
     tableNote.style.cssText =
-      'margin-top:var(--space-4);font-size:var(--text-sm);'
-      + 'color:var(--color-text-secondary);';
+      'margin-top:var(--space-4);font-size:var(--text-sm);color:var(--color-text-secondary);';
     tableNote.textContent = cfg.separationTable.note;
     tableCard.appendChild(tableNote);
 
     screen.appendChild(tableCard);
   }
 
-  /* Without DAL-X context — shown on rejection screens */
+  /* Without DAL-X context — rejection screens only */
   if (cfg.withoutDalX) {
     const withoutNote = document.createElement('div');
     withoutNote.className = 'callout callout--without';
@@ -200,9 +231,8 @@ function renderGateScreen(screenId) {
   /* Evidence label */
   const evidenceLine = document.createElement('p');
   evidenceLine.style.cssText =
-    'margin-top:var(--space-5);font-size:var(--text-sm);'
-    + 'color:var(--color-text-secondary);';
-  evidenceLine.appendChild(document.createTextNode('Evidence: '));
+    'margin-top:var(--space-5);font-size:var(--text-sm);color:var(--color-text-secondary);';
+  evidenceLine.appendChild(document.createTextNode('Evidence: '));
   evidenceLine.appendChild(createEvidenceLabel('demonstrated'));
   screen.appendChild(evidenceLine);
 
@@ -228,14 +258,14 @@ function renderGateScreen(screenId) {
   screen.appendChild(nav);
 }
 
-/* ── Per-screen render functions ──────────────────────────────────────── */
+/* ── Per-screen render functions ──────────────────────────────────────────── */
 
 function renderScreen2() { renderGateScreen('screen-2'); }
 function renderScreen3() { renderGateScreen('screen-3'); }
 function renderScreen4() { renderGateScreen('screen-4'); }
 function renderScreen5() { renderGateScreen('screen-5'); }
 
-/* ── Init ─────────────────────────────────────────────────────────────── */
+/* ── Init ─────────────────────────────────────────────────────────────────── */
 
 document.addEventListener('DOMContentLoaded', () => {
   renderScreen2();
