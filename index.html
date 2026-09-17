@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAL-X Execution Simulation</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <span class="app-header__logo">DAL-X</span>
+    <span class="app-header__sep">|</span>
+    <span class="app-header__title">Execution Simulation</span>
+  </header>
+
+  <main id="app">
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SURFACE 1 — Public Demonstration
+         Screens 1–6 · Built in T04, T05, T06
+    ════════════════════════════════════════════════════════════════════ -->
+
+    <section id="screen-1" class="screen">
+      <div class="surface-badge">Surface 1 — Public Demonstration</div>
+      <h1 class="screen-title">Screen 1: Choose an Example</h1>
+      <p class="screen-subtitle">Select a use case to walk through the DAL-X gate simulation.</p>
+      <p class="placeholder-note">Content built in T04</p>
+      <nav class="screen-nav screen-nav--end">
+        <button class="btn btn--primary" onclick="showScreen('screen-2')">Next &rarr;</button>
+      </nav>
+    </section>
+
+    <section id="screen-2" class="screen">
+      <div class="surface-badge">Surface 1 — Public Demonstration</div>
+      <h1 class="screen-title">Screen 2: Missing Authorization</h1>
+      <p class="screen-subtitle">The downstream gate calls DAL-X without an authorization_id.</p>
+      <p class="placeholder-note">Content built in T05</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-3')">Next &rarr;</button>
+      </nav>
+    </section>
+
+    <section id="screen-3" class="screen">
+      <div class="surface-badge">Surface 1 — Public Demonstration</div>
+      <h1 class="screen-title">Screen 3: Wrong Action</h1>
+      <p class="screen-subtitle">The attempted action does not match the authorized action.</p>
+      <p class="placeholder-note">Content built in T05</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-4')">Next &rarr;</button>
+      </nav>
+    </section>
+
+    <section id="screen-4" class="screen">
+      <div class="surface-badge">Surface 1 — Public Demonstration</div>
+      <h1 class="screen-title">Screen 4: Valid Authorization</h1>
+      <p class="screen-subtitle">The correct authorization_id, action, and target are submitted before expiration.</p>
+      <p class="placeholder-note">Content built in T05</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-5')">Next &rarr;</button>
+      </nav>
+    </section>
+
+    <section id="screen-5" class="screen">
+      <div class="surface-badge">Surface 1 — Public Demonstration</div>
+      <h1 class="screen-title">Screen 5: Reused Authorization</h1>
+      <p class="screen-subtitle">The same authorization_id is submitted again after it has been consumed.</p>
+      <p class="placeholder-note">Content built in T05</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-6')">Next &rarr;</button>
+      </nav>
+    </section>
+
+    <section id="screen-6" class="screen">
+      <div class="surface-badge">Surface 1 — Public Demonstration</div>
+      <h1 class="screen-title">Screen 6: Demonstration Result</h1>
+      <p class="screen-subtitle">Summary of what DAL-X demonstrated across the four gate scenarios.</p>
+      <p class="placeholder-note">Content built in T06</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-7')">Request a Guided Assessment &rarr;</button>
+      </nav>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SURFACE 2 — Guided Business Assessment
+         Screens 7–8 · Built in T07, T08
+    ════════════════════════════════════════════════════════════════════ -->
+
+    <section id="screen-7" class="screen">
+      <div class="surface-badge">Surface 2 — Guided Business Assessment</div>
+      <h1 class="screen-title">Screen 7: Define the Use Case</h1>
+      <p class="screen-subtitle">Identify the agent, proposed execution, downstream system, and required response.</p>
+      <p class="placeholder-note">Content built in T07</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-8')">Next &rarr;</button>
+      </nav>
+    </section>
+
+    <section id="screen-8" class="screen">
+      <div class="surface-badge">Surface 2 — Guided Business Assessment</div>
+      <h1 class="screen-title">Screen 8: Business Result</h1>
+      <p class="screen-subtitle">DAL-X fit determination based on the reported use case.</p>
+      <p class="placeholder-note">Content built in T08</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-9')">Proceed to Simulation &rarr;</button>
+      </nav>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SURFACE 3 — Configured DAL-X Simulation
+         Screens 9–15 · Built in T09–T15
+    ════════════════════════════════════════════════════════════════════ -->
+
+    <section id="screen-9" class="screen">
+      <div class="surface-badge">Surface 3 — Configured DAL-X Simulation</div>
+      <h1 class="screen-title">Screen 9: Record Enterprise Policy</h1>
+      <p class="screen-subtitle">Jochanni Labs maps enterprise policy to DAL-X trigger rules.</p>
+      <p class="placeholder-note">Content built in T09</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-10')">Next &rarr;</button>
+      </nav>
+    </section>
+
+    <section id="screen-10" class="screen">
+      <div class="surface-badge">Surface 3 — Configured DAL-X Simulation</div>
+      <h1 class="screen-title">Screen 10: Build the Proposed Submission</h1>
+      <p class="screen-subtitle">Enter the DAL-X submission fields for the proposed execution.</p>
+      <p class="placeholder-note">Content built in T10</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-11')">Next &rarr;</button>
+      </nav>
+    </section>
+
+    <section id="screen-11" class="screen">
+      <div class="surface-badge">Surface 3 — Configured DAL-X Simulation</div>
+      <h1 class="screen-title">Screen 11: Trigger Evaluation</h1>
+      <p class="screen-subtitle">DAL-X evaluates the submission against the configured trigger rules.</p>
+      <p class="placeholder-note">Content built in T11</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-12')">Next &rarr;</button>
+      </nav>
+    </section>
+
+    <section id="screen-12" class="screen">
+      <div class="surface-badge">Surface 3 — Configured DAL-X Simulation</div>
+      <h1 class="screen-title">Screen 12: Human Review</h1>
+      <p class="screen-subtitle">An authorized reviewer approves, rejects, escalates, or requests revision.</p>
+      <p class="placeholder-note">Content built in T12</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-13')">Next &rarr;</button>
+      </nav>
+    </section>
+
+    <section id="screen-13" class="screen">
+      <div class="surface-badge">Surface 3 — Configured DAL-X Simulation</div>
+      <h1 class="screen-title">Screen 13: Authorization Available</h1>
+      <p class="screen-subtitle">The authorization_id is available for the enterprise to retrieve.</p>
+      <p class="placeholder-note">Content built in T13</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-14')">Next &rarr;</button>
+      </nav>
+    </section>
+
+    <section id="screen-14" class="screen">
+      <div class="surface-badge">Surface 3 — Configured DAL-X Simulation</div>
+      <h1 class="screen-title">Screen 14: Downstream Gate Tests</h1>
+      <p class="screen-subtitle">Six enforcement scenarios tested against the DAL-X gate.</p>
+      <p class="placeholder-note">Content built in T14</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-15')">Next &rarr;</button>
+      </nav>
+    </section>
+
+    <section id="screen-15" class="screen">
+      <div class="surface-badge">Surface 3 — Configured DAL-X Simulation</div>
+      <h1 class="screen-title">Screen 15: Configured Simulation Result</h1>
+      <p class="screen-subtitle">Summary of the complete configured simulation.</p>
+      <p class="placeholder-note">Content built in T15</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-16')">Proceed to Technical Review &rarr;</button>
+      </nav>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SURFACE 4 — Technical Review
+         Screens 16–18 · Built in T16, T17, T18
+    ════════════════════════════════════════════════════════════════════ -->
+
+    <section id="screen-16" class="screen">
+      <div class="surface-badge">Surface 4 — Technical Review</div>
+      <h1 class="screen-title">Screen 16: Technical Questions</h1>
+      <p class="screen-subtitle">Ten questions covering the two required DAL-X integration points.</p>
+      <p class="placeholder-note">Content built in T16</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-17')">Next &rarr;</button>
+      </nav>
+    </section>
+
+    <section id="screen-17" class="screen">
+      <div class="surface-badge">Surface 4 — Technical Review</div>
+      <h1 class="screen-title">Screen 17: Reported Boundary Map</h1>
+      <p class="screen-subtitle">Integration path derived from reported technical answers.</p>
+      <p class="placeholder-note">Content built in T17</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-18')">Next &rarr;</button>
+      </nav>
+    </section>
+
+    <section id="screen-18" class="screen">
+      <div class="surface-badge">Surface 4 — Technical Review</div>
+      <h1 class="screen-title">Screen 18: Self-Reported Technical Result</h1>
+      <p class="screen-subtitle">Evaluation of structural and implementation integration requirements.</p>
+      <p class="placeholder-note">Content built in T18</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-19')">Submit to Jochanni Labs &rarr;</button>
+      </nav>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         JOCHANNI LABS REVIEW
+         Screens 19–21 · Built in T19, T20, T21
+    ════════════════════════════════════════════════════════════════════ -->
+
+    <section id="screen-19" class="screen">
+      <div class="surface-badge">Jochanni Labs Review</div>
+      <h1 class="screen-title">Screen 19: Review the Reported Integration</h1>
+      <p class="screen-subtitle">Jochanni Labs reviews the submitted integration path and technical answers.</p>
+      <p class="placeholder-note">Content built in T19</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-20')">Next &rarr;</button>
+      </nav>
+    </section>
+
+    <section id="screen-20" class="screen">
+      <div class="surface-badge">Jochanni Labs Review</div>
+      <h1 class="screen-title">Screen 20: Jochanni Labs Decision</h1>
+      <p class="screen-subtitle">Pilot candidacy decision based on the complete assessment.</p>
+      <p class="placeholder-note">Content built in T20</p>
+      <nav class="screen-nav">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+        <button class="btn btn--primary" onclick="showScreen('screen-21')">Next &rarr;</button>
+      </nav>
+    </section>
+
+    <section id="screen-21" class="screen">
+      <div class="surface-badge">Jochanni Labs Review</div>
+      <h1 class="screen-title">Screen 21: DAL-X Simulation Result</h1>
+      <p class="screen-subtitle">Complete simulation result with evidence labels and pilot decision.</p>
+      <p class="placeholder-note">Content built in T21</p>
+      <nav class="screen-nav screen-nav--start">
+        <button class="btn btn--ghost" onclick="goBack()">&larr; Back</button>
+      </nav>
+    </section>
+
+  </main><!-- /#app -->
+
+  <script src="js/app.js"></script>
+  <script src="js/components.js"></script>
+  <script src="js/screens/screen1.js"></script>
+  <script src="js/screens/screen2to5.js"></script>
+  <script src="js/screens/screen6.js"></script>
+  <script src="js/screens/screen7.js"></script>
+  <script src="js/screens/screen8.js"></script>
+  <script src="js/screens/screen9.js"></script>
+  <script src="js/screens/screen10.js"></script>
+  <script src="js/screens/screen11.js"></script>
+  <script src="js/screens/screen12.js"></script>
+  <script src="js/screens/screen13.js"></script>
+  <script src="js/screens/screen14.js"></script>
+  <script src="js/screens/screen15.js"></script>
+  <script src="js/screens/screen16.js"></script>
+  <script src="js/screens/screen17.js"></script>
+  <script src="js/screens/screen18.js"></script>
+  <script src="js/screens/screen19.js"></script>
+  <script src="js/screens/screen20.js"></script>
+  <script src="js/screens/screen21.js"></script>
+</body>
+</html>

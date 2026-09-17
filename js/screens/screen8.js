@@ -1,0 +1,184 @@
+/* ─── Screen 8: Business Result ─────────────────────────────────────────── */
+
+/*
+ * Evaluation order (spec-required):
+ *   1. DAL-X not required     — agent only recommends, or no downstream, or no consequence
+ *   2. Enforcement not established — missing_authority_response === 'may_continue'
+ *   3. More information required  — any required field is empty or 'not_sure' / 'unknown'
+ *   4. Potential DAL-X use case   — all four requirements confirmed
+ *
+ * The spec ordering places enforcement not established BEFORE more info
+ * required: a known blocking answer surfaces before incomplete answers.
+ */
+
+/* ── Outcome configurations ───────────────────────────────────────────── */
+
+const S8_OUTCOMES = {
+  potential_use_case: {
+    decision: {
+      state:             'Potential DAL-X use case',
+      reason:            'The reported agent can initiate a consequential execution that must stop when authority is missing.',
+      required_response: 'Identify the authority owner and downstream system owner.',
+      what_happens_next: 'Jochanni Labs configures the execution simulation.',
+      variant:           'accepted',
+      title:             'Business Result',
+    },
+    evidence:   'business',
+    showProceed: true,
+  },
+
+  enforcement_not_established: {
+    decision: {
+      state:             'DAL-X enforcement requirement not established',
+      reason:            'The enterprise currently allows execution to continue without authority.',
+      required_response: 'Decide whether missing authority must stop execution.',
+      what_happens_next: 'The assessment closes. The enterprise may request a new assessment if the requirement changes.',
+      variant:           'rejected',
+      title:             'Business Result',
+    },
+    evidence:    'business',
+    showProceed: false,
+  },
+
+  more_info_required: {
+    decision: {
+      state:             'More information required',
+      reason:            'The agent, execution, downstream system, consequence, or required response remains unknown.',
+      required_response: 'Confirm the missing information.',
+      what_happens_next: 'The assessment closes. The enterprise may request reassessment when the information is available.',
+      variant:           'pending',
+      title:             'Business Result',
+    },
+    evidence:    'business',
+    showProceed: false,
+  },
+
+  not_required: {
+    decision: {
+      state:             'DAL-X not required for this workflow',
+      reason:            'The agent does not initiate a consequential downstream execution.',
+      required_response: 'None.',
+      what_happens_next: 'No DAL-X pilot is proposed.',
+      variant:           'neutral',
+      title:             'Business Result',
+    },
+    evidence:    'business',
+    showProceed: false,
+  },
+};
+
+/* ── Evaluation logic ─────────────────────────────────────────────────── */
+
+function evaluateBusinessResult() {
+  const agentType    = getState('s2.agent_type')                 || '';
+  const execution    = getState('s2.proposed_execution')         || '';
+  const downstream   = getState('s2.downstream_system')          || '';
+  const consequences = getState('s2.consequences')               || [];
+  const authResponse = getState('s2.missing_authority_response') || '';
+
+  /* A value is "known" when it is non-empty and not the not-sure sentinel */
+  const isKnown = v => Boolean(v) && v !== 'not_sure';
+
+  /* Consequences are "known" when the array is non-empty and not only not_sure */
+  const hasKnownConsequence =
+    consequences.length > 0 && !consequences.every(v => v === 'not_sure');
+
+  /* ── 1. DAL-X not required ─────────────────────────────────────────── */
+  if (
+    execution   === 'recommendations_only' ||
+    downstream  === 'none'                 ||
+    consequences.includes('none')
+  ) {
+    return 'not_required';
+  }
+
+  /* ── 2. Enforcement requirement not established ─────────────────────── */
+  if (authResponse === 'may_continue') {
+    return 'enforcement_not_established';
+  }
+
+  /* ── 3. More information required ──────────────────────────────────── */
+  if (
+    !isKnown(agentType)                              ||
+    !isKnown(execution)                              ||
+    !isKnown(downstream)                             ||
+    !hasKnownConsequence                             ||
+    !authResponse || authResponse === 'unknown'
+  ) {
+    return 'more_info_required';
+  }
+
+  /* ── 4. Potential DAL-X use case ────────────────────────────────────── */
+  return 'potential_use_case';
+}
+
+/* ── Renderer ─────────────────────────────────────────────────────────── */
+
+function renderScreen8() {
+  const resultKey = evaluateBusinessResult();
+  setState('s2.business_result', resultKey);
+
+  const cfg    = S8_OUTCOMES[resultKey];
+  const screen = document.getElementById('screen-8');
+  screen.innerHTML = '';
+
+  /* Surface badge */
+  const badge = document.createElement('div');
+  badge.className = 'surface-badge';
+  badge.textContent = 'Surface 2 — Guided Business Assessment';
+  screen.appendChild(badge);
+
+  /* Title */
+  const title = document.createElement('h1');
+  title.className = 'screen-title';
+  title.textContent = 'Business Result';
+  screen.appendChild(title);
+
+  /* Decision state block */
+  screen.appendChild(createDecisionBlock(cfg.decision));
+
+  /* Evidence label */
+  const evidenceLine = document.createElement('p');
+  evidenceLine.style.cssText =
+    'margin-top:var(--space-5);font-size:var(--text-sm);'
+    + 'color:var(--color-text-secondary);';
+  evidenceLine.appendChild(document.createTextNode('Evidence: '));
+  evidenceLine.appendChild(createEvidenceLabel(cfg.evidence));
+  screen.appendChild(evidenceLine);
+
+  /* Proceed callout — potential use case only */
+  if (cfg.showProceed) {
+    const proceedNote = document.createElement('div');
+    proceedNote.className = 'callout callout--info';
+    proceedNote.style.marginTop = 'var(--space-6)';
+    proceedNote.textContent =
+      'Next step: Jochanni Labs will configure the execution simulation '
+      + 'using the enterprise policy and submission fields.';
+    screen.appendChild(proceedNote);
+  }
+
+  /* Nav */
+  const nav = document.createElement('nav');
+  nav.className = cfg.showProceed ? 'screen-nav' : 'screen-nav screen-nav--start';
+
+  const backBtn = document.createElement('button');
+  backBtn.className = 'btn btn--ghost';
+  backBtn.textContent = '← Back';
+  backBtn.addEventListener('click', () => showScreen('screen-7'));
+  nav.appendChild(backBtn);
+
+  if (cfg.showProceed) {
+    const proceedBtn = document.createElement('button');
+    proceedBtn.className = 'btn btn--primary';
+    proceedBtn.textContent = 'Proceed to Simulation →';
+    proceedBtn.addEventListener('click', () => {
+      if (typeof renderScreen9 === 'function') renderScreen9();
+      showScreen('screen-9');
+    });
+    nav.appendChild(proceedBtn);
+  }
+
+  screen.appendChild(nav);
+}
+
+document.addEventListener('DOMContentLoaded', renderScreen8);
