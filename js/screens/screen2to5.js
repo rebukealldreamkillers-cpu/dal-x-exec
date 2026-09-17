@@ -20,7 +20,7 @@ function buildConfigs(ex) {
       title: 'Missing Authorization',
       setup:
         `The ${ag} attempts to execute ${a} on ${t}. `
-        + `The downstream system calls the DAL-X enforcement endpoint — `
+        + `The downstream system calls the DAL-X enforcement endpoint, `
         + `but no authorization_id was obtained first.`,
       decision: {
         state:             'Rejected',
@@ -32,7 +32,7 @@ function buildConfigs(ex) {
       withoutDalX:
         `Without this gate, ${c}. `
         + `This would have proceeded with no record that authorization was ever requested, `
-        + `reviewed, or granted — and no way to stop it.`,
+        + `reviewed, or granted. There was no way to stop it.`,
       separationTable: null,
       prev:         'screen-1',
       next:         'screen-3',
@@ -43,7 +43,7 @@ function buildConfigs(ex) {
       title: 'Wrong Action',
       setup:
         `Authorization was issued for ${a}. `
-        + `The agent now presents that authorization while attempting ${wa} — `
+        + `The agent now presents that authorization while attempting ${wa}: `
         + `a different action on the same target.`,
       decision: {
         state:             'Rejected',
@@ -54,7 +54,7 @@ function buildConfigs(ex) {
       },
       withoutDalX:
         `Without action matching, an authorization for ${a} could be reused to execute `
-        + `${wa} instead. The ${au} approved one specific action — `
+        + `${wa} instead. The ${au} approved one specific action, `
         + `not every action the agent might attempt on ${t}.`,
       separationTable: null,
       prev: 'screen-2',
@@ -100,7 +100,7 @@ function buildConfigs(ex) {
       },
       withoutDalX:
         `Without consumption tracking, the same authorization could trigger `
-        + `additional ${a} executions on ${t} — `
+        + `additional ${a} executions on ${t}, `
         + `each one beyond what the ${au} ever intended to approve.`,
       separationTable: null,
       prev: 'screen-4',
@@ -151,7 +151,7 @@ function renderGateScreen(screenId) {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 1 — Public Demonstration';
+  badge.textContent = 'Surface 1 · Public Demonstration';
   screen.appendChild(badge);
 
   /* Scenario context strip — always visible */

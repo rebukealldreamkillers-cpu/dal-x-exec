@@ -8,12 +8,6 @@ function renderScreen0() {
   const hero = document.createElement('div');
   hero.className = 'hero-panel';
 
-  const heroImg = document.createElement('img');
-  heroImg.src = 'images/dal-hero.png';
-  heroImg.alt = 'DAL-X: Consequential AI actions. Authority before execution.';
-  heroImg.className = 'hero-panel__image';
-  hero.appendChild(heroImg);
-
   const heroBody = document.createElement('div');
   heroBody.className = 'hero-panel__body';
 
@@ -21,10 +15,8 @@ function renderScreen0() {
   logoWrap.className = 'hero-logo';
   logoWrap.innerHTML = `
     <img src="images/dal-logo.jpg" alt="DAL-X logo" class="hero-logo__img">
-    <div>
-      <div class="hero-logo__text">DAL<span class="hero-logo__x">-X</span></div>
-      <div class="hero-byline">by Jochanni Labs &nbsp;·&nbsp; Decision Authority Layer — Execute</div>
-    </div>
+    <div class="hero-logo__text">DAL<span class="hero-logo__x">-X</span></div>
+    <div class="hero-byline">by Jochanni Labs &nbsp;·&nbsp; Decision Authority Layer · Execute</div>
   `;
   heroBody.appendChild(logoWrap);
 
@@ -36,9 +28,9 @@ function renderScreen0() {
   const sub = document.createElement('p');
   sub.className = 'hero-subhead';
   sub.textContent =
-    'Most enterprises have no mandatory checkpoint between what an AI agent '
-    + 'decides to do and what the downstream system actually executes. '
-    + 'DAL-X is that checkpoint.';
+    'Most enterprises have no required approval between what an AI agent '
+    + 'proposes and what the downstream system executes. '
+    + 'DAL-X enforces that approval.';
   heroBody.appendChild(sub);
 
   const ctaBtn = document.createElement('button');
@@ -55,7 +47,7 @@ function renderScreen0() {
   hero.appendChild(heroBody);
   screen.appendChild(hero);
 
-  /* ── The problem — incident narrative ─────────────────────────────────── */
+  /* ── The problem ─────────────────────────────────────────────────────── */
   appendSectionLabel(screen, 'The problem', 'var(--space-8)');
 
   const problemHeadline = document.createElement('h2');
@@ -63,7 +55,7 @@ function renderScreen0() {
     'font-size:var(--text-xl);font-weight:700;color:var(--color-text);'
     + 'margin-bottom:var(--space-2);line-height:1.3;';
   problemHeadline.textContent =
-    'When an AI agent takes a consequential action, who stopped it from acting without approval?';
+    'When an AI agent takes a high-stakes action, what stopped it from acting without approval?';
   screen.appendChild(problemHeadline);
 
   const problemSub = document.createElement('p');
@@ -71,24 +63,24 @@ function renderScreen0() {
     'font-size:var(--text-sm);color:var(--color-text-secondary);'
     + 'margin-bottom:0;line-height:1.65;';
   problemSub.textContent =
-    'These incidents do not require an agent to malfunction, hallucinate, or be compromised. '
-    + 'They happen when an agent operates correctly — inside an enterprise that has no mandatory '
-    + 'authorization gate before consequential execution.';
+    'None of these incidents required an agent to malfunction, hallucinate, or be compromised. '
+    + 'Each agent operated exactly as designed. '
+    + 'The enterprise had no required approval step before the downstream system executed.';
   screen.appendChild(problemSub);
 
   const incidents = [
     {
-      tag:      'Authorization failure',
+      tag:      'Execution without approval',
       headline: 'Treasury agent commits $2.3M in wire transfers. Finance learns hours after settlement.',
-      detail:   'The agent executed vendor payments autonomously. No approval was requested, no reviewer was notified, and no one could intervene before funds were committed.',
+      detail:   'The agent executed vendor payments on its own. No approval was requested, no reviewer was notified, and no one could intervene before funds were committed.',
     },
     {
-      tag:      'Authorization failure',
+      tag:      'Execution without approval',
       headline: 'Infrastructure agent modifies the live API gateway. Error rate reaches 40%.',
       detail:   'A deployment agent applied a configuration change outside the approved release window. The change was not reviewed. It was not in scope. It executed anyway.',
     },
     {
-      tag:      'Authorization failure',
+      tag:      'Execution without approval',
       headline: 'Customer agent sends campaign to 1.4M contacts. Wrong segment. Cannot be recalled.',
       detail:   'An outreach agent triggered a bulk email to the full customer database instead of the intended trial cohort. Delivery was already underway before anyone was alerted.',
     },
@@ -121,17 +113,16 @@ function renderScreen0() {
 
   screen.appendChild(incidentGrid);
 
-  /* ── The insight — key reframe ─────────────────────────────────────────── */
+  /* ── The insight ─────────────────────────────────────────────────────── */
   const insight = document.createElement('div');
   insight.className = 'insight-panel';
   insight.innerHTML = `
     <div class="insight-panel__quote">
-      <strong>These weren't AI failures. The agents weren't misaligned.</strong>
-      Each agent executed exactly what it was configured to do.<br><br>
-      The enterprise had <em>no mandatory gate</em> between the agent's decision
-      and the downstream system.<br>
-      No authorization was required. No one could stop it.<br>
-      By the time anyone noticed — execution had already happened.
+      <strong>These weren't AI failures. The agents weren't broken.</strong>
+      Each agent did exactly what it was configured to do.<br><br>
+      The enterprise had <em>no required approval</em> before execution.<br>
+      No one could stop it. No record was required.<br>
+      By the time anyone noticed, execution had already happened.
     </div>
   `;
   screen.appendChild(insight);
@@ -153,7 +144,7 @@ function renderScreen0() {
     {
       num:   '3',
       label: 'Enforce',
-      desc:  'The downstream system calls the DAL-X enforcement endpoint before executing. No valid authorization means no execution — regardless of how the request arrived, who sent it, or what it claimed.',
+      desc:  'The downstream system calls the DAL-X enforcement endpoint before executing. No valid authorization means the execution is blocked, regardless of how the request arrived, who sent it, or what it claimed.',
     },
   ];
 
@@ -187,16 +178,26 @@ function renderScreen0() {
 
   screen.appendChild(howItWorks);
 
-  /* ── Demo preview ─────────────────────────────────────────────────────── */
-  appendSectionLabel(screen, 'What the simulation demonstrates');
+  /* Solution diagram */
+  const diagram = document.createElement('img');
+  diagram.src = 'images/dal-hero.png';
+  diagram.alt = 'DAL-X: Authority before execution.';
+  diagram.style.cssText =
+    'width:100%;display:block;border-radius:12px;margin-top:var(--space-6);';
+  screen.appendChild(diagram);
+
+  /* ── What you are about to see ───────────────────────────────────────── */
+  appendSectionLabel(screen, 'What you are about to see');
 
   const demoIntro = document.createElement('p');
   demoIntro.style.cssText =
     'font-size:var(--text-sm);color:var(--color-text-secondary);'
     + 'margin-bottom:var(--space-4);line-height:1.65;';
   demoIntro.textContent =
-    'The public demonstration runs four gate scenarios for a single consequential execution. '
-    + 'Each scenario shows a different way the gate responds — and what happens to the downstream system.';
+    'You will pick a real-world scenario on the next screen. '
+    + 'The simulation then walks you through four situations at the gate, one after another. '
+    + 'Each situation shows a specific way the gate responds to that scenario '
+    + 'and what happens to the downstream system as a result.';
   screen.appendChild(demoIntro);
 
   const behaviors = [
@@ -204,7 +205,7 @@ function renderScreen0() {
       state: 'rejected',
       icon:  '✕',
       label: 'No authorization presented',
-      body:  'No authorization_id exists. The gate rejects the request and the downstream system is not called.',
+      body:  'No authorization exists. The gate rejects the request. The downstream system is not called.',
     },
     {
       state: 'rejected',
@@ -259,9 +260,10 @@ function renderScreen0() {
   scope.className = 'callout callout--info';
   scope.style.marginTop = 'var(--space-2)';
   scope.textContent =
-    'DAL-X controls execution, not model intent. It does not determine why an agent proposed '
-    + 'an action — only whether the enterprise authorized that specific execution before the '
-    + 'downstream system proceeded.';
+    'DAL-X controls execution, not model intent. '
+    + 'It does not determine why an agent proposed an action. '
+    + 'It only checks whether the enterprise authorized that specific execution '
+    + 'before the downstream system proceeded.';
   screen.appendChild(scope);
 
   /* CTA into demo */
@@ -278,8 +280,8 @@ function renderScreen0() {
   demoDesc.style.cssText =
     'font-size:var(--text-sm);color:var(--color-text-secondary);margin-bottom:var(--space-5);';
   demoDesc.textContent =
-    'Choose a consequential execution scenario and walk through each gate response. '
-    + 'After the demonstration, you can request a guided assessment with Jochanni Labs.';
+    'Choose a real-world scenario and walk through each gate response. '
+    + 'After the simulation, you can request a guided assessment with Jochanni Labs.';
 
   const demoBtn = document.createElement('button');
   demoBtn.className = 'btn btn--primary btn--lg';
