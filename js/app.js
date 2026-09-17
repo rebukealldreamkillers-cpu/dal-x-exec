@@ -331,5 +331,5 @@ function resetAll() {
 /* ─── Init ───────────────────────────────────────────────────────────────── */
 
 document.addEventListener('DOMContentLoaded', () => {
-  showScreen('screen-1', false);
+  showScreen('screen-0', false);
 });

@@ -8,6 +8,7 @@
 const EXAMPLES = {
   infrastructure: {
     label:              'Production infrastructure change',
+    icon:               '⚙',
     agent:              'Infrastructure deployment agent',
     action:             'infrastructure_change',
     target:             'cloud_infrastructure_api',
@@ -17,6 +18,7 @@ const EXAMPLES = {
   },
   bulk_data_export: {
     label:              'Bulk data export',
+    icon:               '⬆',
     agent:              'Data pipeline agent',
     action:             'data_export',
     target:             'data_warehouse_api',
@@ -26,6 +28,7 @@ const EXAMPLES = {
   },
   access_change: {
     label:              'Privileged access change',
+    icon:               '🔑',
     agent:              'Identity management agent',
     action:             'access_change',
     target:             'identity_platform_api',
@@ -35,6 +38,7 @@ const EXAMPLES = {
   },
   code_deployment: {
     label:              'Code deployment',
+    icon:               '▶',
     agent:              'CI/CD agent',
     action:             'code_deployment',
     target:             'deployment_pipeline_api',
@@ -44,6 +48,7 @@ const EXAMPLES = {
   },
   customer_communication: {
     label:              'Customer communication',
+    icon:               '✉',
     agent:              'Customer outreach agent',
     action:             'send_communication',
     target:             'communication_platform_api',
@@ -53,6 +58,7 @@ const EXAMPLES = {
   },
   financial_transaction: {
     label:              'Financial transaction',
+    icon:               '$',
     agent:              'Treasury agent',
     action:             'commit_funds',
     target:             'payment_system_api',
@@ -104,7 +110,7 @@ function renderScreen1() {
     btn.className = 'example-card';
     btn.dataset.exampleKey = key;
     btn.setAttribute('aria-pressed', 'false');
-    btn.textContent = ex.label;
+    btn.innerHTML = `<span class="example-card__icon">${ex.icon}</span><span>${ex.label}</span>`;
     btn.addEventListener('click', () => selectExample(key));
     grid.appendChild(btn);
   });

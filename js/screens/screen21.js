@@ -591,6 +591,7 @@ function renderScreen21() {
   nav.appendChild(backBtn);
 
   screen.appendChild(nav);
+  screen.appendChild(createBrandFooter());
 }
 
 document.addEventListener('DOMContentLoaded', renderScreen21);

@@ -113,6 +113,7 @@ function renderScreen6() {
   ctaGroup.appendChild(replayBtn);
 
   screen.appendChild(ctaGroup);
+  screen.appendChild(createBrandFooter());
 }
 
 document.addEventListener('DOMContentLoaded', renderScreen6);
