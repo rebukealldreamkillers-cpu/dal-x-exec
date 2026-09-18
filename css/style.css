@@ -896,6 +896,16 @@ textarea.form-control {
   color: var(--color-accent);
 }
 
+.verdict-banner--critical {
+  background: #1c0a00;
+  border: 2px solid #f97316;
+  color: #fdba74;
+}
+
+.verdict-banner--critical .verdict-banner__verdict {
+  color: #f97316;
+}
+
 /* ─── Brand footer (result screens) ─────────────────────────────────────── */
 .brand-footer {
   display: flex;

@@ -95,9 +95,16 @@ const S21_REMOVED_ITEMS = [
 /* ── Display label maps ───────────────────────────────────────────────────── */
 
 const S21_BUSINESS_RESULT_LABELS = {
-  potential_use_case:          'Potential DAL-X use case',
-  enforcement_not_established: 'DAL-X enforcement requirement not established',
+  critical_gap:                'Critical enforcement gap',
+  gap_identified:              'Enforcement gap identified',
+  gap_low_priority:            'Gap identified, lower priority',
+  high_risk_no_requirement:    'High-stakes workflow with no enforcement requirement',
+  enforcement_not_established: 'No enforcement requirement for this workflow',
+  urgent_investigation:        'Urgent: high-risk workflow with incomplete answers',
   more_info_required:          'More information required',
+  not_applicable:              'No enforcement gap applies',
+  /* legacy keys */
+  potential_use_case:          'Potential DAL-X use case',
   not_required:                'DAL-X not required for this workflow',
 };
 
@@ -413,6 +420,14 @@ function renderScreen21() {
     'Business fit',
     S21_BUSINESS_RESULT_LABELS[getState('s2.business_result')] || 'N/A',
     'business'));
+
+  const hr3b = document.createElement('hr'); hr3b.className = 'divider'; card.appendChild(hr3b);
+  const riskBand  = getState('s2.risk_band')  || '';
+  const riskScore = getState('s2.risk_score');
+  const riskLabel = riskScore != null
+    ? `${(S8_RISK_BAND_LABELS || {})[riskBand] || riskBand} (${riskScore})`
+    : 'N/A';
+  card.appendChild(createLabelledField('Risk score', riskLabel, 'business'));
 
   /* Fields 5–8: demonstrated evidence */
   const hr4 = document.createElement('hr'); hr4.className = 'divider'; card.appendChild(hr4);
