@@ -906,6 +906,173 @@ textarea.form-control {
   color: #f97316;
 }
 
+/* ─── Risk profile rows ──────────────────────────────────────────────────── */
+
+.risk-profile-row {
+  display: grid;
+  grid-template-columns: 140px 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.risk-profile-row__label {
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.risk-profile-row__value {
+  color: var(--color-text);
+}
+
+.risk-profile-row__score {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  text-align: right;
+  font-size: var(--text-xs);
+}
+
+.risk-profile-row--total {
+  border-top: 2px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.risk-profile-row--total .risk-profile-row__label,
+.risk-profile-row--total .risk-profile-row__value {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.risk-profile-row--total .risk-profile-row__score {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* ─── Mobile responsive ──────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+
+  /* Screen padding */
+  .screen {
+    padding: var(--space-6) var(--space-4) var(--space-8);
+  }
+
+  /* Hero panel */
+  .hero-panel__body {
+    padding: var(--space-6) var(--space-5) var(--space-8);
+  }
+  .hero-headline {
+    font-size: 1.35rem;
+  }
+  .hero-subhead {
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-6);
+  }
+
+  /* Insight panel */
+  .insight-panel {
+    padding: var(--space-6) var(--space-5);
+  }
+  .insight-panel__quote {
+    font-size: var(--text-sm);
+  }
+  .insight-panel__quote strong {
+    font-size: var(--text-base);
+  }
+
+  /* Grids collapse to single column */
+  .incident-grid {
+    grid-template-columns: 1fr;
+  }
+  .behavior-grid {
+    grid-template-columns: 1fr;
+  }
+  .example-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Decision block: stack label above value */
+  .decision-block__row {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+
+  /* Field rows: stack key above value */
+  .field-row {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+  .field-row__key {
+    margin-bottom: 2px;
+  }
+
+  /* Verdict banner: reduce large text */
+  .verdict-banner {
+    padding: var(--space-5) var(--space-4);
+  }
+  .verdict-banner__verdict {
+    font-size: 2rem;
+  }
+  .verdict-banner__label {
+    font-size: var(--text-base);
+  }
+
+  /* Data tables: horizontal scroll instead of overflow */
+  .data-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .data-table th,
+  .data-table td {
+    padding: var(--space-2) var(--space-3);
+    white-space: nowrap;
+  }
+
+  /* Screen nav: wrap buttons and stretch to fill */
+  .screen-nav {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  .screen-nav > .btn {
+    flex: 1 1 120px;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+  }
+
+  /* Risk profile rows */
+  .risk-profile-row {
+    grid-template-columns: 1fr auto !important;
+    grid-template-rows: auto auto;
+    gap: 2px var(--space-3) !important;
+  }
+  .risk-profile-row__label {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .risk-profile-row__value {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .risk-profile-row__score {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    align-self: center;
+  }
+
+  /* Card padding slightly tighter */
+  .card {
+    padding: var(--space-4);
+  }
+
+  /* Screen title smaller */
+  .screen-title {
+    font-size: var(--text-xl);
+  }
+}
+
 /* ─── Brand footer (result screens) ─────────────────────────────────────── */
 .brand-footer {
   display: flex;

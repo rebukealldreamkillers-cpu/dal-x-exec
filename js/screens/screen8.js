@@ -393,24 +393,19 @@ function buildRiskProfilePanel() {
 
   rows.forEach((row, i) => {
     const rowEl = document.createElement('div');
-    rowEl.style.cssText =
-      'display:grid;grid-template-columns:140px 1fr auto;'
-      + 'align-items:center;gap:var(--space-3);'
-      + 'padding:var(--space-3) var(--space-4);font-size:var(--text-sm);'
-      + (i < rows.length - 1 ? 'border-bottom:1px solid var(--color-border);' : '');
+    rowEl.className = 'risk-profile-row';
+    if (i < rows.length - 1) rowEl.style.borderBottom = '1px solid var(--color-border)';
 
     const keyEl = document.createElement('div');
-    keyEl.style.cssText = 'color:var(--color-text-secondary);white-space:nowrap;';
+    keyEl.className = 'risk-profile-row__label';
     keyEl.textContent = row.label;
 
     const valEl = document.createElement('div');
-    valEl.style.color = 'var(--color-text)';
+    valEl.className = 'risk-profile-row__value';
     valEl.textContent = row.value;
 
     const scoreEl = document.createElement('div');
-    scoreEl.style.cssText =
-      'font-variant-numeric:tabular-nums;color:var(--color-text-secondary);'
-      + 'white-space:nowrap;text-align:right;font-size:var(--text-xs);';
+    scoreEl.className = 'risk-profile-row__score';
     scoreEl.textContent = `${row.score} / ${row.max}`;
 
     rowEl.appendChild(keyEl);
@@ -421,25 +416,18 @@ function buildRiskProfilePanel() {
 
   /* Total row */
   const totalRow = document.createElement('div');
-  totalRow.style.cssText =
-    'display:grid;grid-template-columns:140px 1fr auto;'
-    + 'align-items:center;gap:var(--space-3);'
-    + 'padding:var(--space-3) var(--space-4);font-size:var(--text-sm);'
-    + 'border-top:2px solid var(--color-border);'
-    + 'background:rgba(255,255,255,0.04);';
+  totalRow.className = 'risk-profile-row risk-profile-row--total';
 
   const totalKey = document.createElement('div');
-  totalKey.style.cssText = 'font-weight:600;color:var(--color-text);white-space:nowrap;';
+  totalKey.className = 'risk-profile-row__label';
   totalKey.textContent = 'Total risk score';
 
   const bandEl = document.createElement('div');
-  bandEl.style.cssText = 'font-weight:600;color:var(--color-text);';
+  bandEl.className = 'risk-profile-row__value';
   bandEl.textContent = S8_RISK_BAND_LABELS[riskBand] || riskBand;
 
   const totalScore = document.createElement('div');
-  totalScore.style.cssText =
-    'font-weight:700;font-variant-numeric:tabular-nums;'
-    + 'white-space:nowrap;text-align:right;color:var(--color-text);';
+  totalScore.className = 'risk-profile-row__score';
   totalScore.textContent = String(riskScore);
 
   totalRow.appendChild(totalKey);
