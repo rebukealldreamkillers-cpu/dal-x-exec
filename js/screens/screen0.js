@@ -33,11 +33,22 @@ function renderScreen0() {
     + 'DAL-X enforces that approval.';
   heroBody.appendChild(sub);
 
+  const heroCtas = document.createElement('div');
+  heroCtas.className = 'hero-cta-group';
+
   const ctaBtn = document.createElement('button');
   ctaBtn.className = 'btn btn--accent btn--lg';
   ctaBtn.textContent = 'See the Demo →';
   ctaBtn.addEventListener('click', () => showScreen('screen-1'));
-  heroBody.appendChild(ctaBtn);
+  heroCtas.appendChild(ctaBtn);
+
+  const skipBtn = document.createElement('button');
+  skipBtn.className = 'btn btn--hero-ghost btn--lg';
+  skipBtn.textContent = 'Start Assessment →';
+  skipBtn.addEventListener('click', () => showScreen('screen-7'));
+  heroCtas.appendChild(skipBtn);
+
+  heroBody.appendChild(heroCtas);
 
   const disclaimer = document.createElement('p');
   disclaimer.className = 'hero-disclaimer';

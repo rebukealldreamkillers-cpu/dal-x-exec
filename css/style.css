@@ -715,6 +715,18 @@ textarea.form-control {
   outline-color: var(--color-primary-light);
 }
 
+.btn--hero-ghost {
+  background: transparent;
+  color: rgba(255,255,255,0.85);
+  border-color: rgba(255,255,255,0.3);
+}
+
+.btn--hero-ghost:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.55);
+  color: #fff;
+}
+
 /* ─── Intro hero panel (Screen 0) ────────────────────────────────────────── */
 .hero-panel {
   background: var(--color-dark);
@@ -809,6 +821,14 @@ textarea.form-control {
   max-width: 500px;
   margin-left: auto;
   margin-right: auto;
+}
+
+.hero-cta-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+  margin-bottom: var(--space-2);
 }
 
 .hero-disclaimer {
