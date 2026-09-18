@@ -197,6 +197,86 @@ function renderScreen0() {
     'width:100%;display:block;border-radius:12px;margin-top:var(--space-6);';
   screen.appendChild(diagram);
 
+  /* ── How this session is structured ─────────────────────────────────── */
+  appendSectionLabel(screen, 'How this session is structured');
+
+  const sessionSteps = [
+    {
+      num:   '1',
+      name:  'The demonstration',
+      desc:  'You pick a real-world scenario. The gate responds to four situations: missing authorization, changed action, valid authorization, reused authorization. You see exactly how DAL-X behaves before committing any further time.',
+      why:   'The concept becomes concrete. You are not taking anyone\'s word for it.',
+    },
+    {
+      num:   '2',
+      name:  'The assessment',
+      desc:  'You describe your specific AI workflow: what the agent does, what system it acts on, the consequences of unauthorized execution, and whether an enforcement gate currently exists. Five factors are scored against a risk model to determine whether a gap is present and how serious it is.',
+      why:   'The assessment identifies whether DAL-X applies to your situation specifically — not AI agents in general.',
+    },
+    {
+      num:   '3',
+      name:  'The configured simulation',
+      desc:  'You define your enterprise policy: what the agent may do autonomously, what requires review, and what must be blocked. The simulation runs your policy through the gate so you see DAL-X working for your scenario.',
+      why:   'This is where the engagement becomes specific to you. Jochanni Labs translates your policy into working trigger logic.',
+    },
+  ];
+
+  const sessionGrid = document.createElement('div');
+  sessionGrid.style.cssText =
+    'display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));'
+    + 'gap:var(--space-4);margin-top:var(--space-4);margin-bottom:var(--space-2);';
+
+  sessionSteps.forEach(step => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.display = 'flex';
+    card.style.flexDirection = 'column';
+    card.style.gap = 'var(--space-3)';
+
+    const numEl = document.createElement('div');
+    numEl.style.cssText =
+      'font-size:2rem;font-weight:900;line-height:1;'
+      + 'color:var(--color-accent);letter-spacing:-0.02em;';
+    numEl.textContent = step.num;
+
+    const nameEl = document.createElement('div');
+    nameEl.style.cssText =
+      'font-size:var(--text-base);font-weight:700;color:var(--color-text);';
+    nameEl.textContent = step.name;
+
+    const descEl = document.createElement('div');
+    descEl.style.cssText =
+      'font-size:var(--text-sm);color:var(--color-text-secondary);line-height:1.6;';
+    descEl.textContent = step.desc;
+
+    const whyWrap = document.createElement('div');
+    whyWrap.style.cssText =
+      'margin-top:auto;padding-top:var(--space-3);'
+      + 'border-top:1px solid var(--color-border);';
+
+    const whyLabel = document.createElement('span');
+    whyLabel.style.cssText =
+      'font-size:var(--text-xs);font-weight:700;text-transform:uppercase;'
+      + 'letter-spacing:0.06em;color:var(--color-text-muted);margin-right:var(--space-2);';
+    whyLabel.textContent = 'Why it matters:';
+
+    const whyText = document.createElement('span');
+    whyText.style.cssText =
+      'font-size:var(--text-xs);color:var(--color-text-muted);line-height:1.5;';
+    whyText.textContent = step.why;
+
+    whyWrap.appendChild(whyLabel);
+    whyWrap.appendChild(whyText);
+
+    card.appendChild(numEl);
+    card.appendChild(nameEl);
+    card.appendChild(descEl);
+    card.appendChild(whyWrap);
+    sessionGrid.appendChild(card);
+  });
+
+  screen.appendChild(sessionGrid);
+
   /* ── What you are about to see ───────────────────────────────────────── */
   appendSectionLabel(screen, 'What you are about to see');
 
