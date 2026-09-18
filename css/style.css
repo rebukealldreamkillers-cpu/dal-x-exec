@@ -989,7 +989,7 @@ textarea.form-control {
   color: var(--color-text-secondary);
 }
 
-/* Step state: skip (bypassed — shown muted with dashed border) */
+/* Step state: skip (bypassed, shown muted with dashed border) */
 .gate-flow__step--skip .gate-flow__marker {
   border-style: dashed;
   opacity: 0.38;
@@ -1030,7 +1030,7 @@ textarea.form-control {
   opacity: 0.35;
 }
 
-/* Step state: block (final — execution stopped) */
+/* Step state: block (final, execution stopped) */
 .gate-flow__step--block .gate-flow__marker {
   border-color: #f87171;
   background: rgba(248, 113, 113, 0.1);
@@ -1040,7 +1040,7 @@ textarea.form-control {
   color: var(--color-text-secondary);
 }
 
-/* Step state: execute (final — execution permitted) */
+/* Step state: execute (final, execution permitted) */
 .gate-flow__step--execute .gate-flow__marker {
   border-color: #4ade80;
   background: rgba(74, 222, 128, 0.1);
@@ -1428,7 +1428,7 @@ textarea.form-control {
   text-transform: uppercase;
 }
 
-/* ─── Incident cards (Screen 0 — pain narrative) ────────────────────────── */
+/* ─── Incident cards (Screen 0 - pain narrative) ────────────────────────── */
 .incident-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1468,7 +1468,7 @@ textarea.form-control {
   line-height: 1.6;
 }
 
-/* ─── Insight panel (Screen 0 — the key reframe) ─────────────────────────── */
+/* ─── Insight panel (Screen 0 - the key reframe) ─────────────────────────── */
 .insight-panel {
   background: var(--color-dark);
   border-radius: var(--radius-lg);

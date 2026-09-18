@@ -5,7 +5,7 @@
  * stores results in s3.gate_tests[]. Results are generated once on first
  * visit; subsequent renders reuse the stored array.
  *
- * Scenarios 1, 2, 3, 5, 6 are structurally always rejected — they each
+ * Scenarios 1, 2, 3, 5, 6 are structurally always rejected. They each
  * test a specific enforcement rule (missing auth, action mismatch, target
  * mismatch, already consumed, expired). Their reason text references the
  * actual authorized action and target from the submission where available.
@@ -13,7 +13,7 @@
  * Scenario 4 ("Valid active authorization_id") is dynamic: it reflects
  * whether an authorization was actually issued in this simulation path.
  * If the trigger blocked the submission or a reviewer denied it, scenario 4
- * shows Rejected with a reason derived from the actual simulation outcome —
+ * shows Rejected with a reason derived from the actual simulation outcome,
  * not a hardcoded Accepted regardless of what happened upstream.
  *
  * Each result record: { name, chipState, chipLabel, reason,

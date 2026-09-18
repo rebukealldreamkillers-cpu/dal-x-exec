@@ -1,4 +1,4 @@
-/* ─── webhook.js — completion ping to Google Sheets via Apps Script ──────── */
+/* ─── webhook.js - completion ping to Google Sheets via Apps Script ──────── */
 
 /*
  * fireCompletionWebhook()
@@ -35,6 +35,6 @@ function fireCompletionWebhook() {
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify(payload),
   }).catch(() => {
-    console.warn('DAL-X: completion webhook failed — check WEBHOOK_URL in config.js');
+    console.warn('DAL-X: completion webhook failed - check WEBHOOK_URL in config.js');
   });
 }

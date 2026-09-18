@@ -59,9 +59,9 @@ const S7_CONSEQUENCE_OPTIONS = [
 
 /* Three fixed options only, spec does not include Not sure or Enter my own */
 const S7_AUTHORITY_OPTIONS = [
-  { value: 'must_stop',    label: 'No — there is no gate. The agent\'s action reaches the downstream system directly.'              },
-  { value: 'may_continue', label: 'We don\'t require a gate — execution without explicit approval is acceptable for this workflow.' },
-  { value: 'unknown',      label: 'Unknown — we have no visibility into what happens between the agent and the downstream system.'  },
+  { value: 'must_stop',    label: 'No - there is no gate. The agent\'s action reaches the downstream system directly.'              },
+  { value: 'may_continue', label: 'We don\'t require a gate. Execution without explicit approval is acceptable for this workflow.' },
+  { value: 'unknown',      label: 'Unknown - we have no visibility into what happens between the agent and the downstream system.'  },
 ];
 
 function renderScreen7() {
@@ -85,7 +85,7 @@ function renderScreen7() {
   subtitle.className = 'screen-subtitle';
   subtitle.textContent =
     'Five questions that identify whether your AI workflow has an enforcement gap. '
-    + 'Answer them for your specific use case — the assessment scores your risk profile automatically.';
+    + 'Answer them for your specific use case. The assessment scores your risk profile automatically.';
   screen.appendChild(subtitle);
 
   /* Methodology notice */
@@ -94,7 +94,7 @@ function renderScreen7() {
   methodNote.style.marginBottom = 'var(--space-6)';
   methodNote.textContent =
     'Walk through these five questions for your specific AI workflow. '
-    + 'Your answers are self-reported — Jochanni Labs reviews and validates them with your team '
+    + 'Your answers are self-reported. Jochanni Labs reviews and validates them with your team '
     + 'as part of a paid engagement before any recommendation is finalized.';
   screen.appendChild(methodNote);
 

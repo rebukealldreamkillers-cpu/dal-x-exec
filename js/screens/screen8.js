@@ -133,7 +133,7 @@ const S8_OUTCOMES = {
     decision: {
       title:             'Business Result',
       state:             'No enforcement requirement for this workflow',
-      reason:            'The enterprise does not require a gate before execution. DAL-X enforces a gate — if no gate is required, there is nothing to enforce.',
+      reason:            'The enterprise does not require a gate before execution. DAL-X enforces a gate. If no gate is required, there is nothing to enforce.',
       required_response: 'None.',
       what_happens_next: 'The assessment closes.',
       variant:           'neutral',
@@ -146,7 +146,7 @@ const S8_OUTCOMES = {
     decision: {
       title:             'Business Result',
       state:             'Urgent: high-risk workflow with unresolved information gaps',
-      reason:            'The risk profile is high. The enforcement status of this workflow cannot be confirmed until the gaps listed below are resolved — either by completing unanswered questions or by investigating fields your organization currently does not know.',
+      reason:            'The risk profile is high. The enforcement status of this workflow cannot be confirmed until the gaps listed below are resolved, either by completing unanswered questions or by investigating fields your organization currently does not know.',
       required_response: 'Resolve each gap listed below. Unanswered questions can be completed here. Fields answered as Unknown require organizational investigation before returning.',
       what_happens_next: 'Return here after resolving each gap and re-evaluate.',
       variant:           'pending',
@@ -159,7 +159,7 @@ const S8_OUTCOMES = {
     decision: {
       title:             'Business Result',
       state:             'More information required',
-      reason:            'The assessment cannot determine whether an enforcement gap exists. One or more questions are unanswered, or were answered as Unknown — meaning your organization does not yet have this information.',
+      reason:            'The assessment cannot determine whether an enforcement gap exists. One or more questions are unanswered, or were answered as Unknown, meaning your organization does not yet have this information.',
       required_response: 'Resolve each gap listed below. Unanswered questions can be completed here. Fields answered as Unknown require your organization to investigate and establish the answer before returning.',
       what_happens_next: 'Return here after resolving each gap and re-evaluate.',
       variant:           'pending',
@@ -221,10 +221,10 @@ function evaluateBusinessResult() {
   /*
    * Two distinct problem types require different responses:
    *
-   *   unansweredFields — field was left blank or skipped entirely.
+   *   unansweredFields - field was left blank or skipped entirely.
    *     Response: go back and answer the question.
    *
-   *   unknownFields — field was answered, but the answer is "Not sure" /
+   *   unknownFields - field was answered, but the answer is "Not sure" /
    *     "Unknown." The user deliberately indicated their organization
    *     lacks this knowledge. Going back and re-selecting won't help.
    *     Response: investigate outside this tool, then return.
@@ -309,7 +309,7 @@ function buildBusinessVerdictBanner(resultKey) {
       variant: 'no',
       verdict: 'NOT NEEDED',
       label:   'No enforcement requirement for this workflow',
-      sub:     'The enterprise does not require a gate before execution. DAL-X enforces a gate — if none is required, there is nothing to enforce.',
+      sub:     'The enterprise does not require a gate before execution. DAL-X enforces a gate. If none is required, there is nothing to enforce.',
     },
     urgent_investigation: {
       variant: 'inconclusive',
@@ -583,7 +583,7 @@ function renderScreen8() {
   /* Decision state block */
   screen.appendChild(createDecisionBlock(cfg.decision));
 
-  /* Information gap panels — shown for incomplete outcomes only */
+  /* Information gap panels - shown for incomplete outcomes only */
   if (resultKey === 'urgent_investigation' || resultKey === 'more_info_required') {
     const unanswered = getState('s2.unanswered_fields') || [];
     const unknown    = getState('s2.unknown_fields')    || [];
@@ -629,7 +629,7 @@ function renderScreen8() {
     /*
      * Unknown: question was answered, but the answer is "Not sure" / "Unknown."
      * The user correctly reported what their organization knows.
-     * This is not a form error — it is an organizational knowledge gap.
+     * This is not a form error - it is an organizational knowledge gap.
      * Response: investigate outside this tool, then return.
      */
     if (unknown.length > 0) {
@@ -641,8 +641,8 @@ function renderScreen8() {
       heading.style.cssText =
         'font-weight:600;font-size:var(--text-sm);margin-bottom:var(--space-3);';
       heading.textContent = unknown.length === 1
-        ? '1 field was answered as Unknown — this requires organizational investigation:'
-        : `${unknown.length} fields were answered as Unknown — these require organizational investigation:`;
+        ? '1 field was answered as Unknown. This requires organizational investigation:'
+        : `${unknown.length} fields were answered as Unknown. These require organizational investigation:`;
       callout.appendChild(heading);
 
       const list = document.createElement('ul');
@@ -660,8 +660,8 @@ function renderScreen8() {
       hint.style.cssText =
         'font-size:var(--text-xs);color:var(--color-text-secondary);margin-top:var(--space-3);';
       hint.textContent =
-        'Selecting Unknown is correct when your organization does not yet have this information — '
-        + 'it is not a form error. To complete this assessment, involve the AI agent service owner, '
+        'Selecting Unknown is correct when your organization does not yet have this information. '
+        + 'It is not a form error. To complete this assessment, involve the AI agent service owner, '
         + 'the downstream system owner, or your security or IT team to establish the answer. '
         + 'Return here once each unknown is resolved.';
       callout.appendChild(hint);
@@ -724,7 +724,7 @@ function renderScreen8() {
   if (S8_GAP_OUTCOMES.has(resultKey) && !sessionState.lead) {
     document.getElementById('lead-capture-modal')?.remove();
     document.body.appendChild(buildLeadCaptureModal(resultKey, () => {
-      /* Modal dismissed — result is already rendered beneath it */
+      /* Modal dismissed - result is already rendered beneath it */
     }));
   }
 }

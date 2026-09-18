@@ -101,7 +101,7 @@ function renderScreen6() {
     + 'line-height:1.65;margin-bottom:var(--space-5);';
   assessNote.textContent =
     'The next section is the discovery assessment. '
-    + 'Walk through it for your specific workflow — the tool scores your risk profile automatically. '
+    + 'Walk through it for your specific workflow. The tool scores your risk profile automatically. '
     + 'Results are self-reported; Jochanni Labs reviews and validates them with you as part of a paid engagement.';
   ctaGroup.appendChild(assessNote);
 

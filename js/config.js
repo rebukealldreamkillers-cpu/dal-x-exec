@@ -1,13 +1,13 @@
-/* ─── config.js — runtime constants and third-party credentials ─────────── */
+/* ─── config.js - runtime constants and third-party credentials ─────────── */
 
-/* Calendly booking link — update if URL changes */
+/* Calendly booking link - update if URL changes */
 const JL_BOOKING_URL = 'https://calendly.com/kevin-jochannilabs';
 
 /* Fallback contact email shown if email send fails */
 const JL_CONTACT_EMAIL = 'kmoore1962@yahoo.com';
 
 /*
- * EmailJS credentials — create a free account at https://www.emailjs.com/
+ * EmailJS credentials - create a free account at https://www.emailjs.com/
  * 1. Create a service (Gmail, Outlook, etc.) → copy the Service ID
  * 2. Create an email template → copy the Template ID
  * 3. Copy your Public Key from Account → API Keys
@@ -22,7 +22,7 @@ const EMAILJS_SERVICE_ID  = '';   /* paste your EmailJS service ID here */
 const EMAILJS_TEMPLATE_ID = '';   /* paste your EmailJS template ID here */
 
 /*
- * Completion webhook — Google Apps Script Web App URL
+ * Completion webhook - Google Apps Script Web App URL
  * 1. Create a Google Sheet with columns:
  *    timestamp | name | email | company | business_result | risk_score |
  *    risk_band | technical_result | agent_type | proposed_execution |

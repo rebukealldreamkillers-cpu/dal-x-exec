@@ -405,7 +405,7 @@ function renderScreen21() {
   prelimNote.textContent =
     'These are preliminary findings based on self-reported answers. '
     + 'They have not been independently verified. '
-    + 'In a live engagement, Jochanni Labs reviews these findings with your team — '
+    + 'In a live engagement, Jochanni Labs reviews these findings with your team, '
     + 'validating the reported integration path, confirming the risk profile, '
     + 'and determining whether a pilot is appropriate before any recommendation is finalized.';
   screen.appendChild(prelimNote);
@@ -578,7 +578,7 @@ function renderScreen21() {
   ctaSection.style.marginTop = 'var(--space-8)';
 
   if (lead) {
-    /* Lead is captured — show full booking + email CTA */
+    /* Lead is captured - show full booking + email CTA */
     const ctaLabel = document.createElement('p');
     ctaLabel.className = 'section-label';
     ctaLabel.textContent = 'Ready to take this further?';
@@ -624,7 +624,7 @@ function renderScreen21() {
     ctaSection.appendChild(emailErr);
 
   } else {
-    /* No lead captured — soft prompt to start from the beginning */
+    /* No lead captured - soft prompt to start from the beginning */
     const softNote = document.createElement('div');
     softNote.className = 'callout callout--info';
     softNote.textContent =

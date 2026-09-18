@@ -1,8 +1,8 @@
-/* ─── email.js — send assessment results to the user via EmailJS ─────────── */
+/* ─── email.js - send assessment results to the user via EmailJS ─────────── */
 
 /* Human-readable labels for result keys */
 const EMAIL_BUSINESS_LABELS = {
-  not_applicable:              'Not applicable — DAL-X does not apply to this workflow',
+  not_applicable:              'Not applicable - DAL-X does not apply to this workflow',
   critical_gap:                'Critical enforcement gap',
   gap_identified:              'Enforcement gap identified',
   gap_low_priority:            'Gap identified, lower priority',
@@ -24,7 +24,7 @@ const EMAIL_TECHNICAL_LABELS = {
  * Called by the "Email me my results" button on Screen 21.
  * Uses EmailJS if configured; falls back to mailto: link.
  *
- * @param {HTMLButtonElement} btn — the button element (for loading state)
+ * @param {HTMLButtonElement} btn - the button element (for loading state)
  */
 function sendResultsByEmail(btn) {
   const lead = sessionState.lead;
@@ -53,7 +53,7 @@ function sendResultsByEmail(btn) {
       + `Technical result: ${technicalLabel}\n\n`
       + `Ready to go further? Schedule a conversation with Jochanni Labs:\n`
       + `${JL_BOOKING_URL}\n\n`
-      + `— Jochanni Labs`
+      + `- Jochanni Labs`
     );
     window.location.href = `mailto:${lead.email}?subject=${subject}&body=${body}`;
     btn.textContent = 'Opening email client…';
@@ -77,7 +77,7 @@ function sendResultsByEmail(btn) {
     booking_url:      JL_BOOKING_URL,
     assessment_date:  today,
   }).then(() => {
-    btn.textContent = 'Sent — check your inbox ✓';
+    btn.textContent = 'Sent - check your inbox ✓';
   }).catch(() => {
     btn.textContent = 'Send failed';
     btn.disabled = false;

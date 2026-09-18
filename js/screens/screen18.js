@@ -161,7 +161,7 @@ function buildTechnicalVerdictBanner(resultKey) {
       variant: 'yes',
       verdict: 'READY',
       label:   'The technical path supports DAL-X integration',
-      sub:     'Both required integration points — submission before execution, enforcement at the downstream boundary — are in place or can be added.',
+      sub:     'Both required integration points (submission before execution and enforcement at the downstream boundary) are in place or can be added.',
     },
     implementation_work: {
       variant: 'inconclusive',

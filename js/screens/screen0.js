@@ -1,4 +1,4 @@
-/* ─── Screen 0: Intro / Landing ──────────────────────────────────────────── */
+/* ─── Screen 0: Intro / Landing ─────────────────────────────────────────── */
 
 function renderScreen0() {
   const screen = document.getElementById('screen-0');
@@ -29,7 +29,7 @@ function renderScreen0() {
   sub.className = 'hero-subhead';
   sub.textContent =
     'Most enterprises have no required approval between what an AI workflow '
-    + 'proposes and what the downstream system executes — '
+    + 'proposes and what the downstream system executes, '
     + 'whether that workflow is a custom agent, an AI-powered product, or an automated pipeline. '
     + 'DAL-X enforces that approval.';
   heroBody.appendChild(sub);
@@ -211,7 +211,7 @@ function renderScreen0() {
     {
       num:  '2',
       name: 'The assessment',
-      desc: 'You describe a specific AI workflow — any product or automation where the AI takes an action in a downstream system rather than just making a recommendation. Five factors are scored to determine whether an enforcement gap is present and how serious it is.',
+      desc: 'You describe a specific AI workflow: any product or automation where the AI takes an action in a downstream system rather than just making a recommendation. Five factors are scored to determine whether an enforcement gap is present and how serious it is.',
       why:  'The assessment identifies whether DAL-X applies to your specific workflow, not AI in general. Any workflow where automation reaches a downstream system qualifies.',
     },
     {
@@ -295,8 +295,8 @@ function renderScreen0() {
   demoIntro.textContent =
     'You will pick a real-world scenario on the next screen. '
     + 'The simulation walks you through four situations at the gate and shows exactly how the gate responds to each one. '
-    + 'After the demonstration, the tool transitions into the discovery assessment — '
-    + 'the same structured questions Jochanni Labs works through with your team '
+    + 'After the demonstration, the tool transitions into the discovery assessment. '
+    + 'The same structured questions Jochanni Labs works through with your team '
     + 'to identify whether an enforcement gap exists in your specific environment.';
   screen.appendChild(demoIntro);
 
@@ -374,8 +374,8 @@ function renderScreen0() {
     'font-size:var(--text-sm);color:var(--color-text-secondary);'
     + 'margin-bottom:var(--space-4);line-height:1.65;';
   assessIntro.textContent =
-    'The discovery assessment evaluates any AI workflow — a custom-built agent, an AI-powered product, '
-    + 'or an automated pipeline — across five factors: '
+    'The discovery assessment evaluates any AI workflow: a custom-built agent, an AI-powered product, '
+    + 'or an automated pipeline, across five factors: '
     + 'the workflow type, the action it proposes, the downstream system it acts on, '
     + 'the consequences of unauthorized execution, and whether an enforcement gate currently exists. '
     + 'Each factor carries independent weight. The combination determines the risk profile and whether an enforcement gap is present.';
@@ -388,7 +388,7 @@ function renderScreen0() {
     'These answers are self-reported and unvalidated. '
     + 'In a live engagement, a Jochanni Labs consultant facilitates this session '
     + 'alongside your technical and business stakeholders. '
-    + 'Results shown here are preliminary findings — '
+    + 'Results shown here are preliminary findings. '
     + 'Jochanni Labs reviews them with you before any recommendation is finalized.';
   screen.appendChild(assessNote);
 
@@ -408,7 +408,7 @@ function renderScreen0() {
   demoDesc.textContent =
     'Choose a real-world scenario and walk through each gate response. '
     + 'The demonstration runs in about three minutes. '
-    + 'The discovery assessment follows — work through it at your own pace, then review the findings with Jochanni Labs.';
+    + 'The discovery assessment follows. Work through it at your own pace, then review the findings with Jochanni Labs.';
 
   const demoBtn = document.createElement('button');
   demoBtn.className = 'btn btn--primary btn--lg';
