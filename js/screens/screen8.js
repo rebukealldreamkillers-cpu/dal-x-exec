@@ -145,10 +145,10 @@ const S8_OUTCOMES = {
   urgent_investigation: {
     decision: {
       title:             'Business Result',
-      state:             'Urgent: high-risk workflow with incomplete answers',
-      reason:            'The risk profile is high but one or more required answers are missing or unknown. The enforcement status cannot be confirmed until every field below is completed.',
-      required_response: 'Return to the previous screen and complete every field listed below. Involve the agent service owner or downstream system owner if the answers are not known.',
-      what_happens_next: 'Complete the missing answers and re-evaluate.',
+      state:             'Urgent: high-risk workflow with unresolved information gaps',
+      reason:            'The risk profile is high. The enforcement status of this workflow cannot be confirmed until the gaps listed below are resolved — either by completing unanswered questions or by investigating fields your organization currently does not know.',
+      required_response: 'Resolve each gap listed below. Unanswered questions can be completed here. Fields answered as Unknown require organizational investigation before returning.',
+      what_happens_next: 'Return here after resolving each gap and re-evaluate.',
       variant:           'pending',
     },
     evidence:    'business',
@@ -159,9 +159,9 @@ const S8_OUTCOMES = {
     decision: {
       title:             'Business Result',
       state:             'More information required',
-      reason:            'One or more required answers are missing or unknown. The assessment cannot determine whether an enforcement gap exists until every field below is completed.',
-      required_response: 'Return to the previous screen and complete every field listed below.',
-      what_happens_next: 'Complete the missing answers and re-evaluate.',
+      reason:            'The assessment cannot determine whether an enforcement gap exists. One or more questions are unanswered, or were answered as Unknown — meaning your organization does not yet have this information.',
+      required_response: 'Resolve each gap listed below. Unanswered questions can be completed here. Fields answered as Unknown require your organization to investigate and establish the answer before returning.',
+      what_happens_next: 'Return here after resolving each gap and re-evaluate.',
       variant:           'pending',
     },
     evidence:    'business',
@@ -218,16 +218,41 @@ function evaluateBusinessResult() {
   setState('s2.risk_consequence', consequenceRisk);
 
   /* ── 3. Missing required information ────────────────────────────────── */
-  const missingFields = [];
-  if (!isKnown(agentType))                         missingFields.push('AI agent');
-  if (!isKnown(execution))                         missingFields.push('Proposed execution');
-  if (!isKnown(downstream))                        missingFields.push('Downstream system');
-  if (!hasKnownConsequence)                        missingFields.push('Consequence');
-  if (!authResponse || authResponse === 'unknown') missingFields.push('Current enforcement gap');
+  /*
+   * Two distinct problem types require different responses:
+   *
+   *   unansweredFields — field was left blank or skipped entirely.
+   *     Response: go back and answer the question.
+   *
+   *   unknownFields — field was answered, but the answer is "Not sure" /
+   *     "Unknown." The user deliberately indicated their organization
+   *     lacks this knowledge. Going back and re-selecting won't help.
+   *     Response: investigate outside this tool, then return.
+   */
+  const unansweredFields = [];
+  const unknownFields    = [];
 
-  setState('s2.missing_fields', missingFields);
+  if (!agentType)                      unansweredFields.push('AI agent');
+  else if (agentType === 'not_sure')   unknownFields.push('AI agent');
 
-  if (missingFields.length > 0) {
+  if (!execution)                      unansweredFields.push('Proposed execution');
+  else if (execution === 'not_sure')   unknownFields.push('Proposed execution');
+
+  if (!downstream)                     unansweredFields.push('Downstream system');
+  else if (downstream === 'not_sure')  unknownFields.push('Downstream system');
+
+  if (!consequences.length)                                 unansweredFields.push('Consequence');
+  else if (consequences.every(v => v === 'not_sure'))       unknownFields.push('Consequence');
+
+  if (!authResponse)                   unansweredFields.push('Current enforcement gap');
+  else if (authResponse === 'unknown') unknownFields.push('Current enforcement gap');
+
+  setState('s2.unanswered_fields', unansweredFields);
+  setState('s2.unknown_fields',    unknownFields);
+  /* Keep missing_fields as combined list for other screens that reference it */
+  setState('s2.missing_fields', [...unansweredFields, ...unknownFields]);
+
+  if (unansweredFields.length > 0 || unknownFields.length > 0) {
     return riskScore >= 8 ? 'urgent_investigation' : 'more_info_required';
   }
 
@@ -558,43 +583,90 @@ function renderScreen8() {
   /* Decision state block */
   screen.appendChild(createDecisionBlock(cfg.decision));
 
-  /* Missing fields panel — shown for incomplete outcomes only */
+  /* Information gap panels — shown for incomplete outcomes only */
   if (resultKey === 'urgent_investigation' || resultKey === 'more_info_required') {
-    const missing = getState('s2.missing_fields') || [];
-    if (missing.length > 0) {
-      const missingSection = document.createElement('div');
-      missingSection.className = 'callout callout--warning';
-      missingSection.style.marginTop = 'var(--space-5)';
+    const unanswered = getState('s2.unanswered_fields') || [];
+    const unknown    = getState('s2.unknown_fields')    || [];
 
-      const missingHeading = document.createElement('p');
-      missingHeading.style.cssText =
+    /*
+     * Unanswered: question was skipped entirely.
+     * Response: go back and select an answer.
+     */
+    if (unanswered.length > 0) {
+      const callout = document.createElement('div');
+      callout.className = 'callout callout--warning';
+      callout.style.marginTop = 'var(--space-5)';
+
+      const heading = document.createElement('p');
+      heading.style.cssText =
         'font-weight:600;font-size:var(--text-sm);margin-bottom:var(--space-3);';
-      missingHeading.textContent =
-        missing.length === 1
-          ? '1 field requires an answer:'
-          : `${missing.length} fields require answers:`;
-      missingSection.appendChild(missingHeading);
+      heading.textContent = unanswered.length === 1
+        ? '1 question was not answered:'
+        : `${unanswered.length} questions were not answered:`;
+      callout.appendChild(heading);
 
       const list = document.createElement('ul');
       list.style.cssText =
         'margin:0 0 0 var(--space-5);display:flex;flex-direction:column;gap:var(--space-2);';
-      missing.forEach(field => {
+      unanswered.forEach(field => {
         const li = document.createElement('li');
         li.style.cssText = 'font-size:var(--text-sm);';
         li.textContent = field;
         list.appendChild(li);
       });
-      missingSection.appendChild(list);
+      callout.appendChild(list);
 
-      const backHint = document.createElement('p');
-      backHint.style.cssText =
-        'font-size:var(--text-xs);color:var(--color-text-secondary);'
-        + 'margin-top:var(--space-3);';
-      backHint.textContent =
-        'Use the ← Back button below to return to the questions and complete these fields.';
-      missingSection.appendChild(backHint);
+      const hint = document.createElement('p');
+      hint.style.cssText =
+        'font-size:var(--text-xs);color:var(--color-text-secondary);margin-top:var(--space-3);';
+      hint.textContent =
+        'Use ← Back to return to the questions and select an answer for each.';
+      callout.appendChild(hint);
 
-      screen.appendChild(missingSection);
+      screen.appendChild(callout);
+    }
+
+    /*
+     * Unknown: question was answered, but the answer is "Not sure" / "Unknown."
+     * The user correctly reported what their organization knows.
+     * This is not a form error — it is an organizational knowledge gap.
+     * Response: investigate outside this tool, then return.
+     */
+    if (unknown.length > 0) {
+      const callout = document.createElement('div');
+      callout.className = 'callout callout--info';
+      callout.style.marginTop = 'var(--space-5)';
+
+      const heading = document.createElement('p');
+      heading.style.cssText =
+        'font-weight:600;font-size:var(--text-sm);margin-bottom:var(--space-3);';
+      heading.textContent = unknown.length === 1
+        ? '1 field was answered as Unknown — this requires organizational investigation:'
+        : `${unknown.length} fields were answered as Unknown — these require organizational investigation:`;
+      callout.appendChild(heading);
+
+      const list = document.createElement('ul');
+      list.style.cssText =
+        'margin:0 0 0 var(--space-5);display:flex;flex-direction:column;gap:var(--space-2);';
+      unknown.forEach(field => {
+        const li = document.createElement('li');
+        li.style.cssText = 'font-size:var(--text-sm);';
+        li.textContent = field;
+        list.appendChild(li);
+      });
+      callout.appendChild(list);
+
+      const hint = document.createElement('p');
+      hint.style.cssText =
+        'font-size:var(--text-xs);color:var(--color-text-secondary);margin-top:var(--space-3);';
+      hint.textContent =
+        'Selecting Unknown is correct when your organization does not yet have this information — '
+        + 'it is not a form error. To complete this assessment, involve the AI agent service owner, '
+        + 'the downstream system owner, or your security or IT team to establish the answer. '
+        + 'Return here once each unknown is resolved.';
+      callout.appendChild(hint);
+
+      screen.appendChild(callout);
     }
   }
 
