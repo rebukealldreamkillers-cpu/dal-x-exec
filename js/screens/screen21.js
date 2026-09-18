@@ -301,30 +301,6 @@ function buildBoundaryMapTable() {
   return buildS21Table(['Integration path', 'Map statement'], rows);
 }
 
-function buildJLReviewSummaryTable() {
-  const keys = [
-    'jl.review.submission_point',  'jl.review.pending_execution',
-    'jl.review.webhook_polling',   'jl.review.enforcement_point',
-    'jl.review.blocking_behavior', 'jl.review.bypass_paths',
-    'jl.review.field_mapping',     'jl.review.api_key_storage',
-    'jl.review.data_handling',     'jl.review.downstream_result',
-  ];
-  const counts = { confirmed: 0, more_info: 0, correction_required: 0, not_applicable: 0, not_reviewed: 0 };
-  keys.forEach(k => {
-    const v = getState(k);
-    if (v && counts[v] !== undefined) counts[v]++;
-    else counts.not_reviewed++;
-  });
-  const rows = [
-    ['Confirmed for pilot planning', String(counts.confirmed)],
-    ['More information required',    String(counts.more_info)],
-    ['Correction required',          String(counts.correction_required)],
-    ['Not applicable',               String(counts.not_applicable)],
-  ];
-  if (counts.not_reviewed > 0) rows.push(['Not reviewed', String(counts.not_reviewed)]);
-  return buildS21Table(['Decision', 'Items'], rows);
-}
-
 function buildS21GateTestsTable() {
   const tests = getState('s3.gate_tests') || [];
   if (!tests.length) {
@@ -392,10 +368,14 @@ function renderScreen21() {
   const screen = document.getElementById('screen-21');
   screen.innerHTML = '';
 
+  /* Verdict banner */
+  const businessResult = getState('s2.business_result') || '';
+  screen.appendChild(buildBusinessVerdictBanner(businessResult));
+
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Jochanni Labs Review';
+  badge.textContent = 'Assessment Result';
   screen.appendChild(badge);
 
   /* Title */
@@ -486,23 +466,6 @@ function renderScreen21() {
     'Implementation tasks',
     implTasks.length ? implTasks.map(k => S21_Q_LABELS[k] || k).join('; ') : 'None',
     'technical'));
-
-  /* Fields 13–15: jl-reviewed evidence */
-  const hr12 = document.createElement('hr'); hr12.className = 'divider'; card.appendChild(hr12);
-  card.appendChild(buildTableField('Jochanni Labs review', buildJLReviewSummaryTable(), 'jl-reviewed'));
-
-  const hr13 = document.createElement('hr'); hr13.className = 'divider'; card.appendChild(hr13);
-  const pilotDecisionKey = getState('jl.decision') || '';
-  card.appendChild(createLabelledField(
-    'Pilot decision',
-    S21_PILOT_DECISION_LABELS[pilotDecisionKey] || 'N/A',
-    'jl-reviewed'));
-
-  const hr14 = document.createElement('hr'); hr14.className = 'divider'; card.appendChild(hr14);
-  card.appendChild(createLabelledField(
-    'Required next step',
-    S21_NEXT_STEPS[pilotDecisionKey] || 'N/A',
-    'jl-reviewed'));
 
   screen.appendChild(card);
 

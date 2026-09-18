@@ -40,7 +40,7 @@ const S18_OUTCOMES = {
       state:             'Structural requirements not met',
       reason:            'The reported execution path cannot currently place DAL-X before every governed downstream execution.',
       required_response: 'Correct the identified structural requirement.',
-      what_happens_next: 'Jochanni Labs does not recommend a pilot until the structural requirement is corrected.',
+      what_happens_next: 'The assessment closes until the structural requirement is corrected.',
       variant:           'rejected',
     },
   },
@@ -69,8 +69,8 @@ const S18_OUTCOMES = {
       title:             'Self-Reported Technical Result',
       state:             'Technical answers support integration',
       reason:            'The technical participant reported that the two required DAL-X integration points can be added and enforced.',
-      required_response: 'Submit the answers and boundary map to Jochanni Labs.',
-      what_happens_next: 'Jochanni Labs reviews the reported integration path.',
+      required_response: 'Review the full assessment result.',
+      what_happens_next: 'Your full assessment result is ready.',
       variant:           'accepted',
     },
   },
@@ -233,10 +233,10 @@ function renderScreen18() {
 
   const nextBtn = document.createElement('button');
   nextBtn.className = 'btn btn--primary';
-  nextBtn.textContent = 'Submit to Jochanni Labs →';
+  nextBtn.textContent = 'View Full Results →';
   nextBtn.addEventListener('click', () => {
-    if (typeof renderScreen19 === 'function') renderScreen19();
-    showScreen('screen-19');
+    if (typeof renderScreen21 === 'function') renderScreen21();
+    showScreen('screen-21');
   });
   nav.appendChild(nextBtn);
 

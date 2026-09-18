@@ -112,6 +112,57 @@ function evaluateBusinessResult() {
   return 'potential_use_case';
 }
 
+/* ── Verdict banner builder ───────────────────────────────────────────── */
+
+function buildBusinessVerdictBanner(resultKey) {
+  const configs = {
+    potential_use_case: {
+      variant: 'yes',
+      verdict: 'YES',
+      label:   'This workflow needs DAL-X',
+      sub:     'The agent can initiate a consequential execution that must stop when authority is missing.',
+    },
+    not_required: {
+      variant: 'no',
+      verdict: 'NO',
+      label:   'DAL-X is not required for this workflow',
+      sub:     'The agent does not initiate a consequential downstream execution.',
+    },
+    enforcement_not_established: {
+      variant: 'no',
+      verdict: 'NO',
+      label:   'Enforcement has not been established as a requirement',
+      sub:     'The enterprise currently allows execution to continue without authority.',
+    },
+    more_info_required: {
+      variant: 'inconclusive',
+      verdict: 'INCONCLUSIVE',
+      label:   'More information is needed',
+      sub:     'The agent, execution, downstream system, consequence, or required response remains unknown.',
+    },
+  };
+  const cfg    = configs[resultKey] || configs.more_info_required;
+  const banner = document.createElement('div');
+  banner.className = `verdict-banner verdict-banner--${cfg.variant}`;
+
+  const verdict = document.createElement('div');
+  verdict.className = 'verdict-banner__verdict';
+  verdict.textContent = cfg.verdict;
+
+  const label = document.createElement('div');
+  label.className = 'verdict-banner__label';
+  label.textContent = cfg.label;
+
+  const sub = document.createElement('div');
+  sub.className = 'verdict-banner__sub';
+  sub.textContent = cfg.sub;
+
+  banner.appendChild(verdict);
+  banner.appendChild(label);
+  banner.appendChild(sub);
+  return banner;
+}
+
 /* ── Renderer ─────────────────────────────────────────────────────────── */
 
 function renderScreen8() {
@@ -121,6 +172,9 @@ function renderScreen8() {
   const cfg    = S8_OUTCOMES[resultKey];
   const screen = document.getElementById('screen-8');
   screen.innerHTML = '';
+
+  /* Verdict banner */
+  screen.appendChild(buildBusinessVerdictBanner(resultKey));
 
   /* Surface badge */
   const badge = document.createElement('div');

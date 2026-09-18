@@ -838,6 +838,64 @@ textarea.form-control {
   letter-spacing: 0.03em;
 }
 
+/* ─── Verdict banner ─────────────────────────────────────────────────────── */
+.verdict-banner {
+  border-radius: 12px;
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  text-align: center;
+}
+
+.verdict-banner__verdict {
+  font-size: 3.5rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: var(--space-2);
+}
+
+.verdict-banner__label {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+}
+
+.verdict-banner__sub {
+  font-size: var(--text-sm);
+  opacity: 0.85;
+  line-height: 1.5;
+}
+
+.verdict-banner--yes {
+  background: #0a2e15;
+  border: 2px solid #22c55e;
+  color: #86efac;
+}
+
+.verdict-banner--yes .verdict-banner__verdict {
+  color: #22c55e;
+}
+
+.verdict-banner--no {
+  background: #2d1010;
+  border: 2px solid #ef4444;
+  color: #fca5a5;
+}
+
+.verdict-banner--no .verdict-banner__verdict {
+  color: #ef4444;
+}
+
+.verdict-banner--inconclusive {
+  background: #2a1e08;
+  border: 2px solid var(--color-accent);
+  color: #fdba74;
+}
+
+.verdict-banner--inconclusive .verdict-banner__verdict {
+  color: var(--color-accent);
+}
+
 /* ─── Brand footer (result screens) ─────────────────────────────────────── */
 .brand-footer {
   display: flex;
