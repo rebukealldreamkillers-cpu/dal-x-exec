@@ -146,9 +146,9 @@ const S8_OUTCOMES = {
     decision: {
       title:             'Business Result',
       state:             'Urgent: high-risk workflow with incomplete answers',
-      reason:            'The risk profile is high but required answers are missing. The enforcement status of this workflow cannot be confirmed.',
-      required_response: 'Urgently confirm the missing information with the agent service owner and downstream system owner.',
-      what_happens_next: 'The assessment closes. Request reassessment when the information is confirmed.',
+      reason:            'The risk profile is high but one or more required answers are missing or unknown. The enforcement status cannot be confirmed until every field below is completed.',
+      required_response: 'Return to the previous screen and complete every field listed below. Involve the agent service owner or downstream system owner if the answers are not known.',
+      what_happens_next: 'Complete the missing answers and re-evaluate.',
       variant:           'pending',
     },
     evidence:    'business',
@@ -159,9 +159,9 @@ const S8_OUTCOMES = {
     decision: {
       title:             'Business Result',
       state:             'More information required',
-      reason:            'Required answers about the agent, execution type, downstream system, consequence, or enforcement gap are missing or unknown.',
-      required_response: 'Confirm the missing information.',
-      what_happens_next: 'The assessment closes. Request reassessment when the information is available.',
+      reason:            'One or more required answers are missing or unknown. The assessment cannot determine whether an enforcement gap exists until every field below is completed.',
+      required_response: 'Return to the previous screen and complete every field listed below.',
+      what_happens_next: 'Complete the missing answers and re-evaluate.',
       variant:           'pending',
     },
     evidence:    'business',
@@ -193,6 +193,7 @@ function evaluateBusinessResult() {
     setState('s2.risk_execution',   0);
     setState('s2.risk_system',      0);
     setState('s2.risk_consequence', 0);
+    setState('s2.missing_fields',   []);
     return 'not_applicable';
   }
 
@@ -217,13 +218,16 @@ function evaluateBusinessResult() {
   setState('s2.risk_consequence', consequenceRisk);
 
   /* ── 3. Missing required information ────────────────────────────────── */
-  if (
-    !isKnown(agentType)    ||
-    !isKnown(execution)    ||
-    !isKnown(downstream)   ||
-    !hasKnownConsequence   ||
-    !authResponse || authResponse === 'unknown'
-  ) {
+  const missingFields = [];
+  if (!isKnown(agentType))                         missingFields.push('AI agent');
+  if (!isKnown(execution))                         missingFields.push('Proposed execution');
+  if (!isKnown(downstream))                        missingFields.push('Downstream system');
+  if (!hasKnownConsequence)                        missingFields.push('Consequence');
+  if (!authResponse || authResponse === 'unknown') missingFields.push('Current enforcement gap');
+
+  setState('s2.missing_fields', missingFields);
+
+  if (missingFields.length > 0) {
     return riskScore >= 8 ? 'urgent_investigation' : 'more_info_required';
   }
 
@@ -553,6 +557,46 @@ function renderScreen8() {
 
   /* Decision state block */
   screen.appendChild(createDecisionBlock(cfg.decision));
+
+  /* Missing fields panel — shown for incomplete outcomes only */
+  if (resultKey === 'urgent_investigation' || resultKey === 'more_info_required') {
+    const missing = getState('s2.missing_fields') || [];
+    if (missing.length > 0) {
+      const missingSection = document.createElement('div');
+      missingSection.className = 'callout callout--warning';
+      missingSection.style.marginTop = 'var(--space-5)';
+
+      const missingHeading = document.createElement('p');
+      missingHeading.style.cssText =
+        'font-weight:600;font-size:var(--text-sm);margin-bottom:var(--space-3);';
+      missingHeading.textContent =
+        missing.length === 1
+          ? '1 field requires an answer:'
+          : `${missing.length} fields require answers:`;
+      missingSection.appendChild(missingHeading);
+
+      const list = document.createElement('ul');
+      list.style.cssText =
+        'margin:0 0 0 var(--space-5);display:flex;flex-direction:column;gap:var(--space-2);';
+      missing.forEach(field => {
+        const li = document.createElement('li');
+        li.style.cssText = 'font-size:var(--text-sm);';
+        li.textContent = field;
+        list.appendChild(li);
+      });
+      missingSection.appendChild(list);
+
+      const backHint = document.createElement('p');
+      backHint.style.cssText =
+        'font-size:var(--text-xs);color:var(--color-text-secondary);'
+        + 'margin-top:var(--space-3);';
+      backHint.textContent =
+        'Use the ← Back button below to return to the questions and complete these fields.';
+      missingSection.appendChild(backHint);
+
+      screen.appendChild(missingSection);
+    }
+  }
 
   /* Risk profile panel (not shown for not_applicable with score 0) */
   const riskScore = getState('s2.risk_score') || 0;
