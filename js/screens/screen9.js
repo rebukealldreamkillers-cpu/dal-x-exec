@@ -135,9 +135,8 @@ function renderScreen9() {
   const subtitle = document.createElement('p');
   subtitle.className = 'screen-subtitle';
   subtitle.textContent =
-    'Jochanni Labs records the enterprise policy that governs this execution. '
-    + 'These inputs are mapped to DAL-X trigger rules. The customer does not '
-    + 'author rules directly.';
+    'You define the policy. Jochanni Labs works with your team to build the '
+    + 'trigger logic that enforces it inside DAL-X.';
   screen.appendChild(subtitle);
 
   /* Operator notice */
@@ -145,9 +144,9 @@ function renderScreen9() {
   notice.className = 'callout callout--info';
   notice.style.marginBottom = 'var(--space-6)';
   notice.textContent =
-    'This screen is operated by Jochanni Labs. '
-    + 'Jochanni Labs maps these inputs to the current DAL-X rule types and severity outcomes. '
-    + 'The customer does not author DAL-X rules.';
+    'In a real engagement, you complete this with Jochanni Labs. '
+    + 'You bring your policy knowledge: what the agent may do, what needs review, and what must be blocked. '
+    + 'Jochanni Labs translates that into working DAL-X trigger rules and answers integration questions along the way.';
   screen.appendChild(notice);
 
   /* Form card */

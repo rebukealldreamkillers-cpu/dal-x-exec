@@ -19,7 +19,7 @@ const S8_OUTCOMES = {
       state:             'Potential DAL-X use case',
       reason:            'The reported agent can initiate a consequential execution that must stop when authority is missing.',
       required_response: 'Identify the authority owner and downstream system owner.',
-      what_happens_next: 'Jochanni Labs configures the execution simulation.',
+      what_happens_next: 'Jochanni Labs works with you to configure the execution simulation.',
       variant:           'accepted',
       title:             'Business Result',
     },
@@ -152,8 +152,8 @@ function renderScreen8() {
     proceedNote.className = 'callout callout--info';
     proceedNote.style.marginTop = 'var(--space-6)';
     proceedNote.textContent =
-      'Next step: Jochanni Labs will configure the execution simulation '
-      + 'using the enterprise policy and submission fields.';
+      'Next step: You and Jochanni Labs will configure the execution simulation together, '
+      + 'using your enterprise policy and submission fields.';
     screen.appendChild(proceedNote);
   }
 

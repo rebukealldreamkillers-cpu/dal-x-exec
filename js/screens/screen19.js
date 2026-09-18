@@ -95,8 +95,8 @@ function renderScreen19() {
   notice.className = 'callout callout--info';
   notice.style.marginBottom = 'var(--space-6)';
   notice.textContent =
-    'This screen is operated by Jochanni Labs. '
-    + 'Jochanni Labs reviews each integration item and assigns a decision for pilot planning.';
+    'Jochanni Labs reviews your reported integration answers alongside your technical team, '
+    + 'confirms what is ready, and identifies any gaps before pilot planning.';
   screen.appendChild(notice);
 
   /* Review items card */
@@ -105,7 +105,7 @@ function renderScreen19() {
 
   const cardTitle = document.createElement('div');
   cardTitle.className = 'card__title';
-  cardTitle.textContent = 'Jochanni Labs reviews:';
+  cardTitle.textContent = 'Integration review:';
   card.appendChild(cardTitle);
 
   S19_ITEMS.forEach((cfg, i) => {
