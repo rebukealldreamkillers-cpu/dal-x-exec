@@ -1,4 +1,5 @@
 /* ─── Screen 21: DAL-X Simulation Result ─────────────────────────────────── */
+/* JL_BOOKING_URL is defined in config.js (loaded before this file)          */
 
 /* ── Pilot path phase definitions ────────────────────────────────────────── */
 
@@ -570,9 +571,74 @@ function renderScreen21() {
   pilotSection.appendChild(buildAcceptanceTestCard());
   screen.appendChild(pilotSection);
 
+  /* ── Conversion CTA ─────────────────────────────────────────────────── */
+  const lead = sessionState.lead;
+
+  const ctaSection = document.createElement('div');
+  ctaSection.style.marginTop = 'var(--space-8)';
+
+  if (lead) {
+    /* Lead is captured — show full booking + email CTA */
+    const ctaLabel = document.createElement('p');
+    ctaLabel.className = 'section-label';
+    ctaLabel.textContent = 'Ready to take this further?';
+    ctaSection.appendChild(ctaLabel);
+
+    const ctaCallout = document.createElement('div');
+    ctaCallout.className = 'callout callout--info';
+    ctaCallout.style.marginTop = 'var(--space-3)';
+    ctaCallout.textContent =
+      'Your assessment result is a starting point. Jochanni Labs reviews this picture with you, '
+      + 'validates the technical integration path, and configures the enforcement gate for your specific workflow. '
+      + 'The pilot engagement begins here.';
+    ctaSection.appendChild(ctaCallout);
+
+    const bookBtn = document.createElement('a');
+    bookBtn.href = JL_BOOKING_URL;
+    bookBtn.target = '_blank';
+    bookBtn.rel = 'noopener';
+    bookBtn.className = 'btn btn--primary btn--full';
+    bookBtn.style.marginTop = 'var(--space-4)';
+    bookBtn.style.display = 'flex';
+    bookBtn.style.justifyContent = 'center';
+    bookBtn.textContent = 'Schedule a conversation with Jochanni Labs →';
+    ctaSection.appendChild(bookBtn);
+
+    const emailBtn = document.createElement('button');
+    emailBtn.className = 'btn btn--secondary btn--full';
+    emailBtn.style.marginTop = 'var(--space-3)';
+    emailBtn.textContent = 'Email me my results';
+    emailBtn.addEventListener('click', () => {
+      if (typeof sendResultsByEmail === 'function') sendResultsByEmail(emailBtn);
+    });
+    ctaSection.appendChild(emailBtn);
+
+    const emailErr = document.createElement('p');
+    emailErr.id = 'email-send-error';
+    emailErr.style.cssText =
+      'display:none;font-size:var(--text-sm);color:var(--color-text-secondary);'
+      + 'margin-top:var(--space-2);';
+    emailErr.innerHTML =
+      `Could not send automatically. Email <a href="mailto:${JL_CONTACT_EMAIL}" `
+      + `style="color:var(--color-primary-light)">${JL_CONTACT_EMAIL}</a> directly.`;
+    ctaSection.appendChild(emailErr);
+
+  } else {
+    /* No lead captured — soft prompt to start from the beginning */
+    const softNote = document.createElement('div');
+    softNote.className = 'callout callout--info';
+    softNote.textContent =
+      'To receive your full result summary and connect with Jochanni Labs, '
+      + 'start the assessment from the beginning and enter your details when prompted.';
+    ctaSection.appendChild(softNote);
+  }
+
+  screen.appendChild(ctaSection);
+
   /* Nav: Back only (final screen) */
   const nav = document.createElement('nav');
   nav.className = 'screen-nav screen-nav--start';
+  nav.style.marginTop = 'var(--space-6)';
 
   const backBtn = document.createElement('button');
   backBtn.className = 'btn btn--ghost';
@@ -582,6 +648,13 @@ function renderScreen21() {
 
   screen.appendChild(nav);
   screen.appendChild(createBrandFooter());
+
+  /* ── Completion webhook ──────────────────────────────────────────────── */
+  /* Fire once per session when lead is present and Screen 21 is reached   */
+  if (sessionState.lead && !sessionState.webhookFired) {
+    sessionState.webhookFired = true;
+    if (typeof fireCompletionWebhook === 'function') fireCompletionWebhook();
+  }
 }
 
 document.addEventListener('DOMContentLoaded', renderScreen21);

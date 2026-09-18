@@ -84,9 +84,8 @@ function renderScreen7() {
   const subtitle = document.createElement('p');
   subtitle.className = 'screen-subtitle';
   subtitle.textContent =
-    'These are the five questions Jochanni Labs works through with your team '
-    + 'to identify whether an AI workflow has an enforcement gap. '
-    + 'Walk through them for your specific use case.';
+    'Five questions that identify whether your AI workflow has an enforcement gap. '
+    + 'Answer them for your specific use case — the assessment scores your risk profile automatically.';
   screen.appendChild(subtitle);
 
   /* Methodology notice */
@@ -94,10 +93,9 @@ function renderScreen7() {
   methodNote.className = 'callout callout--info';
   methodNote.style.marginBottom = 'var(--space-6)';
   methodNote.textContent =
-    'In a live engagement, a Jochanni Labs consultant facilitates this session '
-    + 'alongside your technical and business stakeholders. '
-    + 'Your answers here are self-reported and unvalidated. '
-    + 'Jochanni Labs reviews and refines them with your team before any recommendation is finalized.';
+    'Walk through these five questions for your specific AI workflow. '
+    + 'Your answers are self-reported — Jochanni Labs reviews and validates them with your team '
+    + 'as part of a paid engagement before any recommendation is finalized.';
   screen.appendChild(methodNote);
 
   /* Form card */

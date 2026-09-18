@@ -283,6 +283,12 @@
 
   </main><!-- /#app -->
 
+  <!-- EmailJS SDK (used by email.js for "Email me my results") -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <!-- Runtime config: credentials and URL constants (load before everything else) -->
+  <script src="js/config.js"></script>
+
   <script src="js/app.js"></script>
   <script src="js/components.js"></script>
   <script src="js/screens/screen0.js"></script>
@@ -304,5 +310,9 @@
   <script src="js/screens/screen19.js"></script>
   <script src="js/screens/screen20.js"></script>
   <script src="js/screens/screen21.js"></script>
+
+  <!-- Sales pipeline: webhook and email helpers (after screen21.js) -->
+  <script src="js/webhook.js"></script>
+  <script src="js/email.js"></script>
 </body>
 </html>

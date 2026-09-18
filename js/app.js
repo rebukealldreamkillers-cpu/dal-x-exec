@@ -201,6 +201,11 @@ const sessionState = {
     pilot_authority_owner:  '',
     pilot_technical_owner:  '',
   },
+
+  /* ── Lead capture (sales pipeline) ────────────────────────────────────── */
+  /* Populated by the Screen 8 modal; read by Screen 21 CTA and webhook     */
+  lead: null,          /* null = not yet captured; object = captured         */
+  webhookFired: false, /* prevents duplicate pings on Screen 21 re-renders   */
 };
 
 /* ─── State helpers ──────────────────────────────────────────────────────── */

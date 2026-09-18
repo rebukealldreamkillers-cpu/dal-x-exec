@@ -441,6 +441,11 @@ function buildRiskProfilePanel() {
 
 /* ── Renderer ────────────────────────────────────────────────────────────── */
 
+/* Gap outcomes that trigger lead capture */
+const S8_GAP_OUTCOMES = new Set([
+  'critical_gap', 'gap_identified', 'gap_low_priority', 'urgent_investigation',
+]);
+
 function renderScreen8() {
   const resultKey = evaluateBusinessResult();
   setState('s2.business_result', resultKey);
@@ -515,6 +520,15 @@ function renderScreen8() {
   }
 
   screen.appendChild(nav);
+
+  /* ── Lead capture modal ─────────────────────────────────────────────── */
+  /* Show for gap outcomes only; skip if lead already captured            */
+  if (S8_GAP_OUTCOMES.has(resultKey) && !sessionState.lead) {
+    document.getElementById('lead-capture-modal')?.remove();
+    document.body.appendChild(buildLeadCaptureModal(resultKey, () => {
+      /* Modal dismissed — result is already rendered beneath it */
+    }));
+  }
 }
 
 document.addEventListener('DOMContentLoaded', renderScreen8);

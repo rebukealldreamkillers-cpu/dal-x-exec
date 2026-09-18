@@ -100,10 +100,9 @@ function renderScreen6() {
     'font-size:var(--text-sm);color:var(--color-text-secondary);'
     + 'line-height:1.65;margin-bottom:var(--space-5);';
   assessNote.textContent =
-    'The next section is the discovery assessment — the same structured questions '
-    + 'Jochanni Labs works through with your team during a real engagement. '
-    + 'Walk through it for your specific workflow. '
-    + 'The results are preliminary and self-reported; Jochanni Labs reviews them with you before any recommendation is finalized.';
+    'The next section is the discovery assessment. '
+    + 'Walk through it for your specific workflow — the tool scores your risk profile automatically. '
+    + 'Results are self-reported; Jochanni Labs reviews and validates them with you as part of a paid engagement.';
   ctaGroup.appendChild(assessNote);
 
   /* Primary CTA: Continue to discovery assessment */

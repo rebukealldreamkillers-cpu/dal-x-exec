@@ -273,9 +273,9 @@ function renderScreen18() {
   notice.className = 'callout callout--info';
   notice.style.marginTop = 'var(--space-5)';
   notice.textContent =
-    'These answers are self-reported by your technical team. '
-    + 'Jochanni Labs reviews this integration picture with you during the engagement '
-    + 'to validate the reported path before any recommendation is finalized. '
+    'These answers are self-reported. '
+    + 'Jochanni Labs validates the reported integration path with your technical team '
+    + 'as part of a paid engagement before any recommendation is finalized. '
     + 'This result is not called a pilot candidate.';
   screen.appendChild(notice);
 

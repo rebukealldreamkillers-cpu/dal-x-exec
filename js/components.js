@@ -471,3 +471,108 @@ function createStatusChip(state, label) {
   span.textContent = label || (state.charAt(0).toUpperCase() + state.slice(1));
   return span;
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   LEAD CAPTURE MODAL
+   Shown on Screen 8 when a gap outcome is detected and no lead is captured yet.
+   Blocks the result view until name / work email / company are submitted.
+════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * buildLeadCaptureModal(resultKey, onSubmit)
+ * Returns a full-screen overlay modal appended to document.body by the caller.
+ * On submit it stores the lead in sessionState.lead and calls onSubmit().
+ *
+ * @param {string}   resultKey  - The Screen 8 outcome key (e.g. 'critical_gap')
+ * @param {Function} onSubmit   - Called after successful form submission
+ * @returns {HTMLDivElement}    - The .modal-overlay element
+ */
+function buildLeadCaptureModal(resultKey, onSubmit) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'lead-capture-modal';
+
+  const box = document.createElement('div');
+  box.className = 'modal-box';
+
+  const eyebrow = document.createElement('div');
+  eyebrow.className = 'modal-box__eyebrow';
+  eyebrow.textContent = 'Your result is ready';
+  box.appendChild(eyebrow);
+
+  const title = document.createElement('p');
+  title.className = 'modal-box__title';
+  title.textContent = 'See your full assessment result';
+  box.appendChild(title);
+
+  const body = document.createElement('p');
+  body.className = 'modal-box__body';
+  body.textContent =
+    'Enter your details to unlock the complete result and receive a copy by email.';
+  box.appendChild(body);
+
+  function makeField(labelText, inputType, placeholder, autocomplete) {
+    const wrapper = document.createElement('div');
+    const lbl = document.createElement('label');
+    lbl.className = 'form-label';
+    lbl.textContent = labelText;
+    const inp = document.createElement('input');
+    inp.type = inputType;
+    inp.className = 'form-input';
+    inp.placeholder = placeholder;
+    inp.autocomplete = autocomplete;
+    wrapper.appendChild(lbl);
+    wrapper.appendChild(inp);
+    return { wrapper, inp };
+  }
+
+  const { wrapper: nameWrap,    inp: nameInput    } = makeField('Full name',   'text',  'Jane Smith',        'name');
+  const { wrapper: emailWrap,   inp: emailInput   } = makeField('Work email',  'email', 'jane@company.com',  'email');
+  const { wrapper: companyWrap, inp: companyInput } = makeField('Company',     'text',  'Acme Corp',         'organization');
+
+  box.appendChild(nameWrap);
+  box.appendChild(emailWrap);
+  box.appendChild(companyWrap);
+
+  const errorEl = document.createElement('p');
+  errorEl.className = 'modal-box__error';
+  errorEl.id = 'modal-error';
+  box.appendChild(errorEl);
+
+  const submitBtn = document.createElement('button');
+  submitBtn.className = 'btn btn--primary btn--full';
+  submitBtn.textContent = 'See my full result →';
+
+  submitBtn.addEventListener('click', () => {
+    const name    = nameInput.value.trim();
+    const email   = emailInput.value.trim();
+    const company = companyInput.value.trim();
+
+    if (!name || !email || !company) {
+      errorEl.textContent = 'All three fields are required.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errorEl.textContent = 'Please enter a valid work email address.';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    sessionState.lead = {
+      name,
+      email,
+      company,
+      timestamp:  new Date().toISOString(),
+      result_key: resultKey,
+      risk_score: getState('s2.risk_score') || 0,
+    };
+
+    overlay.remove();
+    if (typeof onSubmit === 'function') onSubmit();
+  });
+
+  box.appendChild(submitBtn);
+  overlay.appendChild(box);
+  return overlay;
+}
