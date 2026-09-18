@@ -222,6 +222,19 @@ function renderGateScreen(screenId) {
     screen.appendChild(buildGateFlowchart(cfg.flowchart));
   }
 
+  /* Without-gate stark note: rejection screens only */
+  if (cfg.withoutDalX) {
+    const ungatedNote = document.createElement('div');
+    ungatedNote.style.cssText =
+      'margin:var(--space-4) 0;padding:var(--space-3) var(--space-4);'
+      + 'background:rgba(248,113,113,0.08);border-left:3px solid #f87171;'
+      + 'border-radius:var(--radius);font-size:var(--text-sm);color:var(--color-text);';
+    ungatedNote.innerHTML =
+      '<strong>Without this gate: this execution completes.</strong> '
+      + 'No authorization required. No record created. No way to stop it.';
+    screen.appendChild(ungatedNote);
+  }
+
   /* Decision state block */
   screen.appendChild(createDecisionBlock(cfg.decision));
 

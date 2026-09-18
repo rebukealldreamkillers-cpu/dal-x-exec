@@ -123,6 +123,77 @@ function renderScreen6() {
   });
   ctaGroup.appendChild(replayBtn);
 
+  /* ── Self-reflection gate check ─────────────────────────────────────────── */
+  const reflectSection = document.createElement('div');
+  reflectSection.style.marginTop = 'var(--space-8)';
+
+  const reflectHeading = document.createElement('p');
+  reflectHeading.className = 'section-label';
+  reflectHeading.textContent = 'Before you continue';
+  reflectSection.appendChild(reflectHeading);
+
+  const reflectQ = document.createElement('p');
+  reflectQ.style.cssText =
+    'font-size:var(--text-base);font-weight:600;color:var(--color-text);'
+    + 'margin-bottom:var(--space-4);line-height:1.4;';
+  reflectQ.textContent =
+    'Does the AI workflow you are most concerned about currently have any of these gates in place?';
+  reflectSection.appendChild(reflectQ);
+
+  const gateOpts = [
+    {
+      value:    'no',
+      label:    'No - there is nothing stopping execution if authorization is missing.',
+      cls:      'callout--warning',
+      response: 'That is the gap. The assessment will score how critical it is for your specific workflow.',
+    },
+    {
+      value:    'unknown',
+      label:    'We are not sure what happens between our agent and the downstream system.',
+      cls:      'callout--warning',
+      response: 'If you cannot confirm a gate exists, it likely does not. The assessment will identify the risk.',
+    },
+    {
+      value:    'yes',
+      label:    'We believe controls exist.',
+      cls:      'callout--info',
+      response: 'The assessment will verify whether those controls enforce at the right boundary. Many controls exist but do not stop execution when authorization is absent.',
+    },
+  ];
+
+  const responseArea = document.createElement('div');
+  responseArea.style.marginTop = 'var(--space-3)';
+
+  const gateOptBtns = document.createElement('div');
+  gateOptBtns.style.cssText = 'display:flex;flex-direction:column;gap:var(--space-2);';
+
+  gateOpts.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn--ghost';
+    btn.style.cssText =
+      'text-align:left;justify-content:flex-start;font-size:var(--text-sm);';
+    btn.textContent = opt.label;
+    btn.addEventListener('click', () => {
+      gateOptBtns.querySelectorAll('button').forEach(b => {
+        b.style.borderColor = '';
+        b.style.fontWeight  = '';
+      });
+      btn.style.borderColor = 'var(--color-primary)';
+      btn.style.fontWeight  = '600';
+
+      responseArea.innerHTML = '';
+      const callout = document.createElement('div');
+      callout.className = `callout ${opt.cls}`;
+      callout.textContent = opt.response;
+      responseArea.appendChild(callout);
+    });
+    gateOptBtns.appendChild(btn);
+  });
+
+  reflectSection.appendChild(gateOptBtns);
+  reflectSection.appendChild(responseArea);
+  screen.appendChild(reflectSection);
+
   screen.appendChild(ctaGroup);
   screen.appendChild(createBrandFooter());
 }

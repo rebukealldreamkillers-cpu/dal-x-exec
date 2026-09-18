@@ -550,6 +550,66 @@ function buildRiskLegend() {
   return legend;
 }
 
+/* ── Personalized gap statement ─────────────────────────────────────────── */
+
+function buildPersonalizedGapCallout() {
+  const agentRaw      = getState('s2.agent_type')                || '';
+  const executionRaw  = getState('s2.proposed_execution')        || '';
+  const downstreamRaw = getState('s2.downstream_system')         || '';
+  const agentCustom   = getState('s2.agent_type_custom')         || '';
+  const execCustom    = getState('s2.proposed_execution_custom') || '';
+  const dsCustom      = getState('s2.downstream_system_custom')  || '';
+
+  const AGENT_LABELS = {
+    infrastructure_agent:   'infrastructure agent',
+    cybersecurity_agent:    'cybersecurity agent',
+    data_agent:             'data agent',
+    customer_service_agent: 'customer service agent',
+    procurement_agent:      'procurement agent',
+    treasury_agent:         'treasury agent',
+    compliance_agent:       'compliance agent',
+  };
+  const EXECUTION_LABELS = {
+    change_infrastructure:       'change production infrastructure',
+    export_data:                 'export data',
+    change_system_access:        'change system access',
+    deploy_code:                 'deploy code',
+    modify_records:              'modify records',
+    send_external_communication: 'send external communication',
+    commit_funds:                'commit funds',
+    delete_data:                 'delete data',
+  };
+  const DOWNSTREAM_LABELS = {
+    cloud_platform:         'cloud platform',
+    database:               'database',
+    identity_platform:      'identity platform',
+    deployment_pipeline:    'deployment pipeline',
+    communication_platform: 'communication platform',
+    enterprise_application: 'enterprise application',
+    payment_system:         'payment system',
+    data_warehouse:         'data warehouse',
+  };
+
+  const agent      = agentCustom      || AGENT_LABELS[agentRaw]      || agentRaw      || 'your AI agent';
+  const execution  = execCustom       || EXECUTION_LABELS[executionRaw]  || executionRaw  || 'take this action';
+  const downstream = dsCustom         || DOWNSTREAM_LABELS[downstreamRaw] || downstreamRaw || 'the downstream system';
+
+  const callout = document.createElement('div');
+  callout.className = 'callout callout--warning';
+  callout.style.marginBottom = 'var(--space-5)';
+
+  const strong = document.createElement('strong');
+  strong.textContent = 'This is your current exposure. ';
+  callout.appendChild(strong);
+  callout.appendChild(document.createTextNode(
+    `You described a ${agent} that can ${execution} on your ${downstream}. `
+    + 'Right now, without DAL-X, nothing in that path requires authorization before execution proceeds. '
+    + 'That is happening in your environment today.'
+  ));
+
+  return callout;
+}
+
 /* ── Renderer ────────────────────────────────────────────────────────────── */
 
 /* Gap outcomes that trigger lead capture */
@@ -579,6 +639,11 @@ function renderScreen8() {
   title.className = 'screen-title';
   title.textContent = 'Business Result';
   screen.appendChild(title);
+
+  /* Personalized exposure statement for high-urgency outcomes */
+  if (resultKey === 'critical_gap' || resultKey === 'gap_identified') {
+    screen.appendChild(buildPersonalizedGapCallout());
+  }
 
   /* Decision state block */
   screen.appendChild(createDecisionBlock(cfg.decision));

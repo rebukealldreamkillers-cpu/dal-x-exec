@@ -53,7 +53,9 @@ function renderScreen0() {
 
   const disclaimer = document.createElement('p');
   disclaimer.className = 'hero-disclaimer';
-  disclaimer.textContent = 'No enterprise system is connected. This is a simulation only.';
+  disclaimer.style.cssText =
+    'font-size:var(--text-xs);color:var(--color-text-muted);margin-top:var(--space-6);opacity:0.6;';
+  disclaimer.textContent = 'Simulation only. No enterprise system is connected.';
   heroBody.appendChild(disclaimer);
 
   hero.appendChild(heroBody);
