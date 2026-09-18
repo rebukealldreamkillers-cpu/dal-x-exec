@@ -59,9 +59,9 @@ const S7_CONSEQUENCE_OPTIONS = [
 
 /* Three fixed options only, spec does not include Not sure or Enter my own */
 const S7_AUTHORITY_OPTIONS = [
-  { value: 'must_stop',    label: 'Execution must stop'                  },
-  { value: 'may_continue', label: 'Execution may continue with an alert' },
-  { value: 'unknown',      label: 'Current behavior is unknown'          },
+  { value: 'must_stop',    label: 'No — there is no gate. The agent\'s action reaches the downstream system directly.'              },
+  { value: 'may_continue', label: 'We don\'t require a gate — execution without explicit approval is acceptable for this workflow.' },
+  { value: 'unknown',      label: 'Unknown — we have no visibility into what happens between the agent and the downstream system.'  },
 ];
 
 function renderScreen7() {
@@ -143,11 +143,11 @@ function renderScreen7() {
     initialCustom:    getState('s2.consequences_custom') || '',
   }));
 
-  /* 5. Missing authority response: 3 fixed options, no custom or not-sure */
+  /* 5. Current enforcement gap: 3 fixed options, no custom or not-sure */
   card.appendChild(createDropdown({
     id:           's7-authority',
-    label:        'Missing authority response',
-    description:  'Right now, if your agent acts without obtaining approval first, what happens? e.g. does it stop, proceed with an alert, or is the current behavior unknown?',
+    label:        'Current enforcement gap',
+    description:  'Between what your agent proposes and what the downstream system executes, is there currently a required approval gate that stops execution when approval is missing?',
     options:      S7_AUTHORITY_OPTIONS,
     stateKey:     's2.missing_authority_response',
     allowCustom:  false,

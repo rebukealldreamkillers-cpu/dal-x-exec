@@ -368,10 +368,6 @@ function renderScreen21() {
   const screen = document.getElementById('screen-21');
   screen.innerHTML = '';
 
-  /* Verdict banner */
-  const businessResult = getState('s2.business_result') || '';
-  screen.appendChild(buildBusinessVerdictBanner(businessResult));
-
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
@@ -384,11 +380,15 @@ function renderScreen21() {
   title.textContent = 'DAL-X Simulation Result';
   screen.appendChild(title);
 
-  /* Subtitle */
-  const subtitle = document.createElement('p');
-  subtitle.className = 'screen-subtitle';
-  subtitle.textContent = 'The DAL-X Simulation Result contains:';
-  screen.appendChild(subtitle);
+  /* Business verdict banner */
+  const businessResult = getState('s2.business_result') || '';
+  screen.appendChild(buildBusinessVerdictBanner(businessResult));
+
+  /* Technical verdict banner (only if technical review was completed) */
+  const technicalResult = getState('s4.technical_result') || '';
+  if (technicalResult) {
+    screen.appendChild(buildTechnicalVerdictBanner(technicalResult));
+  }
 
   /* ── Result card ──────────────────────────────────────────────────────── */
   const card = document.createElement('div');

@@ -119,26 +119,26 @@ function buildBusinessVerdictBanner(resultKey) {
     potential_use_case: {
       variant: 'yes',
       verdict: 'YES',
-      label:   'This workflow needs DAL-X',
-      sub:     'The agent can initiate a consequential execution that must stop when authority is missing.',
+      label:   'This workflow has an enforcement gap DAL-X can close',
+      sub:     'A consequential execution reaches a downstream system with no gate stopping it when approval is missing. That gap is exactly what DAL-X enforces.',
     },
     not_required: {
       variant: 'no',
       verdict: 'NO',
-      label:   'DAL-X is not required for this workflow',
-      sub:     'The agent does not initiate a consequential downstream execution.',
+      label:   'DAL-X is not needed for this workflow',
+      sub:     'The agent produces recommendations, has no downstream system, or has no consequential effect. There is no execution gap for DAL-X to enforce.',
     },
     enforcement_not_established: {
       variant: 'no',
       verdict: 'NO',
-      label:   'Enforcement has not been established as a requirement',
-      sub:     'The enterprise currently allows execution to continue without authority.',
+      label:   'No enforcement gap identified',
+      sub:     'The enterprise does not require a gate before execution for this workflow. DAL-X enforces a gate — if no gate is required, there is nothing to enforce.',
     },
     more_info_required: {
       variant: 'inconclusive',
       verdict: 'INCONCLUSIVE',
-      label:   'More information is needed',
-      sub:     'The agent, execution, downstream system, consequence, or required response remains unknown.',
+      label:   'Cannot determine whether a gap exists',
+      sub:     'One or more required answers — agent, execution type, downstream system, consequence, or current enforcement status — are missing or unknown.',
     },
   };
   const cfg    = configs[resultKey] || configs.more_info_required;

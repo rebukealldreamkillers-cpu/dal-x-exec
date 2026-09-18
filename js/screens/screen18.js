@@ -153,6 +153,57 @@ function buildBulletSection(headingText, qKeys) {
   return section;
 }
 
+/* ── Technical verdict banner builder ────────────────────────────────────── */
+
+function buildTechnicalVerdictBanner(resultKey) {
+  const configs = {
+    supports_integration: {
+      variant: 'yes',
+      verdict: 'READY',
+      label:   'The technical path supports DAL-X integration',
+      sub:     'Both required integration points — submission before execution, enforcement at the downstream boundary — are in place or can be added.',
+    },
+    implementation_work: {
+      variant: 'inconclusive',
+      verdict: 'WORK REQUIRED',
+      label:   'Integration is possible but incomplete',
+      sub:     'The execution path can support DAL-X, but field mapping, API key storage, data handling, or downstream result recording still needs work.',
+    },
+    incomplete: {
+      variant: 'inconclusive',
+      verdict: 'INCOMPLETE',
+      label:   'Required technical information is missing',
+      sub:     'One or more integration questions remain unanswered. The owner of the agent service or downstream execution service needs to provide the missing answers.',
+    },
+    structural_failure: {
+      variant: 'no',
+      verdict: 'BLOCKED',
+      label:   'A structural requirement is not met',
+      sub:     'The reported execution path cannot place DAL-X before every governed downstream execution. Integration is not possible in its current form.',
+    },
+  };
+  const cfg    = configs[resultKey] || configs.incomplete;
+  const banner = document.createElement('div');
+  banner.className = `verdict-banner verdict-banner--${cfg.variant}`;
+
+  const verdict = document.createElement('div');
+  verdict.className = 'verdict-banner__verdict';
+  verdict.textContent = cfg.verdict;
+
+  const label = document.createElement('div');
+  label.className = 'verdict-banner__label';
+  label.textContent = cfg.label;
+
+  const sub = document.createElement('div');
+  sub.className = 'verdict-banner__sub';
+  sub.textContent = cfg.sub;
+
+  banner.appendChild(verdict);
+  banner.appendChild(label);
+  banner.appendChild(sub);
+  return banner;
+}
+
 /* ── Renderer ─────────────────────────────────────────────────────────────── */
 
 function renderScreen18() {
@@ -161,6 +212,9 @@ function renderScreen18() {
 
   const screen = document.getElementById('screen-18');
   screen.innerHTML = '';
+
+  /* Verdict banner */
+  screen.appendChild(buildTechnicalVerdictBanner(resultKey));
 
   /* Surface badge */
   const badge = document.createElement('div');
