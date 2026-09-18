@@ -436,7 +436,89 @@ function buildRiskProfilePanel() {
   table.appendChild(totalRow);
 
   panel.appendChild(table);
+  panel.appendChild(buildRiskLegend());
   return panel;
+}
+
+/* ── Risk score legend ───────────────────────────────────────────────────── */
+
+function buildRiskLegend() {
+  const legend = document.createElement('div');
+  legend.className = 'risk-legend';
+
+  /* ── Score factors ──────────────────────────────────────────────────── */
+  const factorsHeading = document.createElement('div');
+  factorsHeading.className = 'risk-legend__heading';
+  factorsHeading.textContent = 'How the score is calculated';
+  legend.appendChild(factorsHeading);
+
+  const factorsList = document.createElement('div');
+  factorsList.className = 'risk-legend__factors';
+
+  [
+    { name: 'Execution type',     range: '0 – 5 pts', },
+    { name: 'Downstream system',  range: '1 – 5 pts', },
+    { name: 'Consequences',       range: '0 – 8 pts (capped)', },
+  ].forEach(({ name, range }) => {
+    const row = document.createElement('div');
+    row.className = 'risk-legend__factor';
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'risk-legend__factor-name';
+    nameEl.textContent = name;
+
+    const rangeEl = document.createElement('span');
+    rangeEl.className = 'risk-legend__factor-range';
+    rangeEl.textContent = range;
+
+    row.appendChild(nameEl);
+    row.appendChild(rangeEl);
+    factorsList.appendChild(row);
+  });
+
+  legend.appendChild(factorsList);
+
+  const factorNote = document.createElement('p');
+  factorNote.className = 'risk-legend__factor-note';
+  factorNote.textContent =
+    'Higher-impact actions, more sensitive downstream systems, and more severe '
+    + 'consequences each increase the total. The three factors are added together.';
+  legend.appendChild(factorNote);
+
+  /* ── Risk bands ─────────────────────────────────────────────────────── */
+  const bandsHeading = document.createElement('div');
+  bandsHeading.className = 'risk-legend__bands-heading';
+  bandsHeading.textContent = 'Risk bands';
+  legend.appendChild(bandsHeading);
+
+  const bandsRow = document.createElement('div');
+  bandsRow.className = 'risk-legend__bands';
+
+  [
+    { band: 'none',     label: 'None',     range: '0' },
+    { band: 'low',      label: 'Low',      range: '1 – 3' },
+    { band: 'medium',   label: 'Medium',   range: '4 – 7' },
+    { band: 'high',     label: 'High',     range: '8 – 11' },
+    { band: 'critical', label: 'Critical', range: '≥ 12' },
+  ].forEach(({ band, label, range }) => {
+    const chip = document.createElement('div');
+    chip.className = `risk-band-chip risk-band-chip--${band}`;
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'risk-band-chip__name';
+    nameEl.textContent = label;
+
+    const rangeEl = document.createElement('div');
+    rangeEl.className = 'risk-band-chip__range';
+    rangeEl.textContent = range;
+
+    chip.appendChild(nameEl);
+    chip.appendChild(rangeEl);
+    bandsRow.appendChild(chip);
+  });
+
+  legend.appendChild(bandsRow);
+  return legend;
 }
 
 /* ── Renderer ────────────────────────────────────────────────────────────── */
