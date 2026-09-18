@@ -22,14 +22,15 @@ function renderScreen0() {
 
   const h1 = document.createElement('h1');
   h1.className = 'hero-headline';
-  h1.innerHTML = 'Your AI agents are executing.<br><em>Who authorized that?</em>';
+  h1.innerHTML = 'Your AI workflows are executing.<br><em>Who authorized that?</em>';
   heroBody.appendChild(h1);
 
   const sub = document.createElement('p');
   sub.className = 'hero-subhead';
   sub.textContent =
-    'Most enterprises have no required approval between what an AI agent '
-    + 'proposes and what the downstream system executes. '
+    'Most enterprises have no required approval between what an AI workflow '
+    + 'proposes and what the downstream system executes — '
+    + 'whether that workflow is a custom agent, an AI-powered product, or an automated pipeline. '
     + 'DAL-X enforces that approval.';
   heroBody.appendChild(sub);
 
@@ -66,7 +67,7 @@ function renderScreen0() {
     'font-size:var(--text-xl);font-weight:700;color:var(--color-text);'
     + 'margin-bottom:var(--space-2);line-height:1.3;';
   problemHeadline.textContent =
-    'When an AI agent takes a high-stakes action, what stopped it from acting without approval?';
+    'When an AI workflow takes a high-stakes action, what stopped it from executing without approval?';
   screen.appendChild(problemHeadline);
 
   const problemSub = document.createElement('p');
@@ -74,26 +75,26 @@ function renderScreen0() {
     'font-size:var(--text-sm);color:var(--color-text-secondary);'
     + 'margin-bottom:0;line-height:1.65;';
   problemSub.textContent =
-    'None of these incidents required an agent to malfunction, hallucinate, or be compromised. '
-    + 'Each agent operated exactly as designed. '
+    'None of these incidents required a malfunction, hallucination, or compromise. '
+    + 'Each workflow operated exactly as configured. '
     + 'The enterprise had no required approval step before the downstream system executed.';
   screen.appendChild(problemSub);
 
   const incidents = [
     {
       tag:      'Execution without approval',
-      headline: 'Treasury agent commits $2.3M in wire transfers. Finance learns hours after settlement.',
-      detail:   'The agent executed vendor payments on its own. No approval was requested, no reviewer was notified, and no one could intervene before funds were committed.',
+      headline: 'Treasury workflow commits $2.3M in wire transfers. Finance learns hours after settlement.',
+      detail:   'An AI-powered payment workflow executed vendor payments on its own. No approval was requested, no reviewer was notified, and no one could intervene before funds were committed.',
     },
     {
       tag:      'Execution without approval',
-      headline: 'Infrastructure agent modifies the live API gateway. Error rate reaches 40%.',
-      detail:   'A deployment agent applied a configuration change outside the approved release window. The change was not reviewed. It was not in scope. It executed anyway.',
+      headline: 'Infrastructure workflow modifies the live API gateway. Error rate reaches 40%.',
+      detail:   'A deployment automation applied a configuration change outside the approved release window. The change was not reviewed. It was not in scope. It executed anyway.',
     },
     {
       tag:      'Execution without approval',
-      headline: 'Customer agent sends campaign to 1.4M contacts. Wrong segment. Cannot be recalled.',
-      detail:   'An outreach agent triggered a bulk email to the full customer database instead of the intended trial cohort. Delivery was already underway before anyone was alerted.',
+      headline: 'Outreach workflow sends campaign to 1.4M contacts. Wrong segment. Cannot be recalled.',
+      detail:   'An AI-powered outreach tool triggered a bulk email to the full customer database instead of the intended trial cohort. Delivery was already underway before anyone was alerted.',
     },
   ];
 
@@ -129,8 +130,8 @@ function renderScreen0() {
   insight.className = 'insight-panel';
   insight.innerHTML = `
     <div class="insight-panel__quote">
-      <strong>These weren't AI failures. The agents weren't broken.</strong>
-      Each agent did exactly what it was configured to do.<br><br>
+      <strong>These weren't AI failures. The workflows weren't broken.</strong>
+      Each one did exactly what it was configured to do.<br><br>
       The enterprise had <em>no required approval</em> before execution.<br>
       No one could stop it. No record was required.<br>
       By the time anyone noticed, execution had already happened.
@@ -145,7 +146,7 @@ function renderScreen0() {
     {
       num:   '1',
       label: 'Submit',
-      desc:  'Before acting, the agent submits its proposed execution to DAL-X. The downstream system waits. Nothing executes yet.',
+      desc:  'Before acting, the workflow submits its proposed execution to DAL-X. The downstream system waits. Nothing executes yet.',
     },
     {
       num:   '2',
@@ -202,57 +203,62 @@ function renderScreen0() {
 
   const sessionSteps = [
     {
-      num:   '1',
-      name:  'The demonstration',
-      desc:  'You pick a real-world scenario. The gate responds to four situations: missing authorization, changed action, valid authorization, reused authorization. You see exactly how DAL-X behaves before committing any further time.',
-      why:   'The concept becomes concrete. You are not taking anyone\'s word for it.',
+      num:  '1',
+      name: 'The demonstration',
+      desc: 'You pick a real-world scenario. The gate responds to four situations: missing authorization, changed action, valid authorization, reused authorization. You see exactly how DAL-X behaves before committing any further time.',
+      why:  'The concept becomes concrete. You are not taking anyone\'s word for it.',
     },
     {
-      num:   '2',
-      name:  'The assessment',
-      desc:  'You describe your specific AI workflow: what the agent does, what system it acts on, the consequences of unauthorized execution, and whether an enforcement gate currently exists. Five factors are scored against a risk model to determine whether a gap is present and how serious it is.',
-      why:   'The assessment identifies whether DAL-X applies to your situation specifically — not AI agents in general.',
+      num:  '2',
+      name: 'The assessment',
+      desc: 'You describe a specific AI workflow — any product or automation where the AI takes an action in a downstream system rather than just making a recommendation. Five factors are scored to determine whether an enforcement gap is present and how serious it is.',
+      why:  'The assessment identifies whether DAL-X applies to your specific workflow, not AI in general. Any workflow where automation reaches a downstream system qualifies.',
     },
     {
-      num:   '3',
-      name:  'The configured simulation',
-      desc:  'You define your enterprise policy: what the agent may do autonomously, what requires review, and what must be blocked. The simulation runs your policy through the gate so you see DAL-X working for your scenario.',
-      why:   'This is where the engagement becomes specific to you. Jochanni Labs translates your policy into working trigger logic.',
+      num:  '3',
+      name: 'The configured simulation',
+      desc: 'You define your enterprise policy: what the workflow may do autonomously, what requires review, and what must be blocked. The simulation runs your policy through the gate so you see DAL-X working for your scenario, not a generic one.',
+      why:  'This is where the engagement becomes specific to you. Jochanni Labs translates your policy into working trigger logic.',
     },
   ];
 
-  const sessionGrid = document.createElement('div');
-  sessionGrid.style.cssText =
-    'display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));'
-    + 'gap:var(--space-4);margin-top:var(--space-4);margin-bottom:var(--space-2);';
+  const sessionCard = document.createElement('div');
+  sessionCard.className = 'card';
+  sessionCard.style.marginTop = 'var(--space-4)';
 
-  sessionSteps.forEach(step => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.style.display = 'flex';
-    card.style.flexDirection = 'column';
-    card.style.gap = 'var(--space-3)';
+  sessionSteps.forEach((step, i) => {
+    if (i > 0) {
+      const hr = document.createElement('hr');
+      hr.className = 'divider';
+      sessionCard.appendChild(hr);
+    }
+
+    const item = document.createElement('div');
+    item.style.cssText =
+      'display:grid;grid-template-columns:2rem 1fr;'
+      + 'gap:var(--space-2) var(--space-5);align-items:start;';
 
     const numEl = document.createElement('div');
     numEl.style.cssText =
-      'font-size:2rem;font-weight:900;line-height:1;'
+      'font-size:1.5rem;font-weight:900;line-height:1.2;'
       + 'color:var(--color-accent);letter-spacing:-0.02em;';
     numEl.textContent = step.num;
 
+    const right = document.createElement('div');
+
     const nameEl = document.createElement('div');
     nameEl.style.cssText =
-      'font-size:var(--text-base);font-weight:700;color:var(--color-text);';
+      'font-size:var(--text-base);font-weight:700;'
+      + 'color:var(--color-text);margin-bottom:var(--space-2);';
     nameEl.textContent = step.name;
 
     const descEl = document.createElement('div');
     descEl.style.cssText =
-      'font-size:var(--text-sm);color:var(--color-text-secondary);line-height:1.6;';
+      'font-size:var(--text-sm);color:var(--color-text-secondary);'
+      + 'line-height:1.65;margin-bottom:var(--space-3);';
     descEl.textContent = step.desc;
 
     const whyWrap = document.createElement('div');
-    whyWrap.style.cssText =
-      'margin-top:auto;padding-top:var(--space-3);'
-      + 'border-top:1px solid var(--color-border);';
 
     const whyLabel = document.createElement('span');
     whyLabel.style.cssText =
@@ -268,14 +274,16 @@ function renderScreen0() {
     whyWrap.appendChild(whyLabel);
     whyWrap.appendChild(whyText);
 
-    card.appendChild(numEl);
-    card.appendChild(nameEl);
-    card.appendChild(descEl);
-    card.appendChild(whyWrap);
-    sessionGrid.appendChild(card);
+    right.appendChild(nameEl);
+    right.appendChild(descEl);
+    right.appendChild(whyWrap);
+
+    item.appendChild(numEl);
+    item.appendChild(right);
+    sessionCard.appendChild(item);
   });
 
-  screen.appendChild(sessionGrid);
+  screen.appendChild(sessionCard);
 
   /* ── What you are about to see ───────────────────────────────────────── */
   appendSectionLabel(screen, 'What you are about to see');
@@ -366,8 +374,9 @@ function renderScreen0() {
     'font-size:var(--text-sm);color:var(--color-text-secondary);'
     + 'margin-bottom:var(--space-4);line-height:1.65;';
   assessIntro.textContent =
-    'The discovery assessment evaluates your specific AI workflow across five factors: '
-    + 'the agent type, the action it proposes, the downstream system it acts on, '
+    'The discovery assessment evaluates any AI workflow — a custom-built agent, an AI-powered product, '
+    + 'or an automated pipeline — across five factors: '
+    + 'the workflow type, the action it proposes, the downstream system it acts on, '
     + 'the consequences of unauthorized execution, and whether an enforcement gate currently exists. '
     + 'Each factor carries independent weight. The combination determines the risk profile and whether an enforcement gap is present.';
   screen.appendChild(assessIntro);
