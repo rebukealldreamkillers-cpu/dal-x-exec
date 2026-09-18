@@ -34,6 +34,18 @@ function buildConfigs(ex) {
         + `This would have proceeded with no record that authorization was ever requested, `
         + `reviewed, or granted. There was no way to stop it.`,
       separationTable: null,
+      flowchart: [
+        { state: 'done',    icon: '1', label: 'AI agent proposes action',
+          detail: `${ag} wants to execute ${a} on ${t}` },
+        { state: 'skip',    icon: '–', label: 'Submit to DAL-X for evaluation',
+          detail: 'Skipped — no submission was made before execution',           dalx: true },
+        { state: 'skip',    icon: '–', label: 'Review and authorization',
+          detail: 'None obtained' },
+        { state: 'error',   icon: '✕', label: 'DAL-X enforcement gate',
+          detail: 'No authorization_id provided — required field missing',        dalx: true },
+        { state: 'block',   icon: '✕', label: 'Execution blocked',
+          detail: 'Downstream system not called' },
+      ],
       prev:         'screen-1',
       next:         'screen-3',
       onBeforeNext: () => renderGateScreen('screen-3'),
@@ -57,6 +69,18 @@ function buildConfigs(ex) {
         + `${wa} instead. The ${au} approved one specific action, `
         + `not every action the agent might attempt on ${t}.`,
       separationTable: null,
+      flowchart: [
+        { state: 'done',    icon: '1', label: 'AI agent proposes action',
+          detail: `${ag} attempts ${wa} on ${t}` },
+        { state: 'done',    icon: '2', label: 'Submit to DAL-X for evaluation',
+          detail: `Submission made for ${a}`,                                     dalx: true },
+        { state: 'done',    icon: '3', label: 'Review and authorization',
+          detail: `${au} approved — authorization issued for ${a} only` },
+        { state: 'error',   icon: '✕', label: 'DAL-X enforcement gate',
+          detail: `Action mismatch — authorized: ${a}, attempted: ${wa}`,         dalx: true },
+        { state: 'block',   icon: '✕', label: 'Execution blocked',
+          detail: 'Downstream system not called' },
+      ],
       prev: 'screen-2',
       next: 'screen-4',
     },
@@ -82,6 +106,18 @@ function buildConfigs(ex) {
         ],
         note: 'DAL-X gate acceptance does not prove that a real downstream system completed execution.',
       },
+      flowchart: [
+        { state: 'done',    icon: '1', label: 'AI agent proposes action',
+          detail: `${ag} proposes ${a} on ${t}` },
+        { state: 'done',    icon: '2', label: 'Submit to DAL-X for evaluation',
+          detail: 'Submission accepted and routed for review',                    dalx: true },
+        { state: 'done',    icon: '3', label: 'Review and authorization',
+          detail: `${au} approved — active authorization issued` },
+        { state: 'success', icon: '✓', label: 'DAL-X enforcement gate',
+          detail: 'Authorization active, action and target match, not expired',   dalx: true },
+        { state: 'execute', icon: '✓', label: 'Execution permitted',
+          detail: 'Downstream system may proceed' },
+      ],
       prev: 'screen-3',
       next: 'screen-5',
     },
@@ -103,6 +139,18 @@ function buildConfigs(ex) {
         + `additional ${a} executions on ${t}, `
         + `each one beyond what the ${au} ever intended to approve.`,
       separationTable: null,
+      flowchart: [
+        { state: 'done',    icon: '1', label: 'AI agent proposes action',
+          detail: `${ag} attempts ${a} on ${t} again` },
+        { state: 'done',    icon: '2', label: 'Submit to DAL-X for evaluation',
+          detail: 'Same authorization_id reused from first request',              dalx: true },
+        { state: 'done',    icon: '3', label: 'Review and authorization',
+          detail: 'Authorization already consumed on first accepted use' },
+        { state: 'error',   icon: '✕', label: 'DAL-X enforcement gate',
+          detail: 'Single-use token already consumed — cannot reuse',             dalx: true },
+        { state: 'block',   icon: '✕', label: 'Execution blocked',
+          detail: 'Downstream system not called' },
+      ],
       prev: 'screen-4',
       next: 'screen-6',
     },
@@ -168,6 +216,11 @@ function renderGateScreen(screenId) {
   setup.className = 'callout callout--neutral';
   setup.textContent = cfg.setup;
   screen.appendChild(setup);
+
+  /* Process flowchart */
+  if (cfg.flowchart) {
+    screen.appendChild(buildGateFlowchart(cfg.flowchart));
+  }
 
   /* Decision state block */
   screen.appendChild(createDecisionBlock(cfg.decision));

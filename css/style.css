@@ -906,6 +906,150 @@ textarea.form-control {
   color: #f97316;
 }
 
+/* ─── Gate process flowchart (Screens 2–5) ───────────────────────────────── */
+
+.gate-flow {
+  display: flex;
+  flex-direction: column;
+  margin-top: var(--space-4);
+}
+
+.gate-flow__step {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 0 var(--space-3);
+}
+
+.gate-flow__marker-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gate-flow__marker {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  flex-shrink: 0;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.gate-flow__connector {
+  width: 2px;
+  flex: 1;
+  background: var(--color-border);
+  min-height: var(--space-5);
+  margin: 3px 0;
+}
+
+.gate-flow__content {
+  padding-bottom: var(--space-5);
+}
+
+.gate-flow__label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.5;
+  padding-top: 7px;  /* vertically align with centre of marker */
+}
+
+.gate-flow__detail {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin-top: 3px;
+  line-height: 1.55;
+}
+
+.gate-flow__dalx-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-primary-light);
+  border: 1px solid var(--color-primary-light);
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-left: var(--space-2);
+  vertical-align: middle;
+  opacity: 0.85;
+}
+
+/* Step state: done (completed step) */
+.gate-flow__step--done .gate-flow__marker {
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+/* Step state: skip (bypassed — shown muted with dashed border) */
+.gate-flow__step--skip .gate-flow__marker {
+  border-style: dashed;
+  opacity: 0.38;
+}
+.gate-flow__step--skip .gate-flow__label,
+.gate-flow__step--skip .gate-flow__detail {
+  opacity: 0.38;
+}
+.gate-flow__step--skip .gate-flow__connector {
+  opacity: 0.25;
+}
+
+/* Step state: error (DAL-X check failed) */
+.gate-flow__step--error .gate-flow__marker {
+  border-color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+  color: #f87171;
+}
+.gate-flow__step--error .gate-flow__label {
+  color: #f87171;
+}
+.gate-flow__step--error .gate-flow__connector {
+  background: #f87171;
+  opacity: 0.35;
+}
+
+/* Step state: success (DAL-X check passed) */
+.gate-flow__step--success .gate-flow__marker {
+  border-color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+  color: #4ade80;
+}
+.gate-flow__step--success .gate-flow__label {
+  color: #4ade80;
+}
+.gate-flow__step--success .gate-flow__connector {
+  background: #4ade80;
+  opacity: 0.35;
+}
+
+/* Step state: block (final — execution stopped) */
+.gate-flow__step--block .gate-flow__marker {
+  border-color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+  color: #f87171;
+}
+.gate-flow__step--block .gate-flow__label {
+  color: var(--color-text-secondary);
+}
+
+/* Step state: execute (final — execution permitted) */
+.gate-flow__step--execute .gate-flow__marker {
+  border-color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+  color: #4ade80;
+}
+.gate-flow__step--execute .gate-flow__label {
+  color: var(--color-text-secondary);
+}
+
 /* ─── Lead capture modal ─────────────────────────────────────────────────── */
 
 .modal-overlay {

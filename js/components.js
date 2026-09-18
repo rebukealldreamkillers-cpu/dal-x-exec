@@ -473,6 +473,85 @@ function createStatusChip(state, label) {
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
+   GATE PROCESS FLOWCHART  (Screens 2–5)
+   Vertical stepper showing the end-to-end DAL-X process with each step
+   carrying a state: 'done' | 'skip' | 'error' | 'success' | 'block' | 'execute'
+   DAL-X integration points are flagged with dalx: true.
+════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * buildGateFlowchart(steps)
+ * Returns a .gate-flow section showing the end-to-end process.
+ *
+ * @param {Array<{state: string, icon: string, label: string, detail?: string, dalx?: boolean}>} steps
+ * @returns {HTMLDivElement}
+ */
+function buildGateFlowchart(steps) {
+  const wrapper = document.createElement('div');
+  wrapper.style.marginTop = 'var(--space-6)';
+
+  const heading = document.createElement('p');
+  heading.className = 'section-label';
+  heading.textContent = 'Where DAL-X operates in this process';
+  heading.style.marginBottom = 'var(--space-3)';
+  wrapper.appendChild(heading);
+
+  const flow = document.createElement('div');
+  flow.className = 'gate-flow';
+
+  steps.forEach((step, i) => {
+    const stepEl = document.createElement('div');
+    stepEl.className = `gate-flow__step gate-flow__step--${step.state}`;
+
+    /* Marker column: circle + vertical connector (except on last step) */
+    const markerCol = document.createElement('div');
+    markerCol.className = 'gate-flow__marker-col';
+
+    const marker = document.createElement('div');
+    marker.className = 'gate-flow__marker';
+    marker.textContent = step.icon;
+    markerCol.appendChild(marker);
+
+    if (i < steps.length - 1) {
+      const connector = document.createElement('div');
+      connector.className = 'gate-flow__connector';
+      markerCol.appendChild(connector);
+    }
+
+    stepEl.appendChild(markerCol);
+
+    /* Content column: label + optional detail */
+    const content = document.createElement('div');
+    content.className = 'gate-flow__content';
+
+    const labelEl = document.createElement('div');
+    labelEl.className = 'gate-flow__label';
+    labelEl.textContent = step.label;
+
+    if (step.dalx) {
+      const badge = document.createElement('span');
+      badge.className = 'gate-flow__dalx-badge';
+      badge.textContent = 'DAL-X';
+      labelEl.appendChild(badge);
+    }
+    content.appendChild(labelEl);
+
+    if (step.detail) {
+      const detailEl = document.createElement('div');
+      detailEl.className = 'gate-flow__detail';
+      detailEl.textContent = step.detail;
+      content.appendChild(detailEl);
+    }
+
+    stepEl.appendChild(content);
+    flow.appendChild(stepEl);
+  });
+
+  wrapper.appendChild(flow);
+  return wrapper;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
    LEAD CAPTURE MODAL
    Shown on Screen 8 when a gap outcome is detected and no lead is captured yet.
    Blocks the result view until name / work email / company are submitted.
