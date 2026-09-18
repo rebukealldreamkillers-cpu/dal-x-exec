@@ -272,7 +272,11 @@ function renderScreen18() {
   const notice = document.createElement('div');
   notice.className = 'callout callout--info';
   notice.style.marginTop = 'var(--space-5)';
-  notice.textContent = 'This result is not called a pilot candidate.';
+  notice.textContent =
+    'These answers are self-reported by your technical team. '
+    + 'Jochanni Labs reviews this integration picture with you during the engagement '
+    + 'to validate the reported path before any recommendation is finalized. '
+    + 'This result is not called a pilot candidate.';
   screen.appendChild(notice);
 
   /* Nav */

@@ -94,10 +94,22 @@ function renderScreen6() {
   ctaGroup.className = 'cta-group';
   ctaGroup.style.marginTop = 'var(--space-8)';
 
-  /* Primary CTA: Request a guided DAL-X assessment */
+  /* Positioning note above CTAs */
+  const assessNote = document.createElement('p');
+  assessNote.style.cssText =
+    'font-size:var(--text-sm);color:var(--color-text-secondary);'
+    + 'line-height:1.65;margin-bottom:var(--space-5);';
+  assessNote.textContent =
+    'The next section is the discovery assessment — the same structured questions '
+    + 'Jochanni Labs works through with your team during a real engagement. '
+    + 'Walk through it for your specific workflow. '
+    + 'The results are preliminary and self-reported; Jochanni Labs reviews them with you before any recommendation is finalized.';
+  ctaGroup.appendChild(assessNote);
+
+  /* Primary CTA: Continue to discovery assessment */
   const assessBtn = document.createElement('button');
   assessBtn.className = 'btn btn--primary btn--lg btn--full';
-  assessBtn.textContent = 'Request a guided DAL-X assessment →';
+  assessBtn.textContent = 'Continue to the discovery assessment →';
   assessBtn.addEventListener('click', () => showScreen('screen-7'));
   ctaGroup.appendChild(assessBtn);
 

@@ -397,6 +397,18 @@ function renderScreen21() {
     screen.appendChild(buildTechnicalVerdictBanner(technicalResult));
   }
 
+  /* Preliminary findings notice */
+  const prelimNote = document.createElement('div');
+  prelimNote.className = 'callout callout--info';
+  prelimNote.style.marginBottom = 'var(--space-4)';
+  prelimNote.textContent =
+    'These are preliminary findings based on self-reported answers. '
+    + 'They have not been independently verified. '
+    + 'In a live engagement, Jochanni Labs reviews these findings with your team — '
+    + 'validating the reported integration path, confirming the risk profile, '
+    + 'and determining whether a pilot is appropriate before any recommendation is finalized.';
+  screen.appendChild(prelimNote);
+
   /* ── Result card ──────────────────────────────────────────────────────── */
   const card = document.createElement('div');
   card.className = 'card';

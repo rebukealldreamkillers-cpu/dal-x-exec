@@ -84,9 +84,21 @@ function renderScreen7() {
   const subtitle = document.createElement('p');
   subtitle.className = 'screen-subtitle';
   subtitle.textContent =
-    'Describe the AI agent, the proposed execution, and the enterprise\'s '
-    + 'required response when authority is missing.';
+    'These are the five questions Jochanni Labs works through with your team '
+    + 'to identify whether an AI workflow has an enforcement gap. '
+    + 'Walk through them for your specific use case.';
   screen.appendChild(subtitle);
+
+  /* Methodology notice */
+  const methodNote = document.createElement('div');
+  methodNote.className = 'callout callout--info';
+  methodNote.style.marginBottom = 'var(--space-6)';
+  methodNote.textContent =
+    'In a live engagement, a Jochanni Labs consultant facilitates this session '
+    + 'alongside your technical and business stakeholders. '
+    + 'Your answers here are self-reported and unvalidated. '
+    + 'Jochanni Labs reviews and refines them with your team before any recommendation is finalized.';
+  screen.appendChild(methodNote);
 
   /* Form card */
   const card = document.createElement('div');

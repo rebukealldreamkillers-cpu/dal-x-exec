@@ -44,7 +44,7 @@ function renderScreen0() {
 
   const skipBtn = document.createElement('button');
   skipBtn.className = 'btn btn--hero-ghost btn--lg';
-  skipBtn.textContent = 'Start Assessment →';
+  skipBtn.textContent = 'Preview the Assessment →';
   skipBtn.addEventListener('click', () => showScreen('screen-7'));
   heroCtas.appendChild(skipBtn);
 
@@ -203,12 +203,13 @@ function renderScreen0() {
   const demoIntro = document.createElement('p');
   demoIntro.style.cssText =
     'font-size:var(--text-sm);color:var(--color-text-secondary);'
-    + 'margin-bottom:var(--space-4);line-height:1.65;';
+    + 'margin-bottom:var(--space-2);line-height:1.65;';
   demoIntro.textContent =
     'You will pick a real-world scenario on the next screen. '
-    + 'The simulation then walks you through four situations at the gate, one after another. '
-    + 'Each situation shows a specific way the gate responds to that scenario '
-    + 'and what happens to the downstream system as a result.';
+    + 'The simulation walks you through four situations at the gate and shows exactly how the gate responds to each one. '
+    + 'After the demonstration, the tool transitions into the discovery assessment — '
+    + 'the same structured questions Jochanni Labs works through with your team '
+    + 'to identify whether an enforcement gap exists in your specific environment.';
   screen.appendChild(demoIntro);
 
   const behaviors = [
@@ -277,6 +278,31 @@ function renderScreen0() {
     + 'before the downstream system proceeded.';
   screen.appendChild(scope);
 
+  /* ── The discovery assessment ─────────────────────────────────────────── */
+  appendSectionLabel(screen, 'The discovery assessment');
+
+  const assessIntro = document.createElement('p');
+  assessIntro.style.cssText =
+    'font-size:var(--text-sm);color:var(--color-text-secondary);'
+    + 'margin-bottom:var(--space-4);line-height:1.65;';
+  assessIntro.textContent =
+    'The discovery assessment evaluates your specific AI workflow across five factors: '
+    + 'the agent type, the action it proposes, the downstream system it acts on, '
+    + 'the consequences of unauthorized execution, and whether an enforcement gate currently exists. '
+    + 'Each factor carries independent weight. The combination determines the risk profile and whether an enforcement gap is present.';
+  screen.appendChild(assessIntro);
+
+  const assessNote = document.createElement('div');
+  assessNote.className = 'callout callout--info';
+  assessNote.style.marginBottom = 'var(--space-4)';
+  assessNote.textContent =
+    'These answers are self-reported and unvalidated. '
+    + 'In a live engagement, a Jochanni Labs consultant facilitates this session '
+    + 'alongside your technical and business stakeholders. '
+    + 'Results shown here are preliminary findings — '
+    + 'Jochanni Labs reviews them with you before any recommendation is finalized.';
+  screen.appendChild(assessNote);
+
   /* CTA into demo */
   const demoCard = document.createElement('div');
   demoCard.className = 'card';
@@ -292,7 +318,8 @@ function renderScreen0() {
     'font-size:var(--text-sm);color:var(--color-text-secondary);margin-bottom:var(--space-5);';
   demoDesc.textContent =
     'Choose a real-world scenario and walk through each gate response. '
-    + 'After the simulation, you can request a guided assessment with Jochanni Labs.';
+    + 'The demonstration runs in about three minutes. '
+    + 'The discovery assessment follows — work through it at your own pace, then review the findings with Jochanni Labs.';
 
   const demoBtn = document.createElement('button');
   demoBtn.className = 'btn btn--primary btn--lg';
