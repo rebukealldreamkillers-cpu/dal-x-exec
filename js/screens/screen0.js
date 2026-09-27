@@ -4,7 +4,7 @@
  *   2. The Problem (three glass alert cards, live pulse indicators)
  *   3. The Solution (Agent → DAL-X Wedge → Downstream chain)
  *   4. How It Works (three-step glassmorphic cards)
- *   5. The Proof (immutable authority chain statement + evidence badges)
+ *   5. The Proof (verifiable authority record statement + evidence badges)
  *   6. Final CTA
  *
  * Preserves all downstream routing: primary CTAs → screen-1 (demo)
@@ -270,7 +270,7 @@ function buildProofSection() {
   const text = document.createElement('div');
   text.className = 'proof-statement__text';
   text.innerHTML =
-    `Every governed execution produces an <em>immutable authority chain</em>.`;
+    `Every governed execution produces a <em>verifiable authority record</em>.`;
   section.appendChild(text);
 
   const badges = document.createElement('div');
