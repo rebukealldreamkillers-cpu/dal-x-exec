@@ -120,7 +120,7 @@ function renderScreen6() {
   screen.appendChild(win);
 
   screen.appendChild(buildAnnotationList([
-    { num: 1, text: 'The downstream banking system called DAL-X before processing the wire. The agent cannot bypass this -- if the call is absent, execution is blocked.' },
+    { num: 1, text: 'The downstream banking system called DAL-X before processing the wire. The agent cannot bypass this. If the call is absent, execution is blocked.' },
     { num: 2, text: 'This is the only condition that matters. False means the wire is blocked, regardless of what the agent, the reviewer, or anyone else wants.' },
     { num: 3, text: 'DAL-X writes a receipt for every enforcement call, accepted or rejected.' },
     { num: 4, text: 'From agent output to execution receipt, every step is timestamped and permanent. This is the complete record an auditor would examine.' },

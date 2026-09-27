@@ -113,7 +113,7 @@ function renderScreen2() {
   screen.appendChild(buildAnnotationList([
     { num: 1, text: 'Every registered agent\'s output lands here before it can execute.' },
     { num: 2, text: 'The $500K+ trigger rule requires a lead reviewer. Standard reviewers cannot approve this item.' },
-    { num: 3, text: 'Queue dwell time is timestamped and part of the permanent record. Submissions cannot be silently removed.' },
+    { num: 3, text: 'How long each submission sits in the queue is timestamped and part of the permanent record. Submissions cannot be silently removed.' },
   ]));
 
   const nav = document.createElement('nav');
@@ -288,14 +288,14 @@ function renderScreen3() {
 
     trPanel.appendChild(buildTriggerTable([
       {
-        name:        'Wire Transfer — $500K+',
+        name:        'Wire Transfer: $500K+',
         severity:    'HIGH_RISK',
         controlling: true,
         detail:      'currency_threshold ≥ $500,000 USD',
         annNum:      2,
       },
       {
-        name:        'Wire Transfer — $10K+',
+        name:        'Wire Transfer: $10K+',
         severity:    'NEEDS_REVIEW',
         controlling: false,
         detail:      'currency_threshold ≥ $10,000 USD',
@@ -372,8 +372,8 @@ function renderScreen3() {
   screen.appendChild(win);
 
   screen.appendChild(buildAnnotationList([
-    { num: 1, text: 'Agent output, trigger logic, drift signals, and timeline -- all in one view.' },
-    { num: 2, text: 'The controlling rule sets the review tier. The reviewer cannot lower it -- only approve, reject, escalate, or request revision.' },
+    { num: 1, text: 'Agent output, trigger logic, drift signals, and timeline. All in one view.' },
+    { num: 2, text: 'The controlling rule sets the review tier. The reviewer cannot lower it, only approve, reject, escalate, or request revision.' },
     { num: 3, text: 'DAL-X compares each submission against the agent\'s baseline. No drift here means the reviewer can act immediately. Drift would escalate the authority tier.' },
     { num: 4, text: 'Every event is timestamped as it happens. The timeline cannot be edited.' },
   ]));
