@@ -322,10 +322,10 @@ function renderScreen1() {
 
   /* Annotations list */
   const annotations = buildAnnotationList([
-    { num: 1, text: 'Blocked by default. Every submission to DAL-X is blocked from execution until a valid authorization exists. The agent cannot proceed.' },
-    { num: 2, text: 'Exact agent output. The reviewer sees precisely what the agent said. Nothing is summarized or translated.' },
-    { num: 3, text: 'Highest severity wins. Three rules matched, but only the highest-severity result controls the outcome. This submission requires a lead reviewer.' },
-    { num: 4, text: 'Review required. The submission is now in the queue. No execution can occur until a reviewer acts and an authorization is issued.' },
+    { num: 1, text: 'Blocked until authorized. Every DAL-X submission is held from execution until a valid authorization exists. The agent cannot proceed.' },
+    { num: 2, text: 'The reviewer sees exactly what the agent said. No summaries, no paraphrasing.' },
+    { num: 3, text: 'Three rules matched. The highest severity controls -- this submission requires a lead reviewer.' },
+    { num: 4, text: 'The submission is now in the queue. Execution is blocked until a reviewer acts and an authorization is issued.' },
   ]);
   screen.appendChild(annotations);
 

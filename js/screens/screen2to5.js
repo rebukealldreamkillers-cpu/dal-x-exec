@@ -111,9 +111,9 @@ function renderScreen2() {
   screen.appendChild(win);
 
   screen.appendChild(buildAnnotationList([
-    { num: 1, text: 'Every governed submission. Every action proposed by a DAL-X-registered agent appears here before execution is permitted to proceed.' },
-    { num: 2, text: 'Lead reviewer required. The $500K+ trigger rule requires a lead reviewer. Standard reviewers see this item but cannot approve it.' },
-    { num: 3, text: 'Timestamped at intake. Queue dwell time is part of the immutable governance record. No submission can be quietly aged out.' },
+    { num: 1, text: 'Every registered agent\'s output lands here before it can execute.' },
+    { num: 2, text: 'The $500K+ trigger rule requires a lead reviewer. Standard reviewers cannot approve this item.' },
+    { num: 3, text: 'Queue dwell time is timestamped and part of the permanent record. Submissions cannot be silently removed.' },
   ]));
 
   const nav = document.createElement('nav');
@@ -337,7 +337,7 @@ function renderScreen3() {
     const dResult = document.createElement('p');
     dResult.className = 'wedge-drift-result';
     dResult.textContent =
-      'No drift detected. This submission is consistent with the agent\'s established behavioral baseline. No drift acknowledgement is required before approval.';
+      'No drift detected. This submission matches the agent\'s baseline. Approval can proceed.';
     dResultWrap.appendChild(dResult);
     dResultWrap.appendChild(annBadge(3));
     driftPanel.appendChild(dResultWrap);
@@ -372,10 +372,10 @@ function renderScreen3() {
   screen.appendChild(win);
 
   screen.appendChild(buildAnnotationList([
-    { num: 1, text: 'Complete picture. The reviewer sees everything in one place: agent output, trigger logic, drift signals, and the full timeline. Nothing is withheld.' },
-    { num: 2, text: 'Authority requirement established. The controlling rule determines the review tier. The reviewer cannot lower this requirement. They can only approve, reject, escalate, or request revision.' },
-    { num: 3, text: 'Drift detection. DAL-X compares each submission against the agent\'s behavioral baseline. No drift here means the reviewer can act without an additional acknowledgement step. Drift would escalate the authority requirement.' },
-    { num: 4, text: 'Immutable record. Every event is timestamped as it happens. The timeline cannot be edited. This is the audit artifact.' },
+    { num: 1, text: 'Agent output, trigger logic, drift signals, and timeline -- all in one view.' },
+    { num: 2, text: 'The controlling rule sets the review tier. The reviewer cannot lower it -- only approve, reject, escalate, or request revision.' },
+    { num: 3, text: 'DAL-X compares each submission against the agent\'s baseline. No drift here means the reviewer can act immediately. Drift would escalate the authority tier.' },
+    { num: 4, text: 'Every event is timestamped as it happens. The timeline cannot be edited.' },
   ]));
 
   const nav = document.createElement('nav');
@@ -389,7 +389,7 @@ function renderScreen3() {
 
   const nextBtn = document.createElement('button');
   nextBtn.className = 'btn btn--primary';
-  nextBtn.textContent = 'Approve the Submission →';
+  nextBtn.textContent = 'Make the Decision →';
   nextBtn.addEventListener('click', () => showScreen('screen-4'));
   nav.appendChild(nextBtn);
 
@@ -585,9 +585,9 @@ function renderScreen4() {
   screen.appendChild(win);
 
   screen.appendChild(buildAnnotationList([
-    { num: 1, text: 'Minimum dwell time enforced. DAL-X prevents approvals until the reviewer has spent a defined minimum on the workbench. The elapsed time is recorded in the governance timeline.' },
-    { num: 2, text: 'Mandatory reason. An approval without a reason cannot be submitted. The reason is written verbatim to the immutable decision record. It travels with the authorization ID.' },
-    { num: 3, text: 'Segregation of duties. A reviewer cannot approve their own submission. DAL-X enforces this in code. The check runs at submission time, not at policy review.' },
+    { num: 1, text: 'DAL-X blocks approval until the reviewer has spent a minimum time on the workbench. Elapsed time is recorded.' },
+    { num: 2, text: 'A reason is required. It is written verbatim into the decision record and permanently linked to the authorization.' },
+    { num: 3, text: 'A reviewer cannot approve their own submission. DAL-X enforces this in code, not policy.' },
   ]));
 
   const nav = document.createElement('nav');
