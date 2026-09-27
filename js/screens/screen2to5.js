@@ -1,388 +1,806 @@
-/* ─── Screens 2 to 5: Gate Demonstrations ────────────────────────────────
- * Each screen shows one enforcement outcome using an animated gate
- * pipeline. Reads s1.* fields written by screen1.js. Preserves navigation
- * to screen-1, screen-3, screen-4, screen-5, and screen-6.
- */
-
-function getExampleData() {
-  const key = getState('s1.example') || 'infrastructure';
-  return EXAMPLES[key] || EXAMPLES.infrastructure;
-}
-
-/* ── Reusable animated pipeline ────────────────────────────────────────── */
-
-/**
- * buildGatePipeline(config)
- * Renders the animated agent → gate → downstream pipeline.
+/* ─── Screens 2 to 5: DAL-X-Wedge product mockups ─────────────────────────
+ * Fixed scenario: $650,000 wire transfer submitted by treasury-agent-v1,
+ * reviewed by S. Chen, approved with an authorization token issued.
+ * Each screen shows a different view of the same product handling this
+ * one submission, annotated with numbered callouts.
  *
- * @param {object} config
- * @param {string} config.agentLabel
- * @param {string} config.actionLabel
- * @param {string} config.targetLabel
- * @param {boolean} config.hasToken
- * @param {boolean} config.tokenValid
- * @param {boolean} [config.tokenConsumed]
- * @param {boolean} [config.tokenExpired]
- * @param {'accepted'|'rejected'} config.outcome
- * @param {string} config.rejectionReason
- * @param {string} config.executionNote
- * @returns {HTMLDivElement}
+ * Depends on shared helpers defined in screen1.js:
+ *   buildSurfaceBadge, buildStepIndicator, buildWedgeWindow,
+ *   buildAnnotationList, annBadge, buildTriggerTable, WEDGE_SCENARIO
  */
-function buildGatePipeline(config) {
-  const wrap = document.createElement('div');
-  wrap.className = `gate-pipeline gate-pipeline--${config.outcome}`;
-  if (config.hasToken)      wrap.classList.add('gate-pipeline--has-token');
-  if (config.tokenConsumed) wrap.classList.add('gate-pipeline--token-consumed');
-  if (config.tokenExpired)  wrap.classList.add('gate-pipeline--token-expired');
 
-  /* Agent node */
-  const agent = document.createElement('div');
-  agent.className = 'gate-pipeline__node gate-pipeline__node--agent';
-  agent.innerHTML = `
-    <div class="gate-pipeline__node-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/>
-        <path d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5" stroke="currentColor"
-              stroke-width="1.8" stroke-linecap="round"/>
-      </svg>
-    </div>
-    <div class="gate-pipeline__node-title">Agent</div>
-    <div class="gate-pipeline__node-sub">${config.agentLabel}</div>
-  `;
-  wrap.appendChild(agent);
+/* ── Screen 2: Review Queue ───────────────────────────────────────────── */
 
-  /* Connector: agent to gate */
-  const conn1 = document.createElement('div');
-  conn1.className = 'gate-pipeline__connector gate-pipeline__connector--in';
-
-  const packet = document.createElement('div');
-  packet.className = 'gate-pipeline__packet';
-  packet.setAttribute('aria-hidden', 'true');
-  conn1.appendChild(packet);
-
-  if (config.hasToken) {
-    const token = document.createElement('div');
-    token.className = 'gate-pipeline__token';
-    if (!config.tokenValid) token.classList.add('gate-pipeline__token--invalid');
-    token.textContent = config.tokenConsumed
-      ? 'authorization_id (used)'
-      : 'authorization_id';
-    conn1.appendChild(token);
-  }
-
-  const actionTag = document.createElement('div');
-  actionTag.className = 'gate-pipeline__action-tag';
-  actionTag.textContent = config.actionLabel;
-  conn1.appendChild(actionTag);
-
-  wrap.appendChild(conn1);
-
-  /* Gate node */
-  const gate = document.createElement('div');
-  gate.className = 'gate-pipeline__node gate-pipeline__node--gate';
-  gate.innerHTML = `
-    <div class="gate-pipeline__node-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-3z"
-              stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-      </svg>
-    </div>
-    <div class="gate-pipeline__node-title">DAL-X gate</div>
-    <div class="gate-pipeline__node-sub">${config.outcome === 'accepted' ? 'Accepted' : 'Rejected'}</div>
-  `;
-  wrap.appendChild(gate);
-
-  /* Connector: gate to downstream */
-  const conn2 = document.createElement('div');
-  conn2.className = 'gate-pipeline__connector gate-pipeline__connector--out';
-
-  if (config.outcome === 'accepted') {
-    const packet2 = document.createElement('div');
-    packet2.className = 'gate-pipeline__packet gate-pipeline__packet--out';
-    packet2.setAttribute('aria-hidden', 'true');
-    conn2.appendChild(packet2);
-  }
-
-  wrap.appendChild(conn2);
-
-  /* Downstream node */
-  const down = document.createElement('div');
-  down.className = 'gate-pipeline__node gate-pipeline__node--downstream';
-  down.innerHTML = `
-    <div class="gate-pipeline__node-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
-        <path d="M7 9h10M7 13h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-      </svg>
-    </div>
-    <div class="gate-pipeline__node-title">Downstream</div>
-    <div class="gate-pipeline__node-sub">${config.targetLabel}</div>
-  `;
-  wrap.appendChild(down);
-
-  return wrap;
-}
-
-/* ── Build scenario configs ────────────────────────────────────────────── */
-
-function buildConfigs(ex) {
-  const a  = ex.action;
-  const wa = ex.wrong_action;
-  const t  = ex.target;
-  const ag = ex.agent;
-  const au = ex.required_authority;
-
-  return {
-    'screen-2': {
-      heading: 'No authorization presented',
-      subtext:
-        'The downstream gate received a request with no authorization. '
-        + 'DAL-X blocked it before the system acted.',
-      pipeline: {
-        agentLabel:      ag,
-        actionLabel:     a,
-        targetLabel:     t,
-        hasToken:        false,
-        tokenValid:      false,
-        tokenConsumed:   false,
-        tokenExpired:    false,
-        outcome:         'rejected',
-        rejectionReason: 'No execution authorization was provided.',
-        executionNote:   'Downstream system not reached.',
-      },
-      decision: {
-        state:             'Rejected',
-        reason:            'No execution authorization was provided.',
-        required_response: 'Submit the proposed execution to DAL-X for evaluation.',
-        what_happens_next: 'The downstream system was not called.',
-        variant:           'rejected',
-      },
-      afterNote:
-        'The agent must submit the proposed execution to DAL-X before attempting to proceed.',
-      prev: 'screen-1',
-      next: 'screen-3',
-      onBeforeNext: () => renderGateScreen('screen-3'),
-    },
-
-    'screen-3': {
-      heading: 'Authorization scope mismatch',
-      subtext:
-        `The token was issued for ${a}. `
-        + 'The attempted action was different. DAL-X rejected it.',
-      pipeline: {
-        agentLabel:      ag,
-        actionLabel:     wa,
-        targetLabel:     t,
-        hasToken:        true,
-        tokenValid:      false,
-        tokenConsumed:   false,
-        tokenExpired:    false,
-        outcome:         'rejected',
-        rejectionReason: 'The attempted action does not match the authorized action.',
-        executionNote:   'Downstream system not reached.',
-      },
-      decision: {
-        state:             'Rejected',
-        reason:            'The attempted action does not match the authorized action.',
-        required_response: 'Submit the changed action as a new proposed execution.',
-        what_happens_next: 'The downstream system was not called.',
-        variant:           'rejected',
-      },
-      afterNote:
-        'A changed action requires a new submission and a new authorization.',
-      prev: 'screen-2',
-      next: 'screen-4',
-    },
-
-    'screen-4': {
-      heading: 'Authorization accepted',
-      subtext:
-        'Correct authorization, matching action and target, submitted before expiration. '
-        + 'DAL-X accepted it.',
-      pipeline: {
-        agentLabel:      ag,
-        actionLabel:     a,
-        targetLabel:     t,
-        hasToken:        true,
-        tokenValid:      true,
-        tokenConsumed:   false,
-        tokenExpired:    false,
-        outcome:         'accepted',
-        rejectionReason: '',
-        executionNote:   'Downstream execution completed.',
-      },
-      decision: {
-        state:             'Accepted',
-        reason:            'The authorization is active and the action and target match.',
-        required_response: 'None.',
-        what_happens_next: 'The downstream call proceeded.',
-        variant:           'accepted',
-      },
-      separationTable: {
-        rows: [
-          { record: 'DAL-X gate',                  result: 'Accepted',  chipState: 'accepted' },
-          { record: 'Simulated downstream system', result: 'Completed', chipState: 'neutral'  },
-        ],
-        note: 'DAL-X gate acceptance does not prove that a real downstream system completed execution.',
-      },
-      afterNote: null,
-      prev: 'screen-3',
-      next: 'screen-5',
-    },
-
-    'screen-5': {
-      heading: 'Authorization already consumed',
-      subtext:
-        'The same authorization was used twice. '
-        + 'Single-use tokens cannot be replayed.',
-      pipeline: {
-        agentLabel:      ag,
-        actionLabel:     a,
-        targetLabel:     t,
-        hasToken:        true,
-        tokenValid:      false,
-        tokenConsumed:   true,
-        tokenExpired:    false,
-        outcome:         'rejected',
-        rejectionReason: 'The execution authorization has already been consumed.',
-        executionNote:   'Downstream system not reached.',
-      },
-      decision: {
-        state:             'Rejected',
-        reason:            'The execution authorization has already been consumed.',
-        required_response: 'Create a new submission and obtain new authority.',
-        what_happens_next: 'The downstream system was not called.',
-        variant:           'rejected',
-      },
-      afterNote:
-        'Each governed execution requires its own authorization. Reuse is blocked by design.',
-      prev: 'screen-4',
-      next: 'screen-6',
-    },
-  };
-}
-
-/* ── Generic renderer ─────────────────────────────────────────────────── */
-
-function renderGateScreen(screenId) {
-  const ex  = getExampleData();
-  const cfg = buildConfigs(ex)[screenId];
-  if (!cfg) return;
-
-  const screen = document.getElementById(screenId);
+function renderScreen2() {
+  const screen = document.getElementById('screen-2');
   if (!screen) return;
   screen.innerHTML = '';
 
-  /* Surface badge */
-  const badge = document.createElement('div');
-  badge.className = 'surface-badge';
-  badge.textContent = 'Surface 1 · Public Demonstration';
-  screen.appendChild(badge);
+  screen.appendChild(buildSurfaceBadge());
+  screen.appendChild(buildStepIndicator(2, 'Queue'));
 
-  /* Heading */
-  const heading = document.createElement('h1');
-  heading.className = 'screen-title';
-  heading.textContent = cfg.heading;
-  screen.appendChild(heading);
+  const win = buildWedgeWindow('queue', main => {
+    const panel = document.createElement('section');
+    panel.className = 'wedge-panel';
 
-  /* Subtext */
-  const subtext = document.createElement('p');
-  subtext.className = 'screen-subtitle';
-  subtext.textContent = cfg.subtext;
-  screen.appendChild(subtext);
+    /* Queue header */
+    const head = document.createElement('div');
+    head.className = 'wedge-queue-header';
 
-  /* Pipeline */
-  screen.appendChild(buildGatePipeline(cfg.pipeline));
+    const title = document.createElement('div');
+    title.className = 'wedge-panel__heading';
+    title.textContent = 'Review Queue';
+    head.appendChild(title);
 
-  /* Result panel (fades in after animation) */
-  const result = document.createElement('div');
-  result.className = 'gate-pipeline__result';
+    const badgeWrap = document.createElement('span');
+    badgeWrap.className = 'wedge-header-badge-wrap';
+    const pending = document.createElement('span');
+    pending.className = 'wedge-badge wedge-badge--pending';
+    pending.textContent = '3 pending';
+    badgeWrap.appendChild(pending);
+    badgeWrap.appendChild(annBadge(1));
+    head.appendChild(badgeWrap);
 
-  /* Result summary rows */
-  const summary = document.createElement('div');
-  summary.className = 'gate-pipeline__result-summary';
+    panel.appendChild(head);
 
-  if (cfg.pipeline.outcome === 'accepted') {
-    summary.appendChild(makeResultRow('DAL-X gate', 'Accepted', 'accepted'));
-    summary.appendChild(makeResultRow('Simulated downstream system', 'Completed', 'neutral'));
-  } else {
-    summary.appendChild(makeResultRow('DAL-X gate', 'Rejected', 'rejected'));
-    summary.appendChild(makeResultRow('Downstream system', 'Not reached', 'neutral'));
-  }
-  result.appendChild(summary);
+    /* Queue table */
+    const table = document.createElement('div');
+    table.className = 'wedge-queue-table';
 
-  /* Decision block */
-  result.appendChild(createDecisionBlock(cfg.decision));
+    const header = document.createElement('div');
+    header.className = 'wedge-queue-row wedge-queue-row--header';
+    ['Submission', 'Agent', 'Content preview', 'Severity', 'Age', 'Status'].forEach(h => {
+      const c = document.createElement('div');
+      c.className = 'wedge-queue-cell';
+      c.textContent = h;
+      header.appendChild(c);
+    });
+    table.appendChild(header);
 
-  /* Separation table for screen 4 */
-  if (cfg.separationTable) {
-    const infoPanel = document.createElement('div');
-    infoPanel.className = 'gate-info-panel';
-    infoPanel.textContent = cfg.separationTable.note;
-    result.appendChild(infoPanel);
-  }
+    /* Row 1: highlighted */
+    const row1 = buildQueueRow({
+      id:      WEDGE_SCENARIO.submission_id,
+      agent:   WEDGE_SCENARIO.agent,
+      preview: 'Transfer $650,000.00 USD...',
+      severity: 'HIGH RISK',
+      severityClass: 'high',
+      age:      '0:02',
+      status:   'AWAITING LEAD AUTHORITY',
+      active:   true,
+      annNum:   2,
+    });
+    table.appendChild(row1);
 
-  /* After note */
-  if (cfg.afterNote) {
-    const note = document.createElement('p');
-    note.className = 'gate-after-note';
-    note.textContent = cfg.afterNote;
-    result.appendChild(note);
-  }
+    const row2 = buildQueueRow({
+      id:      'sub_01JJ4R...',
+      agent:   'data-agent-v2',
+      preview: 'Export customer payment records...',
+      severity: 'NEEDS REVIEW',
+      severityClass: 'needs',
+      age:      '0:47',
+      status:   'AWAITING REVIEW',
+      active:   false,
+    });
+    table.appendChild(row2);
 
-  /* Evidence badge */
-  const evidence = document.createElement('div');
-  evidence.className = 'gate-evidence-line';
-  evidence.appendChild(createEvidenceLabel('demonstrated'));
-  result.appendChild(evidence);
+    const row3 = buildQueueRow({
+      id:      'sub_01JH2P...',
+      agent:   'infra-agent-v3',
+      preview: 'Modify production database schema: users',
+      severity: 'NEEDS REVIEW',
+      severityClass: 'needs',
+      age:      '1:23',
+      status:   'AWAITING REVIEW',
+      active:   false,
+      annOnAge: 3,
+    });
+    table.appendChild(row3);
 
-  screen.appendChild(result);
+    panel.appendChild(table);
 
-  /* Nav */
+    /* Detail strip */
+    const strip = document.createElement('div');
+    strip.className = 'wedge-detail-strip';
+    strip.textContent =
+      'HIGH RISK. Lead reviewer required. Standard reviewers cannot approve this item.';
+    panel.appendChild(strip);
+
+    main.appendChild(panel);
+  });
+
+  screen.appendChild(win);
+
+  screen.appendChild(buildAnnotationList([
+    { num: 1, text: 'Every governed submission. Every action proposed by a DAL-X-registered agent appears here before execution is permitted to proceed.' },
+    { num: 2, text: 'Lead reviewer required. The $500K+ trigger rule requires a lead reviewer. Standard reviewers see this item but cannot approve it.' },
+    { num: 3, text: 'Timestamped at intake. Queue dwell time is part of the immutable governance record. No submission can be quietly aged out.' },
+  ]));
+
   const nav = document.createElement('nav');
   nav.className = 'screen-nav';
 
   const backBtn = document.createElement('button');
   backBtn.className = 'btn btn--ghost';
-  backBtn.textContent = 'Back';
-  backBtn.addEventListener('click', () => showScreen(cfg.prev));
+  backBtn.textContent = '← Back';
+  backBtn.addEventListener('click', () => showScreen('screen-1'));
   nav.appendChild(backBtn);
 
   const nextBtn = document.createElement('button');
   nextBtn.className = 'btn btn--primary';
-  nextBtn.textContent = 'Continue';
-  nextBtn.addEventListener('click', () => {
-    if (cfg.onBeforeNext) cfg.onBeforeNext();
-    showScreen(cfg.next);
-  });
+  nextBtn.textContent = 'Open the Review Workbench →';
+  nextBtn.addEventListener('click', () => showScreen('screen-3'));
   nav.appendChild(nextBtn);
 
   screen.appendChild(nav);
 }
 
-function makeResultRow(label, value, chipState) {
+function buildQueueRow(cfg) {
   const row = document.createElement('div');
-  row.className = 'gate-result-row';
+  row.className = 'wedge-queue-row';
+  if (cfg.active) row.classList.add('wedge-queue-row--active');
+  else row.classList.add('wedge-queue-row--dim');
 
-  const key = document.createElement('div');
-  key.className = 'gate-result-row__key';
-  key.textContent = label;
-  row.appendChild(key);
+  const c1 = document.createElement('div');
+  c1.className = 'wedge-queue-cell wedge-queue-cell--mono';
+  c1.textContent = cfg.id;
+  row.appendChild(c1);
 
-  const val = document.createElement('div');
-  val.className = 'gate-result-row__val';
-  val.appendChild(createStatusChip(chipState, value));
-  row.appendChild(val);
+  const c2 = document.createElement('div');
+  c2.className = 'wedge-queue-cell';
+  c2.textContent = cfg.agent;
+  row.appendChild(c2);
+
+  const c3 = document.createElement('div');
+  c3.className = 'wedge-queue-cell wedge-queue-cell--preview';
+  c3.textContent = cfg.preview;
+  row.appendChild(c3);
+
+  const c4 = document.createElement('div');
+  c4.className = 'wedge-queue-cell';
+  const chip = document.createElement('span');
+  chip.className = 'wedge-sev-chip';
+  if (cfg.severityClass === 'high') {
+    chip.classList.add('wedge-sev-chip--high');
+  } else {
+    chip.classList.add('wedge-sev-chip--needs');
+  }
+  chip.textContent = cfg.severity;
+  c4.appendChild(chip);
+  if (cfg.annNum) c4.appendChild(annBadge(cfg.annNum));
+  row.appendChild(c4);
+
+  const c5 = document.createElement('div');
+  c5.className = 'wedge-queue-cell';
+  c5.textContent = cfg.age;
+  if (cfg.annOnAge) c5.appendChild(annBadge(cfg.annOnAge));
+  row.appendChild(c5);
+
+  const c6 = document.createElement('div');
+  c6.className = 'wedge-queue-cell wedge-queue-cell--status';
+  c6.textContent = cfg.status;
+  row.appendChild(c6);
 
   return row;
 }
 
-/* ── Per-screen render functions ──────────────────────────────────────── */
+/* ── Screen 3: Review Workbench ───────────────────────────────────────── */
 
-function renderScreen2() { renderGateScreen('screen-2'); }
-function renderScreen3() { renderGateScreen('screen-3'); }
-function renderScreen4() { renderGateScreen('screen-4'); }
-function renderScreen5() { renderGateScreen('screen-5'); }
+function renderScreen3() {
+  const screen = document.getElementById('screen-3');
+  if (!screen) return;
+  screen.innerHTML = '';
+
+  screen.appendChild(buildSurfaceBadge());
+  screen.appendChild(buildStepIndicator(3, 'Workbench'));
+
+  const win = buildWedgeWindow('workbench', main => {
+    /* Workbench header */
+    const head = document.createElement('div');
+    head.className = 'wedge-workbench-head';
+
+    const idEl = document.createElement('span');
+    idEl.className = 'wedge-mono';
+    idEl.textContent = WEDGE_SCENARIO.submission_id;
+    head.appendChild(idEl);
+
+    const chip = document.createElement('span');
+    chip.className = 'wedge-badge wedge-badge--high-risk';
+    chip.textContent = 'HIGH RISK';
+    head.appendChild(chip);
+
+    main.appendChild(head);
+
+    /* Tab bar */
+    const tabWrap = document.createElement('div');
+    tabWrap.className = 'wedge-tab-wrap';
+
+    const tabs = document.createElement('div');
+    tabs.className = 'wedge-tab-bar';
+    [
+      { label: 'CONTENT',    active: true  },
+      { label: 'TRIGGERS',   count: '3',   active: false },
+      { label: 'DRIFT',      active: false },
+      { label: 'TIMELINE',   active: false },
+    ].forEach(t => {
+      const tab = document.createElement('div');
+      tab.className = 'wedge-tab';
+      if (t.active) tab.classList.add('wedge-tab--active');
+      tab.textContent = t.label;
+      if (t.count) {
+        const dot = document.createElement('span');
+        dot.className = 'wedge-tab__count';
+        dot.textContent = '● ' + t.count;
+        tab.appendChild(dot);
+      }
+      tabs.appendChild(tab);
+    });
+    tabWrap.appendChild(tabs);
+    tabWrap.appendChild(annBadge(1));
+    main.appendChild(tabWrap);
+
+    /* CONTENT panel */
+    const contentPanel = document.createElement('section');
+    contentPanel.className = 'wedge-panel';
+
+    const cHead = document.createElement('div');
+    cHead.className = 'wedge-panel__heading';
+    cHead.textContent = 'Content';
+    contentPanel.appendChild(cHead);
+
+    const ocLabel = document.createElement('div');
+    ocLabel.className = 'wedge-section-label';
+    ocLabel.textContent = 'Output content';
+    contentPanel.appendChild(ocLabel);
+
+    const oc = document.createElement('pre');
+    oc.className = 'wedge-code-block';
+    oc.textContent = WEDGE_SCENARIO.output_content;
+    contentPanel.appendChild(oc);
+
+    const eiLabel = document.createElement('div');
+    eiLabel.className = 'wedge-section-label';
+    eiLabel.textContent = 'Execution intent';
+    contentPanel.appendChild(eiLabel);
+
+    const ei = document.createElement('pre');
+    ei.className = 'wedge-code-block';
+    ei.textContent =
+      `action:            ${WEDGE_SCENARIO.action}\n`
+      + `target:            ${WEDGE_SCENARIO.target}\n`
+      + `source_identifier: ${WEDGE_SCENARIO.source_ref}`;
+    contentPanel.appendChild(ei);
+
+    main.appendChild(contentPanel);
+
+    /* TRIGGERS panel */
+    const trPanel = document.createElement('section');
+    trPanel.className = 'wedge-panel';
+
+    const trHead = document.createElement('div');
+    trHead.className = 'wedge-panel__heading';
+    trHead.textContent = 'Triggers';
+    trPanel.appendChild(trHead);
+
+    const trSub = document.createElement('div');
+    trSub.className = 'wedge-panel__subhead';
+    trSub.textContent = '18 rules evaluated. 3 matched.';
+    trPanel.appendChild(trSub);
+
+    trPanel.appendChild(buildTriggerTable([
+      {
+        name:        'Wire Transfer — $500K+',
+        severity:    'HIGH_RISK',
+        controlling: true,
+        detail:      'currency_threshold ≥ $500,000 USD',
+        annNum:      2,
+      },
+      {
+        name:        'Wire Transfer — $10K+',
+        severity:    'NEEDS_REVIEW',
+        controlling: false,
+        detail:      'currency_threshold ≥ $10,000 USD',
+      },
+      {
+        name:        'Payment Execution Keyword',
+        severity:    'NEEDS_REVIEW',
+        controlling: false,
+        detail:      'keyword: "wire transfer"',
+      },
+    ]));
+
+    main.appendChild(trPanel);
+
+    /* DRIFT panel */
+    const driftPanel = document.createElement('section');
+    driftPanel.className = 'wedge-panel';
+
+    const dHead = document.createElement('div');
+    dHead.className = 'wedge-panel__heading';
+    dHead.textContent = 'Drift';
+    driftPanel.appendChild(dHead);
+
+    const dRow = document.createElement('div');
+    dRow.className = 'wedge-drift-row';
+
+    const dInfo = document.createElement('div');
+    dInfo.className = 'wedge-drift-info';
+    dInfo.innerHTML =
+      '<span class="wedge-drift-key">Agent</span>'
+      + `<span class="wedge-drift-val wedge-mono">${WEDGE_SCENARIO.agent}</span>`
+      + '<span class="wedge-drift-key">Baseline</span>'
+      + '<span class="wedge-drift-val"><span class="wedge-badge wedge-badge--active">ACTIVE</span></span>';
+    dRow.appendChild(dInfo);
+    driftPanel.appendChild(dRow);
+
+    const dResultWrap = document.createElement('div');
+    dResultWrap.className = 'wedge-drift-result-wrap';
+    const dResult = document.createElement('p');
+    dResult.className = 'wedge-drift-result';
+    dResult.textContent =
+      'No drift detected. This submission is consistent with the agent\'s established behavioral baseline. No drift acknowledgement is required before approval.';
+    dResultWrap.appendChild(dResult);
+    dResultWrap.appendChild(annBadge(3));
+    driftPanel.appendChild(dResultWrap);
+
+    main.appendChild(driftPanel);
+
+    /* TIMELINE strip */
+    const tPanel = document.createElement('section');
+    tPanel.className = 'wedge-panel';
+
+    const tHead = document.createElement('div');
+    tHead.className = 'wedge-panel__heading';
+    tHead.textContent = 'Timeline';
+    tPanel.appendChild(tHead);
+
+    const tListWrap = document.createElement('div');
+    tListWrap.className = 'wedge-timeline-wrap';
+
+    const tList = buildTimelineList([
+      { time: '14:23:41', label: 'submission_created' },
+      { time: '14:23:41', label: 'trigger_evaluation_completed', detail: '(18 evaluated, 3 matched, controlling: HIGH_RISK)' },
+      { time: '14:23:42', label: 'review_queue_entered' },
+      { time: '14:25:33', label: 'review_opened', detail: '(s.chen@meridian.com)' },
+    ]);
+    tListWrap.appendChild(tList);
+    tListWrap.appendChild(annBadge(4));
+    tPanel.appendChild(tListWrap);
+
+    main.appendChild(tPanel);
+  });
+
+  screen.appendChild(win);
+
+  screen.appendChild(buildAnnotationList([
+    { num: 1, text: 'Complete picture. The reviewer sees everything in one place: agent output, trigger logic, drift signals, and the full timeline. Nothing is withheld.' },
+    { num: 2, text: 'Authority requirement established. The controlling rule determines the review tier. The reviewer cannot lower this requirement. They can only approve, reject, escalate, or request revision.' },
+    { num: 3, text: 'Drift detection. DAL-X compares each submission against the agent\'s behavioral baseline. No drift here means the reviewer can act without an additional acknowledgement step. Drift would escalate the authority requirement.' },
+    { num: 4, text: 'Immutable record. Every event is timestamped as it happens. The timeline cannot be edited. This is the audit artifact.' },
+  ]));
+
+  const nav = document.createElement('nav');
+  nav.className = 'screen-nav';
+
+  const backBtn = document.createElement('button');
+  backBtn.className = 'btn btn--ghost';
+  backBtn.textContent = '← Back';
+  backBtn.addEventListener('click', () => showScreen('screen-2'));
+  nav.appendChild(backBtn);
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'btn btn--primary';
+  nextBtn.textContent = 'Approve the Submission →';
+  nextBtn.addEventListener('click', () => showScreen('screen-4'));
+  nav.appendChild(nextBtn);
+
+  screen.appendChild(nav);
+}
+
+/*
+ * buildTimelineList(entries)
+ * entries: [{ time, label, detail?, completed? }]
+ */
+function buildTimelineList(entries) {
+  const list = document.createElement('ol');
+  list.className = 'wedge-timeline-list';
+
+  entries.forEach(e => {
+    const li = document.createElement('li');
+    li.className = 'wedge-timeline-entry';
+    if (e.completed) li.classList.add('wedge-timeline-entry--completed');
+
+    const time = document.createElement('span');
+    time.className = 'wedge-timeline-time';
+    time.textContent = e.time;
+    li.appendChild(time);
+
+    const dot = document.createElement('span');
+    dot.className = 'wedge-timeline-dot';
+    li.appendChild(dot);
+
+    const label = document.createElement('span');
+    label.className = 'wedge-timeline-label';
+    label.textContent = e.label;
+    li.appendChild(label);
+
+    if (e.detail) {
+      const detail = document.createElement('span');
+      detail.className = 'wedge-timeline-detail';
+      detail.textContent = e.detail;
+      li.appendChild(detail);
+    }
+
+    list.appendChild(li);
+  });
+
+  return list;
+}
+
+/* ── Screen 4: Decision Interface ─────────────────────────────────────── */
+
+function renderScreen4() {
+  const screen = document.getElementById('screen-4');
+  if (!screen) return;
+  screen.innerHTML = '';
+
+  screen.appendChild(buildSurfaceBadge());
+  screen.appendChild(buildStepIndicator(4, 'Decision'));
+
+  const win = buildWedgeWindow('workbench', main => {
+    const panel = document.createElement('section');
+    panel.className = 'wedge-panel';
+
+    /* Header */
+    const head = document.createElement('div');
+    head.className = 'wedge-workbench-head';
+
+    const title = document.createElement('span');
+    title.className = 'wedge-panel__heading wedge-panel__heading--inline';
+    title.textContent = 'Approve decision';
+    head.appendChild(title);
+
+    const idEl = document.createElement('span');
+    idEl.className = 'wedge-mono';
+    idEl.textContent = WEDGE_SCENARIO.submission_id;
+    head.appendChild(idEl);
+
+    const chip = document.createElement('span');
+    chip.className = 'wedge-badge wedge-badge--high-risk';
+    chip.textContent = 'HIGH RISK';
+    head.appendChild(chip);
+
+    panel.appendChild(head);
+
+    /* Dwell timer */
+    const dwellWrap = document.createElement('div');
+    dwellWrap.className = 'wedge-dwell-wrap';
+
+    const dwell = document.createElement('div');
+    dwell.className = 'wedge-dwell-timer';
+
+    const dwellRow = document.createElement('div');
+    dwellRow.className = 'wedge-dwell-row';
+
+    const dwellLabel = document.createElement('span');
+    dwellLabel.className = 'wedge-dwell-label';
+    dwellLabel.textContent = 'Minimum review time: 15 seconds';
+    dwellRow.appendChild(dwellLabel);
+
+    const dwellElapsed = document.createElement('span');
+    dwellElapsed.className = 'wedge-dwell-elapsed';
+    dwellElapsed.textContent = 'elapsed: 0:18';
+    dwellRow.appendChild(dwellElapsed);
+
+    const dwellCheck = document.createElement('span');
+    dwellCheck.className = 'wedge-dwell-check';
+    dwellCheck.textContent = '✓ Elapsed';
+    dwellRow.appendChild(dwellCheck);
+
+    dwell.appendChild(dwellRow);
+
+    const dwellNote = document.createElement('p');
+    dwellNote.className = 'wedge-dwell-note';
+    dwellNote.textContent =
+      'Required for HIGH RISK submissions. Prevents rubber-stamp approvals.';
+    dwell.appendChild(dwellNote);
+
+    dwellWrap.appendChild(dwell);
+    dwellWrap.appendChild(annBadge(1));
+
+    panel.appendChild(dwellWrap);
+
+    /* Reason field */
+    const reasonWrap = document.createElement('div');
+    reasonWrap.className = 'wedge-reason-wrap';
+
+    const reasonLabel = document.createElement('div');
+    reasonLabel.className = 'wedge-section-label';
+    reasonLabel.textContent = 'Reason (required. Minimum 20 characters)';
+    reasonWrap.appendChild(reasonLabel);
+
+    const reasonBox = document.createElement('div');
+    reasonBox.className = 'wedge-reason-box';
+    reasonBox.textContent = WEDGE_SCENARIO.approve_reason;
+    reasonWrap.appendChild(reasonBox);
+
+    const charCount = document.createElement('div');
+    charCount.className = 'wedge-reason-count';
+    charCount.textContent = `${WEDGE_SCENARIO.approve_reason.length} characters`;
+    reasonWrap.appendChild(charCount);
+
+    reasonWrap.appendChild(annBadge(2));
+    panel.appendChild(reasonWrap);
+
+    /* Segregation of duties */
+    const segWrap = document.createElement('div');
+    segWrap.className = 'wedge-seg-wrap';
+
+    const seg = document.createElement('div');
+    seg.className = 'wedge-seg-row';
+
+    const segItem1 = document.createElement('div');
+    segItem1.className = 'wedge-seg-item';
+    segItem1.innerHTML =
+      '<span class="wedge-seg-key">Submitter</span>'
+      + `<span class="wedge-seg-val wedge-mono">${WEDGE_SCENARIO.agent}</span>`;
+    seg.appendChild(segItem1);
+
+    const segItem2 = document.createElement('div');
+    segItem2.className = 'wedge-seg-item';
+    segItem2.innerHTML =
+      '<span class="wedge-seg-key">Reviewer</span>'
+      + `<span class="wedge-seg-val wedge-mono">${WEDGE_SCENARIO.reviewer_email}</span>`;
+    seg.appendChild(segItem2);
+
+    const segCheck = document.createElement('div');
+    segCheck.className = 'wedge-seg-check';
+    segCheck.textContent = '✓ Segregation confirmed';
+    seg.appendChild(segCheck);
+
+    segWrap.appendChild(seg);
+    segWrap.appendChild(annBadge(3));
+    panel.appendChild(segWrap);
+
+    /* Decision buttons */
+    const decWrap = document.createElement('div');
+    decWrap.className = 'wedge-decision-buttons';
+
+    [
+      { label: 'APPROVE',          primary: true  },
+      { label: 'REJECT',           primary: false },
+      { label: 'ESCALATE',         primary: false },
+      { label: 'REQUEST REVISION', primary: false },
+    ].forEach(b => {
+      const btn = document.createElement('div');
+      btn.className = 'wedge-decision-btn';
+      if (b.primary) btn.classList.add('wedge-decision-btn--primary');
+      btn.textContent = b.label;
+      decWrap.appendChild(btn);
+    });
+
+    panel.appendChild(decWrap);
+    main.appendChild(panel);
+  });
+
+  screen.appendChild(win);
+
+  screen.appendChild(buildAnnotationList([
+    { num: 1, text: 'Minimum dwell time enforced. DAL-X prevents approvals until the reviewer has spent a defined minimum on the workbench. The elapsed time is recorded in the governance timeline.' },
+    { num: 2, text: 'Mandatory reason. An approval without a reason cannot be submitted. The reason is written verbatim to the immutable decision record. It travels with the authorization ID.' },
+    { num: 3, text: 'Segregation of duties. A reviewer cannot approve their own submission. DAL-X enforces this in code. The check runs at submission time, not at policy review.' },
+  ]));
+
+  const nav = document.createElement('nav');
+  nav.className = 'screen-nav';
+
+  const backBtn = document.createElement('button');
+  backBtn.className = 'btn btn--ghost';
+  backBtn.textContent = '← Back';
+  backBtn.addEventListener('click', () => showScreen('screen-3'));
+  nav.appendChild(backBtn);
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'btn btn--primary';
+  nextBtn.textContent = 'Issue the Authorization →';
+  nextBtn.addEventListener('click', () => showScreen('screen-5'));
+  nav.appendChild(nextBtn);
+
+  screen.appendChild(nav);
+}
+
+/* ── Screen 5: Token Issuance ─────────────────────────────────────────── */
+
+function renderScreen5() {
+  const screen = document.getElementById('screen-5');
+  if (!screen) return;
+  screen.innerHTML = '';
+
+  screen.appendChild(buildSurfaceBadge());
+  screen.appendChild(buildStepIndicator(5, 'Authorization'));
+
+  const win = buildWedgeWindow('tokens', main => {
+    /* Header */
+    const head = document.createElement('div');
+    head.className = 'wedge-auth-head';
+
+    const title = document.createElement('span');
+    title.className = 'wedge-panel__heading wedge-panel__heading--inline';
+    title.textContent = 'Authorization issued';
+    head.appendChild(title);
+
+    const check = document.createElement('span');
+    check.className = 'wedge-auth-check';
+    check.textContent = '✓';
+    head.appendChild(check);
+
+    main.appendChild(head);
+
+    /* Auth card */
+    const card = document.createElement('div');
+    card.className = 'wedge-auth-card';
+
+    const idRow = document.createElement('div');
+    idRow.className = 'wedge-auth-id-row';
+
+    const idLabel = document.createElement('div');
+    idLabel.className = 'wedge-auth-id-label';
+    idLabel.textContent = 'Authorization ID';
+    idRow.appendChild(idLabel);
+
+    const idValWrap = document.createElement('div');
+    idValWrap.className = 'wedge-auth-id-wrap';
+    const idVal = document.createElement('div');
+    idVal.className = 'wedge-auth-id-val';
+    idVal.textContent = WEDGE_SCENARIO.auth_id;
+    idValWrap.appendChild(idVal);
+    idValWrap.appendChild(annBadge(1));
+    idRow.appendChild(idValWrap);
+
+    card.appendChild(idRow);
+
+    /* Auth details grid */
+    const authGrid = document.createElement('div');
+    authGrid.className = 'wedge-auth-grid';
+
+    authGrid.appendChild(buildAuthKV('Status', null, () => {
+      const chip = document.createElement('span');
+      chip.className = 'wedge-badge wedge-badge--active';
+      chip.textContent = 'ACTIVE';
+      return chip;
+    }));
+
+    authGrid.appendChild(buildAuthKV('Issued', WEDGE_SCENARIO.auth_issued));
+
+    authGrid.appendChild(buildAuthKV('Expires', null, () => {
+      const wrap = document.createElement('div');
+      wrap.className = 'wedge-auth-expires';
+
+      const exp = document.createElement('div');
+      exp.textContent = `${WEDGE_SCENARIO.auth_expires} (15 minutes)`;
+      wrap.appendChild(exp);
+
+      const countdownRow = document.createElement('div');
+      countdownRow.className = 'wedge-countdown-row';
+      const countdown = document.createElement('span');
+      countdown.className = 'wedge-countdown';
+      countdown.textContent = '14m 32s remaining';
+      countdownRow.appendChild(countdown);
+      countdownRow.appendChild(annBadge(2));
+      wrap.appendChild(countdownRow);
+
+      return wrap;
+    }));
+
+    authGrid.appendChild(buildAuthKV('Scope',
+      `${WEDGE_SCENARIO.action} / ${WEDGE_SCENARIO.target}`));
+
+    authGrid.appendChild(buildAuthKV('Single use', null, () => {
+      const wrap = document.createElement('div');
+      wrap.className = 'wedge-auth-single-use';
+      const text = document.createElement('span');
+      text.textContent = 'Yes. Consumed on first valid enforcement call.';
+      wrap.appendChild(text);
+      wrap.appendChild(annBadge(3));
+      return wrap;
+    }));
+
+    card.appendChild(authGrid);
+    main.appendChild(card);
+
+    /* Authority chain */
+    const chainWrap = document.createElement('section');
+    chainWrap.className = 'wedge-panel';
+
+    const chainHead = document.createElement('div');
+    chainHead.className = 'wedge-panel__heading';
+    chainHead.textContent = 'Authority chain';
+    chainWrap.appendChild(chainHead);
+
+    const chainInner = document.createElement('div');
+    chainInner.className = 'wedge-chain-inner';
+
+    const chainGrid = document.createElement('div');
+    chainGrid.className = 'wedge-detail-grid';
+
+    const truncatedReason = WEDGE_SCENARIO.approve_reason.slice(0, 80) + '...';
+
+    [
+      ['Submitted by',        WEDGE_SCENARIO.agent],
+      ['Approved by',         `${WEDGE_SCENARIO.reviewer_email}. ${WEDGE_SCENARIO.reviewer_role}`],
+      ['Reason',              truncatedReason],
+      ['Approved at',         WEDGE_SCENARIO.approved_at],
+      ['Decision record ID',  WEDGE_SCENARIO.decision_record],
+    ].forEach(([k, v]) => {
+      const key = document.createElement('div');
+      key.className = 'wedge-detail-grid__key';
+      key.textContent = k;
+      chainGrid.appendChild(key);
+
+      const val = document.createElement('div');
+      val.className = 'wedge-detail-grid__val';
+      val.textContent = v;
+      chainGrid.appendChild(val);
+    });
+
+    chainInner.appendChild(chainGrid);
+    chainInner.appendChild(annBadge(4));
+    chainWrap.appendChild(chainInner);
+
+    main.appendChild(chainWrap);
+  });
+
+  screen.appendChild(win);
+
+  screen.appendChild(buildAnnotationList([
+    { num: 1, text: 'The authorization. This UUID is what the downstream banking system must present to the enforcement gateway before the wire executes. Without it, the gate rejects.' },
+    { num: 2, text: 'Time-bound. The authorization expires 15 minutes after issuance. If the downstream system does not call the enforcement gate in time, a new review is required.' },
+    { num: 3, text: 'Single-use. Once the enforcement gate accepts this authorization, it is consumed. A second attempt with the same ID is rejected and evidenced.' },
+    { num: 4, text: 'Provable chain. Every authorization carries a permanent, verified link to the human who approved it, the reason they gave, and the exact timestamp. This is the artifact that answers the auditor.' },
+  ]));
+
+  const nav = document.createElement('nav');
+  nav.className = 'screen-nav';
+
+  const backBtn = document.createElement('button');
+  backBtn.className = 'btn btn--ghost';
+  backBtn.textContent = '← Back';
+  backBtn.addEventListener('click', () => showScreen('screen-4'));
+  nav.appendChild(backBtn);
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'btn btn--primary';
+  nextBtn.textContent = 'Test the Enforcement Gate →';
+  nextBtn.addEventListener('click', () => showScreen('screen-6'));
+  nav.appendChild(nextBtn);
+
+  screen.appendChild(nav);
+}
+
+/*
+ * buildAuthKV(key, value?, valueBuilder?)
+ * Renders a single key/value row inside the auth card. If valueBuilder is
+ * provided, it is called to construct the value element.
+ */
+function buildAuthKV(key, value, valueBuilder) {
+  const row = document.createElement('div');
+  row.className = 'wedge-auth-kv';
+
+  const k = document.createElement('div');
+  k.className = 'wedge-auth-kv__key';
+  k.textContent = key;
+  row.appendChild(k);
+
+  const v = document.createElement('div');
+  v.className = 'wedge-auth-kv__val';
+  if (valueBuilder) {
+    v.appendChild(valueBuilder());
+  } else {
+    v.textContent = value;
+  }
+  row.appendChild(v);
+
+  return row;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   renderScreen2();
