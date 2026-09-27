@@ -188,44 +188,132 @@ function buildFieldPanel(labelText, description) {
   return panel;
 }
 
-/* ── Ambient diagram (unknown authority state) ──────────────────────────── */
+/* ── Live summary panel shown in the aside column ───────────────────────── */
 
-function buildAuthorityDiagram() {
-  const wrap = document.createElement('div');
-  wrap.className = 'authority-diagram';
-  wrap.setAttribute('aria-hidden', 'true');
+function buildLiveSummaryPanel() {
+  const panel = document.createElement('div');
+  panel.className = 's7-summary-panel';
+  panel.id = 's7-summary-panel';
 
-  wrap.innerHTML = `
-    <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="s7lineGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"  stop-color="#F97316" stop-opacity="0.05"/>
-          <stop offset="50%" stop-color="#F97316" stop-opacity="0.5"/>
-          <stop offset="100%" stop-color="#F97316" stop-opacity="0.05"/>
-        </linearGradient>
-      </defs>
-      <g class="authority-diagram__node authority-diagram__node--agent">
-        <circle cx="100" cy="40" r="26" />
-        <text x="100" y="45" text-anchor="middle">Agent</text>
-      </g>
-      <line class="authority-diagram__line" x1="100" y1="66" x2="100" y2="106"
-            stroke="url(#s7lineGrad)" />
-      <g class="authority-diagram__gate">
-        <rect x="60" y="106" width="80" height="40" rx="6" />
-        <text x="100" y="132" text-anchor="middle" class="authority-diagram__q">?</text>
-      </g>
-      <line class="authority-diagram__line" x1="100" y1="146" x2="100" y2="186"
-            stroke="url(#s7lineGrad)" />
-      <g class="authority-diagram__node authority-diagram__node--downstream">
-        <rect x="60" y="186" width="80" height="40" rx="6" />
-        <text x="100" y="211" text-anchor="middle">Downstream</text>
-      </g>
-      <circle class="authority-diagram__packet" r="4" cx="100" cy="66" />
-    </svg>
-    <p class="authority-diagram__caption">Unknown authority state</p>
-  `;
+  const heading = document.createElement('div');
+  heading.className = 's7-summary-panel__heading';
+  heading.textContent = 'What you are describing';
+  panel.appendChild(heading);
 
-  return wrap;
+  const AGENT_LABELS = {
+    infrastructure_agent:   'Infrastructure agent',
+    cybersecurity_agent:    'Cybersecurity agent',
+    data_agent:             'Data agent',
+    customer_service_agent: 'Customer service agent',
+    procurement_agent:      'Procurement agent',
+    treasury_agent:         'Treasury agent',
+    compliance_agent:       'Compliance agent',
+  };
+  const EXECUTION_LABELS = {
+    change_infrastructure:       'Change production infrastructure',
+    export_data:                 'Export data',
+    change_system_access:        'Change system access',
+    deploy_code:                 'Deploy code',
+    modify_records:              'Modify records',
+    send_external_communication: 'Send external communication',
+    commit_funds:                'Commit funds',
+    delete_data:                 'Delete data',
+    recommendations_only:        'Recommendations only',
+  };
+  const DOWNSTREAM_LABELS = {
+    cloud_platform:         'Cloud platform',
+    database:               'Database',
+    identity_platform:      'Identity platform',
+    deployment_pipeline:    'Deployment pipeline',
+    communication_platform: 'Communication platform',
+    enterprise_application: 'Enterprise application',
+    payment_system:         'Payment system',
+    data_warehouse:         'Data warehouse',
+    none:                   'None',
+  };
+  const AUTHORITY_LABELS = {
+    must_stop:  'No gate exists today',
+    may_continue: 'No gate is required',
+    unknown:    'Unknown',
+  };
+
+  const rows = [
+    { key: 'agent',      label: 'AI agent',          map: AGENT_LABELS,      stateKey: 's2.agent_type',                customKey: 's2.agent_type_custom' },
+    { key: 'execution',  label: 'Execution',          map: EXECUTION_LABELS,  stateKey: 's2.proposed_execution',        customKey: 's2.proposed_execution_custom' },
+    { key: 'downstream', label: 'Downstream system',  map: DOWNSTREAM_LABELS, stateKey: 's2.downstream_system',         customKey: 's2.downstream_system_custom' },
+    { key: 'authority',  label: 'Enforcement gap',    map: AUTHORITY_LABELS,  stateKey: 's2.missing_authority_response', customKey: null },
+  ];
+
+  const rowEls = {};
+
+  rows.forEach(({ key, label, map, stateKey, customKey }) => {
+    const row = document.createElement('div');
+    row.className = 's7-summary-row';
+
+    const rowLabel = document.createElement('div');
+    rowLabel.className = 's7-summary-row__label';
+    rowLabel.textContent = label;
+
+    const rowValue = document.createElement('div');
+    rowValue.className = 's7-summary-row__value';
+    rowValue.id = `s7-summary-${key}`;
+
+    function refresh() {
+      const raw    = getState(stateKey)  || '';
+      const custom = customKey ? (getState(customKey) || '') : '';
+      const resolved = custom || map[raw] || '';
+      rowValue.textContent = resolved || 'Not selected';
+      rowValue.classList.toggle('s7-summary-row__value--empty', !resolved);
+    }
+
+    refresh();
+    rowEls[key] = refresh;
+
+    row.appendChild(rowLabel);
+    row.appendChild(rowValue);
+    panel.appendChild(row);
+  });
+
+  /* Consequence count row */
+  const consRow = document.createElement('div');
+  consRow.className = 's7-summary-row';
+  const consLabel = document.createElement('div');
+  consLabel.className = 's7-summary-row__label';
+  consLabel.textContent = 'Consequences';
+  const consValue = document.createElement('div');
+  consValue.className = 's7-summary-row__value';
+  consValue.id = 's7-summary-consequences';
+
+  function refreshCons() {
+    const vals = getState('s2.consequences') || [];
+    const real = vals.filter(v => v !== 'not_sure' && v !== 'none' && v !== 'custom');
+    if (vals.includes('none'))     { consValue.textContent = 'No consequential effect'; consValue.classList.remove('s7-summary-row__value--empty'); }
+    else if (real.length === 0)    { consValue.textContent = 'None selected'; consValue.classList.add('s7-summary-row__value--empty'); }
+    else                           { consValue.textContent = real.length === 1 ? '1 selected' : `${real.length} selected`; consValue.classList.remove('s7-summary-row__value--empty'); }
+  }
+  refreshCons();
+  rowEls['consequences'] = refreshCons;
+
+  consRow.appendChild(consLabel);
+  consRow.appendChild(consValue);
+  panel.appendChild(consRow);
+
+  /* Expose refresh so form fields can call it */
+  panel._refresh = function(field) {
+    if (rowEls[field]) rowEls[field]();
+    if (field === 'consequences') refreshCons();
+  };
+  panel._refreshAll = function() {
+    Object.values(rowEls).forEach(fn => fn());
+    refreshCons();
+  };
+
+  const note = document.createElement('p');
+  note.className = 's7-summary-panel__note';
+  note.textContent = 'Screen 8 scores these answers and determines whether an enforcement gap exists.';
+  panel.appendChild(note);
+
+  return panel;
 }
 
 /* ── Renderer ───────────────────────────────────────────────────────────── */
@@ -260,9 +348,10 @@ function renderScreen7() {
   const formCol = document.createElement('div');
   formCol.className = 'assessment-layout__form';
 
+  const summaryPanel = buildLiveSummaryPanel();
   const asideCol = document.createElement('aside');
   asideCol.className = 'assessment-layout__aside';
-  asideCol.appendChild(buildAuthorityDiagram());
+  asideCol.appendChild(summaryPanel);
 
   /* 1. AI agent */
   const agentPanel = buildFieldPanel(
@@ -277,6 +366,7 @@ function renderScreen7() {
     customStateKey:  's2.agent_type_custom',
     initialValue:    getState('s2.agent_type')        || '',
     initialCustom:   getState('s2.agent_type_custom') || '',
+    onChange:        () => summaryPanel._refresh('agent'),
   }));
   formCol.appendChild(agentPanel);
 
@@ -293,6 +383,7 @@ function renderScreen7() {
     customStateKey:  's2.proposed_execution_custom',
     initialValue:    getState('s2.proposed_execution')        || '',
     initialCustom:   getState('s2.proposed_execution_custom') || '',
+    onChange:        () => summaryPanel._refresh('execution'),
   }));
   formCol.appendChild(execPanel);
 
@@ -310,6 +401,7 @@ function renderScreen7() {
     noSelectionLabel: 'No downstream system',
     initialValue:     getState('s2.downstream_system')        || '',
     initialCustom:    getState('s2.downstream_system_custom') || '',
+    onChange:         () => summaryPanel._refresh('downstream'),
   }));
   formCol.appendChild(dsPanel);
 
@@ -321,9 +413,9 @@ function renderScreen7() {
   const initialCons = getState('s2.consequences') || [];
   const pillGroup = buildConsequencePillGroup(initialCons, (values) => {
     setState('s2.consequences', values);
+    summaryPanel._refresh('consequences');
   });
   consPanel.appendChild(pillGroup.wrap);
-  /* Persist current values on first render to normalise state */
   setState('s2.consequences', pillGroup.getSelected());
   formCol.appendChild(consPanel);
 
@@ -335,7 +427,10 @@ function renderScreen7() {
   authPanel.appendChild(
     buildAuthorityCardGroup(
       getState('s2.missing_authority_response') || '',
-      (value) => setState('s2.missing_authority_response', value)
+      (value) => {
+        setState('s2.missing_authority_response', value);
+        summaryPanel._refresh('authority');
+      }
     )
   );
   formCol.appendChild(authPanel);

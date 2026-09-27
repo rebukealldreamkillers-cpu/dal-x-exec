@@ -52,6 +52,17 @@
   --glow-red:             0 0 18px rgba(239, 68, 68, 0.45);
 
   --ease-out-quint:       cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Remap style.css legacy variables to dark-theme values.
+     Every component that references --color-text-* or --color-surface
+     inherits readable colors without touching component JS. */
+  --color-text:           #F8FAFC;
+  --color-text-secondary: rgba(248, 250, 252, 0.65);
+  --color-text-muted:     rgba(248, 250, 252, 0.40);
+  --color-surface:        #0a0f1e;
+  --color-surface-subtle: rgba(255, 255, 255, 0.03);
+  --color-border:         rgba(255, 255, 255, 0.10);
+  --color-neutral-bg:     rgba(255, 255, 255, 0.04);
 }
 
 /* ── 2. Global base ───────────────────────────────────────────────────── */
@@ -1898,28 +1909,62 @@ pre,
   line-height: 1.5;
 }
 
-/* ── Screen 7, ambient diagram ───────────────────────────────────────────── */
+/* ── Screen 7, live summary panel ────────────────────────────────────────── */
 
-.authority-diagram svg { width: 100%; height: auto; display: block; }
-.authority-diagram__node circle,
-.authority-diagram__node rect,
-.authority-diagram__gate rect {
-  fill: var(--bg-glass-strong);
-  stroke: var(--glass-border-strong);
-  stroke-width: 1.4;
+.s7-summary-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
-.authority-diagram__gate rect { stroke-dasharray: 4 4; }
-.authority-diagram__q {
-  fill: var(--agent-orange);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 20px;
-  font-weight: 700;
-  animation: authorityQPulse 2.4s ease-in-out infinite;
-}
-.authority-diagram__node text {
-  fill: var(--text-secondary);
-  font-family: 'Inter', sans-serif;
+
+.s7-summary-panel__heading {
   font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--agent-amber);
+  margin-bottom: 14px;
+}
+
+.s7-summary-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+.s7-summary-row:last-of-type {
+  border-bottom: none;
+}
+
+.s7-summary-row__label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.s7-summary-row__value {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.s7-summary-row__value--empty {
+  color: var(--text-muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.s7-summary-panel__note {
+  margin: 14px 0 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.55;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border);
 }
 .authority-diagram__line { stroke-width: 2; }
 .authority-diagram__packet {
