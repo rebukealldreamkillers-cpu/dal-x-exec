@@ -128,29 +128,19 @@ const S8_OUTCOMES = {
   },
 
   urgent_investigation: {
-    decision: {
-      title:             'Business result',
-      state:             'Urgent, high-risk workflow with unresolved information gaps',
-      reason:            'The risk profile is high. The enforcement status of this workflow cannot be confirmed until the gaps listed below are resolved, either by completing unanswered questions or by investigating fields your organization currently does not know.',
-      required_response: 'Resolve each gap listed below. Unanswered questions can be completed here. Fields answered as Unknown require organizational investigation before returning.',
-      what_happens_next: 'Return here after resolving each gap and re-evaluate.',
-      variant:           'pending',
-    },
-    evidence:    'business',
-    showProceed: false,
+    /* Rendered by buildIncompleteScreen — not through createDecisionBlock */
+    isIncomplete: true,
+    urgentRisk:   true,
+    evidence:     'business',
+    showProceed:  false,
   },
 
   more_info_required: {
-    decision: {
-      title:             'Business result',
-      state:             'More information required',
-      reason:            'The assessment cannot determine whether an enforcement gap exists. One or more questions are unanswered, or were answered as Unknown, meaning your organization does not yet have this information.',
-      required_response: 'Resolve each gap listed below. Unanswered questions can be completed here. Fields answered as Unknown require your organization to investigate and establish the answer before returning.',
-      what_happens_next: 'Return here after resolving each gap and re-evaluate.',
-      variant:           'pending',
-    },
-    evidence:    'business',
-    showProceed: false,
+    /* Rendered by buildIncompleteScreen — not through createDecisionBlock */
+    isIncomplete: true,
+    urgentRisk:   false,
+    evidence:     'business',
+    showProceed:  false,
   },
 };
 
@@ -442,6 +432,131 @@ function s8HeadingClass(resultKey) {
   return 'screen-title';
 }
 
+/* ── Incomplete assessment renderer ─────────────────────────────────────── */
+/*
+ * Used for urgent_investigation and more_info_required outcomes.
+ * These are not final decisions — they mean the visitor left questions
+ * blank or marked them Unknown. Show exactly what is missing and what
+ * to do about each type, then let the visitor go back and fix it.
+ */
+function buildIncompleteScreen(screen, resultKey, cfg) {
+  const unanswered = getState('s2.unanswered_fields') || [];
+  const unknown    = getState('s2.unknown_fields')    || [];
+  const riskScore  = getState('s2.risk_score') || 0;
+  const riskBand   = getState('s2.risk_band')  || 'none';
+
+  /* Surface badge */
+  const badge = document.createElement('div');
+  badge.className = 'surface-badge';
+  badge.textContent = 'Surface 2 · Guided business assessment';
+  screen.appendChild(badge);
+
+  /* Heading */
+  const title = document.createElement('h1');
+  title.className = 'screen-title';
+  title.textContent = 'Assessment incomplete';
+  screen.appendChild(title);
+
+  /* Context paragraph — different for urgent vs. standard */
+  const context = document.createElement('p');
+  context.className = 'incomplete-context';
+  if (cfg.urgentRisk) {
+    context.textContent =
+      'The answers you provided score as high risk — but the assessment cannot reach a final result '
+      + 'until every question has a confirmed answer. Go back and complete the fields shown below.';
+  } else {
+    context.textContent =
+      'One or more questions were left blank or marked as Unknown. '
+      + 'The assessment cannot determine whether an enforcement gap exists until those are resolved.';
+  }
+  screen.appendChild(context);
+
+  /* Show risk band if high urgency, so the visitor understands the stakes */
+  if (cfg.urgentRisk && riskScore > 0) {
+    const riskNote = document.createElement('div');
+    riskNote.className = `s8-risk-note s8-risk-note--${riskBand}`;
+    riskNote.innerHTML =
+      `<span class="s8-risk-note__score">${riskScore}</span>`
+      + `<span class="s8-risk-note__label">Partial risk score — ${S8_RISK_BAND_LABELS[riskBand] || riskBand} based on answers given so far</span>`;
+    screen.appendChild(riskNote);
+  }
+
+  /* Unanswered fields */
+  if (unanswered.length > 0) {
+    const section = document.createElement('div');
+    section.className = 's8-gap-section';
+
+    const heading = document.createElement('div');
+    heading.className = 's8-gap-section__heading';
+    heading.textContent = unanswered.length === 1
+      ? '1 question was not answered'
+      : `${unanswered.length} questions were not answered`;
+    section.appendChild(heading);
+
+    const list = document.createElement('ul');
+    list.className = 's8-gap-list';
+    unanswered.forEach(field => {
+      const li = document.createElement('li');
+      li.className = 's8-gap-list__item';
+      li.textContent = field;
+      list.appendChild(li);
+    });
+    section.appendChild(list);
+
+    const action = document.createElement('p');
+    action.className = 's8-gap-section__action';
+    action.textContent = 'Use the Back button to return and select an answer for each.';
+    section.appendChild(action);
+
+    screen.appendChild(section);
+  }
+
+  /* Unknown fields */
+  if (unknown.length > 0) {
+    const section = document.createElement('div');
+    section.className = 's8-gap-section s8-gap-section--unknown';
+
+    const heading = document.createElement('div');
+    heading.className = 's8-gap-section__heading';
+    heading.textContent = unknown.length === 1
+      ? '1 field was answered as Unknown'
+      : `${unknown.length} fields were answered as Unknown`;
+    section.appendChild(heading);
+
+    const list = document.createElement('ul');
+    list.className = 's8-gap-list';
+    unknown.forEach(field => {
+      const li = document.createElement('li');
+      li.className = 's8-gap-list__item';
+      li.textContent = field;
+      list.appendChild(li);
+    });
+    section.appendChild(list);
+
+    const action = document.createElement('p');
+    action.className = 's8-gap-section__action';
+    action.textContent =
+      'Unknown is the right answer when your organization does not yet have this information. '
+      + 'To complete the assessment, involve the agent service owner, the downstream system owner, '
+      + 'or your security team. Return once each field has a confirmed answer.';
+    section.appendChild(action);
+
+    screen.appendChild(section);
+  }
+
+  /* Nav — back only */
+  const nav = document.createElement('nav');
+  nav.className = 'screen-nav screen-nav--start';
+
+  const backBtn = document.createElement('button');
+  backBtn.className = 'btn btn--ghost';
+  backBtn.textContent = 'Back';
+  backBtn.addEventListener('click', () => showScreen('screen-7'));
+  nav.appendChild(backBtn);
+
+  screen.appendChild(nav);
+}
+
 function renderScreen8() {
   const resultKey = evaluateBusinessResult();
   setState('s2.business_result', resultKey);
@@ -449,6 +564,12 @@ function renderScreen8() {
   const cfg    = S8_OUTCOMES[resultKey];
   const screen = document.getElementById('screen-8');
   screen.innerHTML = '';
+
+  /* Incomplete outcomes get their own renderer — no decision block */
+  if (cfg.isIncomplete) {
+    buildIncompleteScreen(screen, resultKey, cfg);
+    return;
+  }
 
   /* Surface badge */
   const badge = document.createElement('div');
@@ -519,82 +640,6 @@ function renderScreen8() {
     meansPara.className = 'what-this-means';
     meansPara.textContent = cfg.decision.reason;
     screen.appendChild(meansPara);
-  }
-
-  /* Information gap panels for incomplete outcomes */
-  if (resultKey === 'urgent_investigation' || resultKey === 'more_info_required') {
-    const unanswered = getState('s2.unanswered_fields') || [];
-    const unknown    = getState('s2.unknown_fields')    || [];
-
-    if (unanswered.length > 0) {
-      const box = document.createElement('div');
-      box.className = 'callout callout--warning';
-      box.style.marginTop = 'var(--space-5)';
-
-      const heading = document.createElement('p');
-      heading.style.cssText =
-        'font-weight:600;font-size:var(--text-sm);margin-bottom:var(--space-3);';
-      heading.textContent = unanswered.length === 1
-        ? '1 question was not answered'
-        : `${unanswered.length} questions were not answered`;
-      box.appendChild(heading);
-
-      const list = document.createElement('ul');
-      list.style.cssText =
-        'margin:0 0 0 var(--space-5);display:flex;flex-direction:column;gap:var(--space-2);';
-      unanswered.forEach(field => {
-        const li = document.createElement('li');
-        li.style.cssText = 'font-size:var(--text-sm);';
-        li.textContent = field;
-        list.appendChild(li);
-      });
-      box.appendChild(list);
-
-      const hint = document.createElement('p');
-      hint.style.cssText =
-        'font-size:var(--text-xs);color:var(--color-text-secondary);margin-top:var(--space-3);';
-      hint.textContent = 'Use Back to return to the questions and select an answer for each.';
-      box.appendChild(hint);
-
-      screen.appendChild(box);
-    }
-
-    if (unknown.length > 0) {
-      const box = document.createElement('div');
-      box.className = 'callout callout--info';
-      box.style.marginTop = 'var(--space-5)';
-
-      const heading = document.createElement('p');
-      heading.style.cssText =
-        'font-weight:600;font-size:var(--text-sm);margin-bottom:var(--space-3);';
-      heading.textContent = unknown.length === 1
-        ? '1 field was answered as Unknown. This requires organizational investigation.'
-        : `${unknown.length} fields were answered as Unknown. These require organizational investigation.`;
-      box.appendChild(heading);
-
-      const list = document.createElement('ul');
-      list.style.cssText =
-        'margin:0 0 0 var(--space-5);display:flex;flex-direction:column;gap:var(--space-2);';
-      unknown.forEach(field => {
-        const li = document.createElement('li');
-        li.style.cssText = 'font-size:var(--text-sm);';
-        li.textContent = field;
-        list.appendChild(li);
-      });
-      box.appendChild(list);
-
-      const hint = document.createElement('p');
-      hint.style.cssText =
-        'font-size:var(--text-xs);color:var(--color-text-secondary);margin-top:var(--space-3);';
-      hint.textContent =
-        'Selecting Unknown is correct when your organization does not yet have this information. '
-        + 'It is not a form error. To complete this assessment, involve the AI agent service owner, '
-        + 'the downstream system owner, or your security or IT team to establish the answer. '
-        + 'Return here once each unknown is resolved.';
-      box.appendChild(hint);
-
-      screen.appendChild(box);
-    }
   }
 
   /* Decision block preserved for outcome detail */
