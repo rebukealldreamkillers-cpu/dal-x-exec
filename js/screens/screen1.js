@@ -175,12 +175,62 @@ function buildSurfaceBadge() {
 
 /* ── Screen 1 render ───────────────────────────────────────────────────── */
 
+/*
+ * buildDemoOrientation()
+ * Intro block shown at the top of screen 1: what the demo is, what it covers,
+ * and why DAL-X exists. Sets context before the product walkthrough begins.
+ */
+function buildDemoOrientation() {
+  const wrap = document.createElement('div');
+  wrap.className = 'demo-orientation';
+
+  const heading = document.createElement('h2');
+  heading.className = 'demo-orientation__heading';
+  heading.textContent = 'What you are about to see';
+  wrap.appendChild(heading);
+
+  const desc = document.createElement('p');
+  desc.className = 'demo-orientation__desc';
+  desc.textContent =
+    'This is a six-step walkthrough of a single real-world scenario: a consequential AI agent '
+    + 'submitting a $650,000 wire transfer to a core banking system. '
+    + 'You will see how DAL-X intercepts the submission, routes it for human review, '
+    + 'issues a signed authorization token on approval, and how the downstream system '
+    + 'enforces that token before executing.';
+  wrap.appendChild(desc);
+
+  const whyHeading = document.createElement('div');
+  whyHeading.className = 'demo-orientation__why-label';
+  whyHeading.textContent = 'Why DAL-X exists';
+  wrap.appendChild(whyHeading);
+
+  const why = document.createElement('p');
+  why.className = 'demo-orientation__why';
+  why.textContent =
+    'Consequential AI agents — those registered to enterprise systems that move money, '
+    + 'modify infrastructure, or commit your organization to action — are executing today. '
+    + 'When an auditor, regulator, or board asks "who authorized this," there is no answer. '
+    + 'DAL-X exists to make that answer verifiable: every governed execution produces '
+    + 'a signed authority record tied to a specific human decision.';
+  wrap.appendChild(why);
+
+  const scope = document.createElement('p');
+  scope.className = 'demo-orientation__scope';
+  scope.textContent =
+    'DAL-X does not govern every AI agent. It governs the ones your enterprise '
+    + 'has registered — agents with the authority to act on your behalf in downstream systems.';
+  wrap.appendChild(scope);
+
+  return wrap;
+}
+
 function renderScreen1() {
   const screen = document.getElementById('screen-1');
   if (!screen) return;
   screen.innerHTML = '';
 
   screen.appendChild(buildSurfaceBadge());
+  screen.appendChild(buildDemoOrientation());
   screen.appendChild(buildStepIndicator(1, 'Intercept'));
 
   /* Product window */

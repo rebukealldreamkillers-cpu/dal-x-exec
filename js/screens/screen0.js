@@ -65,8 +65,9 @@ function buildHero() {
   subtitle.className = 'immersive-hero__subtitle animate-in';
   subtitle.style.setProperty('--delay', '0.2s');
   subtitle.textContent =
-    'DAL-X is the enforcement gate between what autonomous agents propose '
-    + 'and what downstream systems execute. No authority. No execution.';
+    'DAL-X is the enforcement gate between what consequential AI agents propose '
+    + 'and what downstream systems execute. Not for every agent. '
+    + 'For agents that move money, modify infrastructure, or commit your enterprise to action.';
   hero.appendChild(subtitle);
 
   const ctas = document.createElement('div');
@@ -298,10 +299,11 @@ function buildPositioningNote() {
   const note = document.createElement('div');
   note.className = 'positioning-note animate-in';
   note.innerHTML =
-    `<strong>DAL-X controls execution, not model intent.</strong> `
-    + `It does not determine why an AI agent proposed an execution. `
-    + `It checks whether the enterprise authorized that execution `
-    + `before the downstream system proceeds.`;
+    `<strong>DAL-X is not for all AI agents.</strong> `
+    + `It governs consequential AI agents: those registered to enterprise systems that move money, `
+    + `modify infrastructure, execute contracts, or take other actions your organization is held accountable for. `
+    + `DAL-X checks whether the enterprise authorized that execution before the downstream system proceeds. `
+    + `It does not evaluate model reasoning or intent.`;
   section.appendChild(note);
 
   return section;
