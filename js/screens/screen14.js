@@ -1,46 +1,32 @@
-/* ─── Screen 14: Downstream Gate Tests ──────────────────────────────────── */
+/* ─── Screen 14: Downstream gate tests ──────────────────────────────────── */
 
 /*
  * Runs six gate enforcement scenarios against the simulated DAL-X gate and
  * stores results in s3.gate_tests[]. Results are generated once on first
  * visit; subsequent renders reuse the stored array.
  *
- * Scenarios 1, 2, 3, 5, 6 are structurally always rejected. They each
- * test a specific enforcement rule (missing auth, action mismatch, target
- * mismatch, already consumed, expired). Their reason text references the
- * actual authorized action and target from the submission where available.
- *
- * Scenario 4 ("Valid active authorization_id") is dynamic: it reflects
- * whether an authorization was actually issued in this simulation path.
- * If the trigger blocked the submission or a reviewer denied it, scenario 4
- * shows Rejected with a reason derived from the actual simulation outcome,
- * not a hardcoded Accepted regardless of what happened upstream.
- *
- * Each result record: { name, chipState, chipLabel, reason,
- *   execution_allowed, receipt_id, required_response, what_happens_next,
- *   showSeparationNote }
+ * Scenarios 1, 2, 3, 5, 6 are structurally always rejected.
+ * Scenario 4 reflects whether an authorization was issued in this simulation.
  */
 
-/* ── Receipt ID helper ────────────────────────────────────────────────────── */
+/* ── Receipt ID helper ──────────────────────────────────────────────────── */
 
 function generateReceiptId() {
   return 'RCP-' + Math.random().toString(16).substr(2, 8).toUpperCase();
 }
 
-/* ── Gate test builder (idempotent) ───────────────────────────────────────── */
+/* ── Gate test builder (idempotent) ─────────────────────────────────────── */
 
 function buildGateTests() {
   const existing = getState('s3.gate_tests');
   if (existing && existing.length > 0) return;
 
-  /* Read actual simulation state */
   const action         = getState('s3.submission.action')  || '';
   const target         = getState('s3.submission.target')  || '';
   const triggerOutcome = getState('s3.trigger_outcome')    || '';
   const reviewDecision = getState('s3.reviewer_decision')  || '';
   const authIssued     = Boolean(getState('s3.authorization_id'));
 
-  /* Build the reason for scenario 4 when no auth was issued */
   function noAuthReason() {
     if (triggerOutcome === 'blocked')
       return 'The trigger evaluation blocked this submission. No authorization was issued.';
@@ -90,7 +76,6 @@ function buildGateTests() {
       what_happens_next:  'The downstream system is not called.',
       showSeparationNote: false,
     },
-    /* Scenario 4: outcome is driven by actual simulation state */
     authIssued ? {
       name:               'Valid active authorization_id',
       chipState:          'accepted',
@@ -139,53 +124,140 @@ function buildGateTests() {
   setState('s3.gate_tests', tests);
 }
 
-/* ── Scenario card builder ────────────────────────────────────────────────── */
+/* ── Result row card ────────────────────────────────────────────────────── */
 
-function buildScenarioCard(test) {
-  const card = document.createElement('div');
-  card.className = 'card';
-  card.style.marginBottom = 'var(--space-5)';
+function buildResultRow(test) {
+  const row = document.createElement('div');
+  row.className = 'gate-test-row';
+  row.classList.add(`gate-test-row--${test.chipState}`);
 
-  /* Title row: name + status chip */
-  const titleRow = document.createElement('div');
-  titleRow.style.cssText =
-    'display:flex;align-items:center;justify-content:space-between;'
-    + 'margin-bottom:var(--space-4);gap:var(--space-3);';
+  const head = document.createElement('div');
+  head.className = 'gate-test-row__head';
 
-  const nameEl = document.createElement('div');
-  nameEl.className = 'card__title';
-  nameEl.style.margin = '0';
-  nameEl.textContent = test.name;
-  titleRow.appendChild(nameEl);
-  titleRow.appendChild(createStatusChip(test.chipState, test.chipLabel));
-  card.appendChild(titleRow);
+  const name = document.createElement('div');
+  name.className = 'gate-test-row__name';
+  name.textContent = test.name;
+  head.appendChild(name);
 
-  /* Six result fields */
-  const fields = [
-    ['Reason',             test.reason],
-    ['Execution allowed',  test.execution_allowed],
-    ['Receipt identifier', test.receipt_id],
-    ['Required response',  test.required_response],
-    ['What happens next',  test.what_happens_next],
-  ];
-  fields.forEach(([key, val]) => card.appendChild(createLabelledField(key, val)));
+  head.appendChild(createStatusChip(test.chipState, test.chipLabel));
 
-  /* Separation note for valid scenario */
-  if (test.showSeparationNote) {
-    const note = document.createElement('p');
-    note.style.cssText =
-      'margin-top:var(--space-4);font-size:var(--text-sm);'
-      + 'color:var(--color-text-secondary);';
-    note.textContent =
-      'DAL-X gate acceptance does not prove that a real downstream system '
-      + 'completed execution.';
-    card.appendChild(note);
-  }
+  row.appendChild(head);
 
-  return card;
+  const body = document.createElement('div');
+  body.className = 'gate-test-row__body';
+
+  const reason = document.createElement('div');
+  reason.className = 'gate-test-row__reason';
+  reason.textContent = test.reason;
+  body.appendChild(reason);
+
+  const receipt = document.createElement('div');
+  receipt.className = 'gate-test-row__receipt';
+  receipt.textContent = `Receipt ${test.receipt_id}`;
+  body.appendChild(receipt);
+
+  row.appendChild(body);
+  return row;
 }
 
-/* ── Renderer ─────────────────────────────────────────────────────────────── */
+/* ── Mini pipeline animation ────────────────────────────────────────────── */
+
+function buildMiniPipeline(test) {
+  const outcome = test.chipState === 'accepted' ? 'accepted' : 'rejected';
+  const wrap = document.createElement('div');
+  wrap.className = `mini-pipeline mini-pipeline--${outcome}`;
+
+  const agent = document.createElement('div');
+  agent.className = 'mini-pipeline__node mini-pipeline__node--agent';
+  agent.textContent = 'Agent';
+
+  const conn1 = document.createElement('div');
+  conn1.className = 'mini-pipeline__conn mini-pipeline__conn--in';
+  const packet = document.createElement('div');
+  packet.className = 'mini-pipeline__packet';
+  conn1.appendChild(packet);
+
+  const gate = document.createElement('div');
+  gate.className = 'mini-pipeline__node mini-pipeline__node--gate';
+  gate.textContent = 'Gate';
+
+  const conn2 = document.createElement('div');
+  conn2.className = 'mini-pipeline__conn mini-pipeline__conn--out';
+  if (outcome === 'accepted') {
+    const packet2 = document.createElement('div');
+    packet2.className = 'mini-pipeline__packet mini-pipeline__packet--out';
+    conn2.appendChild(packet2);
+  }
+
+  const down = document.createElement('div');
+  down.className = 'mini-pipeline__node mini-pipeline__node--downstream';
+  down.textContent = 'System';
+
+  wrap.appendChild(agent);
+  wrap.appendChild(conn1);
+  wrap.appendChild(gate);
+  wrap.appendChild(conn2);
+  wrap.appendChild(down);
+
+  return wrap;
+}
+
+/* ── Sequential runner ──────────────────────────────────────────────────── */
+
+function runGateTestSequence(tests, pipelineHost, resultsHost, summaryHost, onDone) {
+  let index = 0;
+  const totalDelay = 1500;
+
+  function step() {
+    if (index >= tests.length) {
+      if (typeof onDone === 'function') onDone();
+      return;
+    }
+    const test = tests[index];
+
+    /* Show the pipeline for this test */
+    pipelineHost.innerHTML = '';
+
+    const label = document.createElement('div');
+    label.className = 'mini-pipeline__label';
+    label.textContent = `Test ${index + 1} of ${tests.length}. ${test.name}`;
+    pipelineHost.appendChild(label);
+
+    pipelineHost.appendChild(buildMiniPipeline(test));
+
+    /* Append the result row after a short delay */
+    setTimeout(() => {
+      const row = buildResultRow(test);
+      row.classList.add('gate-test-row--enter');
+      resultsHost.appendChild(row);
+      index += 1;
+      step();
+    }, totalDelay);
+  }
+
+  step();
+
+  /* When done, render summary */
+  function finalize() {
+    const accepted = tests.filter(t => t.chipState === 'accepted').length;
+    const rejected = tests.filter(t => t.chipState !== 'accepted').length;
+
+    summaryHost.innerHTML = '';
+    const s = document.createElement('div');
+    s.className = 'gate-test-summary';
+    s.innerHTML =
+      `<span class="gate-test-summary__num gate-test-summary__num--green">${accepted}</span> accepted `
+      + `<span class="gate-test-summary__sep"></span> `
+      + `<span class="gate-test-summary__num gate-test-summary__num--red">${rejected}</span> rejected`;
+    summaryHost.appendChild(s);
+  }
+
+  /* Wrap onDone to include finalize */
+  const origOnDone = onDone;
+  onDone = () => { finalize(); if (typeof origOnDone === 'function') origOnDone(); };
+}
+
+/* ── Renderer ───────────────────────────────────────────────────────────── */
 
 function renderScreen14() {
   buildGateTests();
@@ -199,19 +271,20 @@ function renderScreen14() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 3 · Configured DAL-X Simulation';
+  badge.textContent = 'Surface 3 · Configured DAL-X simulation';
   screen.appendChild(badge);
 
   /* Title */
   const title = document.createElement('h1');
   title.className = 'screen-title';
-  title.textContent = 'Downstream Gate Tests';
+  title.textContent = 'Downstream gate tests';
   screen.appendChild(title);
 
   /* Subtitle */
   const subtitle = document.createElement('p');
   subtitle.className = 'screen-subtitle';
-  subtitle.textContent = 'The simulation runs:';
+  subtitle.textContent =
+    'Six enforcement scenarios run against the simulated DAL-X gate.';
   screen.appendChild(subtitle);
 
   /* Simulation mode notice when no authorization was issued */
@@ -221,11 +294,11 @@ function renderScreen14() {
     demoNote.style.marginBottom = 'var(--space-5)';
     demoNote.textContent =
       'No authorization was issued in this simulation path. '
-      + 'Gate tests are shown in demonstration mode using a simulated authorization.';
+      + 'Gate tests run in demonstration mode using a simulated authorization.';
     screen.appendChild(demoNote);
   }
 
-  /* Scope limitation notice (spec-required) */
+  /* Scope limitation notice */
   const scopeNote = document.createElement('div');
   scopeNote.className = 'callout callout--info';
   scopeNote.style.marginBottom = 'var(--space-6)';
@@ -235,15 +308,84 @@ function renderScreen14() {
     + 'is supplied for comparison.';
   screen.appendChild(scopeNote);
 
-  /* Scenario cards */
-  tests.forEach(test => screen.appendChild(buildScenarioCard(test)));
+  /* Run controls */
+  const runControls = document.createElement('div');
+  runControls.className = 'gate-run-controls';
+
+  const runBtn = document.createElement('button');
+  runBtn.className = 'btn btn--primary';
+  runBtn.textContent = 'Run gate tests';
+  runControls.appendChild(runBtn);
+
+  screen.appendChild(runControls);
+
+  /* Pipeline host */
+  const pipelineHost = document.createElement('div');
+  pipelineHost.className = 'gate-pipeline-host';
+  screen.appendChild(pipelineHost);
+
+  /* Results host */
+  const resultsHost = document.createElement('div');
+  resultsHost.className = 'gate-results-host';
+  screen.appendChild(resultsHost);
+
+  /* Summary host */
+  const summaryHost = document.createElement('div');
+  summaryHost.className = 'gate-summary-host';
+  screen.appendChild(summaryHost);
+
+  runBtn.addEventListener('click', () => {
+    runBtn.disabled = true;
+    runBtn.textContent = 'Running';
+    resultsHost.innerHTML = '';
+    summaryHost.innerHTML = '';
+
+    let index = 0;
+    const stepDelay = 1500;
+
+    function runNext() {
+      if (index >= tests.length) {
+        pipelineHost.innerHTML = '';
+        const accepted = tests.filter(t => t.chipState === 'accepted').length;
+        const rejected = tests.filter(t => t.chipState !== 'accepted').length;
+        const s = document.createElement('div');
+        s.className = 'gate-test-summary';
+        s.innerHTML =
+          `<span class="gate-test-summary__num gate-test-summary__num--green">${accepted}</span>`
+          + '<span class="gate-test-summary__word"> accepted</span>'
+          + '<span class="gate-test-summary__sep"></span>'
+          + `<span class="gate-test-summary__num gate-test-summary__num--red">${rejected}</span>`
+          + '<span class="gate-test-summary__word"> rejected</span>';
+        summaryHost.appendChild(s);
+        runBtn.textContent = 'Rerun gate tests';
+        runBtn.disabled = false;
+        return;
+      }
+      const test = tests[index];
+      pipelineHost.innerHTML = '';
+      const label = document.createElement('div');
+      label.className = 'mini-pipeline__label';
+      label.textContent = `Test ${index + 1} of ${tests.length}. ${test.name}`;
+      pipelineHost.appendChild(label);
+      pipelineHost.appendChild(buildMiniPipeline(test));
+
+      setTimeout(() => {
+        const row = buildResultRow(test);
+        row.classList.add('gate-test-row--enter');
+        resultsHost.appendChild(row);
+        index += 1;
+        runNext();
+      }, stepDelay);
+    }
+
+    runNext();
+  });
 
   /* Evidence label */
   const evidenceLine = document.createElement('p');
   evidenceLine.style.cssText =
-    'margin-top:var(--space-5);font-size:var(--text-sm);'
-    + 'color:var(--color-text-secondary);';
-  evidenceLine.appendChild(document.createTextNode('Evidence: '));
+    'margin-top:var(--space-5);font-size:var(--text-sm);color:var(--color-text-secondary);';
+  evidenceLine.appendChild(document.createTextNode('Evidence '));
   evidenceLine.appendChild(createEvidenceLabel('demonstrated'));
   screen.appendChild(evidenceLine);
 
@@ -253,13 +395,13 @@ function renderScreen14() {
 
   const backBtn = document.createElement('button');
   backBtn.className = 'btn btn--ghost';
-  backBtn.textContent = '← Back';
+  backBtn.textContent = 'Back';
   backBtn.addEventListener('click', () => showScreen('screen-13'));
   nav.appendChild(backBtn);
 
   const nextBtn = document.createElement('button');
   nextBtn.className = 'btn btn--primary';
-  nextBtn.textContent = 'Next →';
+  nextBtn.textContent = 'Continue';
   nextBtn.addEventListener('click', () => {
     if (typeof renderScreen15 === 'function') renderScreen15();
     showScreen('screen-15');

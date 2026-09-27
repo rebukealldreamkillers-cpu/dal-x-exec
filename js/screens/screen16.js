@@ -1,15 +1,15 @@
-/* ─── Screen 16: Technical Questions ────────────────────────────────────── */
+/* ─── Screen 16: Technical review ────────────────────────────────────────── */
 
 /*
- * Ten questions across two sections:
- *   Structural (Q1–Q6): confirmed 'no'/'neither' = DAL-X cannot control path
- *   Implementation (Q7–Q10): confirmed 'no' = work required, not disqualifying
+ * Ten questions across two sections.
+ *   Structural (Q1 to Q6). Confirmed 'no'/'neither' = DAL-X cannot control path
+ *   Implementation (Q7 to Q10). Confirmed 'no' = work required, not disqualifying
  *
  * Q2 is conditional:
  *   needs_review | high_risk → Q2 shown, required
  *   auto_approve | blocked   → Q2 hidden, s4.q2 set to 'not_applicable'
  *
- * All answers written to s4.q1–s4.q10.
+ * All answers written to s4.q1 through s4.q10.
  */
 
 /* ── Option sets ──────────────────────────────────────────────────────────── */
@@ -33,121 +33,170 @@ const Q3_OPTIONS = [
 const S16_STRUCTURAL = [
   {
     id:       's16-q1',
+    qNum:     'Q1',
     stateKey: 's4.q1',
-    label:    'Q1: Submission point',
+    label:    'Submission point',
     text:     'Can the agent or calling service submit the proposed execution to DAL-X before execution begins?',
     options:  YES_NO_UNKNOWN,
+    kind:     'structural',
   },
   /* Q2 rendered separately, conditional on trigger_outcome */
   {
     id:       's16-q3',
+    qNum:     'Q3',
     stateKey: 's4.q3',
-    label:    'Q3: Decision handling',
+    label:    'Decision handling',
     text:     'Can the enterprise receive the DAL-X decision through a webhook or retrieve it by polling?',
     options:  Q3_OPTIONS,
+    kind:     'structural',
   },
   {
     id:       's16-q4',
+    qNum:     'Q4',
     stateKey: 's4.q4',
-    label:    'Q4: Enforcement point',
+    label:    'Enforcement point',
     text:     'Can the downstream execution service call the DAL-X enforcement endpoint before execution?',
     options:  YES_NO_UNKNOWN,
+    kind:     'structural',
   },
   {
     id:       's16-q5',
+    qNum:     'Q5',
     stateKey: 's4.q5',
-    label:    'Q5: Blocking behavior',
+    label:    'Blocking behavior',
     text:     'Can the downstream service block execution whenever DAL-X rejects the request, returns an error, or is unavailable?',
     options:  YES_NO_UNKNOWN,
+    kind:     'structural',
   },
   {
     id:       's16-q6',
+    qNum:     'Q6',
     stateKey: 's4.q6',
-    label:    'Q6: Bypass prevention',
+    label:    'Bypass prevention',
     text:     'Can every governed execution be required to pass through the DAL-X enforcement check?',
     options:  YES_NO_UNKNOWN,
+    kind:     'structural',
   },
 ];
 
 const S16_IMPLEMENTATION = [
   {
     id:       's16-q7',
+    qNum:     'Q7',
     stateKey: 's4.q7',
-    label:    'Q7: Submission fields',
+    label:    'Submission fields',
     text:     'Can the enterprise provide the documented submission fields and required metadata?',
     options:  YES_NO_UNKNOWN,
+    kind:     'implementation',
   },
   {
     id:       's16-q8',
+    qNum:     'Q8',
     stateKey: 's4.q8',
-    label:    'Q8: API key storage',
+    label:    'API key storage',
     text:     'Can the enterprise store DAL-X API keys in a secrets manager or equivalent protected configuration?',
     options:  YES_NO_UNKNOWN,
+    kind:     'implementation',
   },
   {
     id:       's16-q9',
+    qNum:     'Q9',
     stateKey: 's4.q9',
-    label:    'Q9: Data handling',
+    label:    'Data handling',
     text:     'Can sensitive information remain inside the enterprise while DAL-X receives reference identifiers and required metadata?',
     options:  YES_NO_UNKNOWN,
+    kind:     'implementation',
   },
   {
     id:       's16-q10',
+    qNum:     'Q10',
     stateKey: 's4.q10',
-    label:    'Q10: Downstream result',
+    label:    'Downstream result',
     text:     'Can the enterprise record the downstream system result separately from the DAL-X gate receipt?',
     options:  YES_NO_UNKNOWN,
+    kind:     'implementation',
   },
 ];
 
-/* ── Radio group builder ──────────────────────────────────────────────────── */
+/* ── Blocker check ───────────────────────────────────────────────────────── */
 
-function buildRadioGroup(cfg) {
-  const group = document.createElement('div');
-  group.className = 'form-group';
+function s16IsBlocker(stateKey) {
+  const v = getState(stateKey);
+  if (stateKey === 's4.q3') return v === 'neither';
+  return v === 'no';
+}
 
-  const labelEl = document.createElement('div');
-  labelEl.className = 'form-label';
+/* ── Question card builder ───────────────────────────────────────────────── */
+
+function s16BuildQuestionCard(cfg, onChange) {
+  const card = document.createElement('div');
+  card.className = 'tech-q-card';
+  card.dataset.qkind = cfg.kind;
+  card.dataset.qkey  = cfg.stateKey;
+
+  if (cfg.kind === 'structural' && s16IsBlocker(cfg.stateKey)) {
+    card.classList.add('tech-q-card--blocker');
+  }
+
+  const head = document.createElement('div');
+  head.className = 'tech-q-card__head';
+
+  const badge = document.createElement('span');
+  badge.className = 'tech-q-card__badge';
+  badge.textContent = cfg.qNum;
+  head.appendChild(badge);
+
+  const labelEl = document.createElement('span');
+  labelEl.className = 'tech-q-card__label';
   labelEl.textContent = cfg.label;
-  group.appendChild(labelEl);
+  head.appendChild(labelEl);
+
+  card.appendChild(head);
 
   const questionEl = document.createElement('p');
-  questionEl.style.cssText =
-    'font-size:var(--text-sm);color:var(--color-text-secondary);'
-    + 'margin:var(--space-1) 0 var(--space-3);line-height:1.6;';
+  questionEl.className = 'tech-q-card__question';
   questionEl.textContent = cfg.text;
-  group.appendChild(questionEl);
+  card.appendChild(questionEl);
 
-  const radioWrap = document.createElement('div');
-  radioWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:var(--space-3);';
+  const pillRow = document.createElement('div');
+  pillRow.className = 'tech-q-pills';
+  pillRow.setAttribute('role', 'radiogroup');
+  pillRow.setAttribute('aria-label', cfg.label);
 
   const saved = getState(cfg.stateKey);
 
   cfg.options.forEach(opt => {
-    const lbl = document.createElement('label');
-    lbl.style.cssText =
-      'display:inline-flex;align-items:center;gap:var(--space-2);'
-      + 'cursor:pointer;font-size:var(--text-sm);';
+    const pill = document.createElement('button');
+    pill.type = 'button';
+    pill.className = 'tech-q-pill';
+    pill.dataset.value = opt.value;
+    pill.setAttribute('role', 'radio');
+    pill.setAttribute('aria-checked', String(saved === opt.value));
+    if (saved === opt.value) pill.classList.add('is-selected');
+    pill.textContent = opt.label;
 
-    const radio = document.createElement('input');
-    radio.type    = 'radio';
-    radio.name    = cfg.id;
-    radio.value   = opt.value;
-    radio.checked = (saved === opt.value);
-    radio.addEventListener('change', () => setState(cfg.stateKey, opt.value));
+    pill.addEventListener('click', () => {
+      setState(cfg.stateKey, opt.value);
+      Array.from(pillRow.children).forEach(child => {
+        const on = child === pill;
+        child.classList.toggle('is-selected', on);
+        child.setAttribute('aria-checked', String(on));
+      });
+      const blocking = cfg.kind === 'structural' && s16IsBlocker(cfg.stateKey);
+      card.classList.toggle('tech-q-card--blocker', blocking);
+      if (typeof onChange === 'function') onChange();
+    });
 
-    lbl.appendChild(radio);
-    lbl.appendChild(document.createTextNode(opt.label));
-    radioWrap.appendChild(lbl);
+    pillRow.appendChild(pill);
   });
 
-  group.appendChild(radioWrap);
-  return group;
+  card.appendChild(pillRow);
+  return card;
 }
 
 /* ── Q2 conditional block ─────────────────────────────────────────────────── */
 
-function buildQ2Block(triggerOutcome) {
+function s16BuildQ2Card(triggerOutcome, onChange) {
   const isNA = (triggerOutcome === 'auto_approve' || triggerOutcome === 'blocked');
 
   /* Set or reset q2 based on current trigger outcome */
@@ -157,75 +206,78 @@ function buildQ2Block(triggerOutcome) {
     setState('s4.q2', null);
   }
 
-  const group = document.createElement('div');
-  group.className = 'form-group';
-
-  const labelEl = document.createElement('div');
-  labelEl.className = 'form-label';
-  labelEl.textContent = 'Q2: Pending execution';
-  group.appendChild(labelEl);
-
-  const questionEl = document.createElement('p');
-  questionEl.style.cssText =
-    'font-size:var(--text-sm);color:var(--color-text-secondary);'
-    + 'margin:var(--space-1) 0 var(--space-3);line-height:1.6;';
-  questionEl.textContent =
-    'Can the proposed execution wait while a reviewer decides and resume from stored pending state?';
-  group.appendChild(questionEl);
-
-  /* Stored Screen 11 result */
-  if (triggerOutcome) {
-    const outcomeEl = document.createElement('p');
-    outcomeEl.style.cssText =
-      'font-size:var(--text-sm);color:var(--color-text-secondary);'
-      + 'margin-bottom:var(--space-3);';
-    outcomeEl.textContent = 'Configured simulation outcome: ' + triggerOutcome;
-    group.appendChild(outcomeEl);
-  }
-
   if (isNA) {
-    /* Not applicable: read-only callout */
-    const naNote = document.createElement('div');
-    naNote.className = 'callout callout--info';
+    const card = document.createElement('div');
+    card.className = 'tech-q-card tech-q-card--na';
+    card.dataset.qkind = 'structural';
+    card.dataset.qkey  = 's4.q2';
+
+    const head = document.createElement('div');
+    head.className = 'tech-q-card__head';
+
+    const badge = document.createElement('span');
+    badge.className = 'tech-q-card__badge';
+    badge.textContent = 'Q2';
+    head.appendChild(badge);
+
+    const labelEl = document.createElement('span');
+    labelEl.className = 'tech-q-card__label';
+    labelEl.textContent = 'Pending execution';
+    head.appendChild(labelEl);
+
+    const naTag = document.createElement('span');
+    naTag.className = 'tech-q-card__na-tag';
+    naTag.textContent = 'Not applicable';
+    head.appendChild(naTag);
+
+    card.appendChild(head);
+
+    const naNote = document.createElement('p');
+    naNote.className = 'tech-q-card__question';
     naNote.textContent =
-      'Pending execution storage is not required because every execution inside '
-      + 'this pilot scope is immediately authorized or blocked.';
-    group.appendChild(naNote);
-  } else {
-    /* Required: info message + radio buttons */
-    const infoMsg = document.createElement('div');
-    infoMsg.className = 'callout callout--info';
-    infoMsg.style.marginBottom = 'var(--space-3)';
-    infoMsg.textContent =
-      'This pilot scope includes executions that may require human review.';
-    group.appendChild(infoMsg);
+      'Pending execution storage is not required. Every execution in this pilot scope is immediately authorized or blocked.';
+    card.appendChild(naNote);
 
-    const radioWrap = document.createElement('div');
-    radioWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:var(--space-3);';
-
-    const saved = getState('s4.q2');
-    YES_NO_UNKNOWN.forEach(opt => {
-      const lbl = document.createElement('label');
-      lbl.style.cssText =
-        'display:inline-flex;align-items:center;gap:var(--space-2);'
-        + 'cursor:pointer;font-size:var(--text-sm);';
-
-      const radio = document.createElement('input');
-      radio.type    = 'radio';
-      radio.name    = 's16-q2';
-      radio.value   = opt.value;
-      radio.checked = (saved === opt.value);
-      radio.addEventListener('change', () => setState('s4.q2', opt.value));
-
-      lbl.appendChild(radio);
-      lbl.appendChild(document.createTextNode(opt.label));
-      radioWrap.appendChild(lbl);
-    });
-
-    group.appendChild(radioWrap);
+    return card;
   }
 
-  return group;
+  const q2cfg = {
+    id:       's16-q2',
+    qNum:     'Q2',
+    stateKey: 's4.q2',
+    label:    'Pending execution',
+    text:     'Can the proposed execution wait while a reviewer decides and resume from stored pending state?',
+    options:  YES_NO_UNKNOWN,
+    kind:     'structural',
+  };
+  return s16BuildQuestionCard(q2cfg, onChange);
+}
+
+/* ── Section divider ─────────────────────────────────────────────────────── */
+
+function s16BuildSectionDivider(text) {
+  const wrap = document.createElement('div');
+  wrap.className = 'tech-section-divider';
+
+  const pill = document.createElement('span');
+  pill.className = 'tech-section-divider__pill';
+  pill.textContent = text;
+  wrap.appendChild(pill);
+
+  return wrap;
+}
+
+/* ── Progress counter ────────────────────────────────────────────────────── */
+
+function s16CountAnswered() {
+  const isAnswered = v => v != null && v !== '';
+  const structKeys = ['s4.q1','s4.q2','s4.q3','s4.q4','s4.q5','s4.q6'];
+  const implKeys   = ['s4.q7','s4.q8','s4.q9','s4.q10'];
+
+  let struct = 0, impl = 0;
+  structKeys.forEach(k => { if (isAnswered(getState(k))) struct++; });
+  implKeys.forEach(k => { if (isAnswered(getState(k))) impl++; });
+  return { struct, impl, total: struct + impl, all: struct === 6 && impl === 4 };
 }
 
 /* ── Renderer ─────────────────────────────────────────────────────────────── */
@@ -239,88 +291,75 @@ function renderScreen16() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 4 · Technical Review';
+  badge.textContent = 'Surface 4 · Technical review';
   screen.appendChild(badge);
 
   /* Title */
   const title = document.createElement('h1');
   title.className = 'screen-title';
-  title.textContent = 'Technical Questions';
+  title.textContent = 'Technical review';
   screen.appendChild(title);
 
-  /* Subtitle */
-  const subtitle = document.createElement('p');
-  subtitle.className = 'screen-subtitle';
-  subtitle.textContent = 'The questions cover the current integration guide.';
-  screen.appendChild(subtitle);
+  /* Opening note (muted) */
+  const note = document.createElement('p');
+  note.className = 'tech-open-note';
+  note.textContent =
+    'These questions establish whether the current architecture can support a DAL-X integration. '
+    + 'Structural failures block the pilot path. Implementation gaps identify work required before activation.';
+  screen.appendChild(note);
 
-  /* ── Structural questions card ───────────────────────────────────────── */
-  const structCard = document.createElement('div');
-  structCard.className = 'card';
+  /* Update-progress + submit refs */
+  let submitBtn = null;
+  let counterEl = null;
 
-  const structLabel = document.createElement('p');
-  structLabel.className = 'section-label';
-  structLabel.style.marginBottom = 'var(--space-2)';
-  structLabel.textContent = 'Structural questions';
-  structCard.appendChild(structLabel);
+  function refreshCounter() {
+    if (!counterEl || !submitBtn) return;
+    const c = s16CountAnswered();
+    counterEl.textContent = `${c.struct} structural, ${c.impl} implementation questions answered.`;
+    submitBtn.disabled = !c.all;
+    submitBtn.classList.toggle('is-ready', c.all);
+  }
 
-  const structNote = document.createElement('p');
-  structNote.style.cssText =
-    'font-size:var(--text-sm);color:var(--color-text-secondary);'
-    + 'margin-bottom:var(--space-5);line-height:1.6;';
-  structNote.textContent =
-    'A confirmed failure means DAL-X cannot currently control the complete execution path.';
-  structCard.appendChild(structNote);
+  /* Section 1 divider */
+  screen.appendChild(s16BuildSectionDivider('Structural requirements'));
 
   /* Q1 */
-  structCard.appendChild(buildRadioGroup(S16_STRUCTURAL[0]));
+  screen.appendChild(s16BuildQuestionCard(S16_STRUCTURAL[0], refreshCounter));
 
-  /* Q2: conditional */
-  const q2Divider = document.createElement('hr');
-  q2Divider.className = 'divider';
-  structCard.appendChild(q2Divider);
-  structCard.appendChild(buildQ2Block(triggerOutcome));
+  /* Q2 conditional */
+  screen.appendChild(s16BuildQ2Card(triggerOutcome, refreshCounter));
 
-  /* Q3–Q6 */
+  /* Q3-Q6 */
   S16_STRUCTURAL.slice(1).forEach(cfg => {
-    const hr = document.createElement('hr');
-    hr.className = 'divider';
-    structCard.appendChild(hr);
-    structCard.appendChild(buildRadioGroup(cfg));
+    screen.appendChild(s16BuildQuestionCard(cfg, refreshCounter));
   });
 
-  screen.appendChild(structCard);
+  /* Section 2 divider */
+  screen.appendChild(s16BuildSectionDivider('Implementation readiness'));
 
-  /* ── Implementation questions card ──────────────────────────────────── */
-  const implCard = document.createElement('div');
-  implCard.className = 'card';
-  implCard.style.marginTop = 'var(--space-6)';
-
-  const implLabel = document.createElement('p');
-  implLabel.className = 'section-label';
-  implLabel.style.marginBottom = 'var(--space-2)';
-  implLabel.textContent = 'Implementation questions';
-  implCard.appendChild(implLabel);
-
-  const implNote = document.createElement('p');
-  implNote.style.cssText =
-    'font-size:var(--text-sm);color:var(--color-text-secondary);'
-    + 'margin-bottom:var(--space-5);line-height:1.6;';
-  implNote.textContent =
-    'A confirmed failure identifies work required before the pilot. '
-    + 'It does not mean the architecture is unusable.';
-  implCard.appendChild(implNote);
-
-  S16_IMPLEMENTATION.forEach((cfg, i) => {
-    if (i > 0) {
-      const hr = document.createElement('hr');
-      hr.className = 'divider';
-      implCard.appendChild(hr);
-    }
-    implCard.appendChild(buildRadioGroup(cfg));
+  /* Q7-Q10 */
+  S16_IMPLEMENTATION.forEach(cfg => {
+    screen.appendChild(s16BuildQuestionCard(cfg, refreshCounter));
   });
 
-  screen.appendChild(implCard);
+  /* Progress + submit row */
+  const submitRow = document.createElement('div');
+  submitRow.className = 'tech-submit-row';
+
+  counterEl = document.createElement('span');
+  counterEl.className = 'tech-submit-row__counter';
+  submitRow.appendChild(counterEl);
+
+  submitBtn = document.createElement('button');
+  submitBtn.className = 'btn btn--primary tech-submit-row__btn';
+  submitBtn.textContent = 'Submit technical review';
+  submitBtn.addEventListener('click', () => {
+    if (typeof renderScreen17 === 'function') renderScreen17();
+    showScreen('screen-17');
+  });
+  submitRow.appendChild(submitBtn);
+
+  screen.appendChild(submitRow);
 
   /* Nav */
   const nav = document.createElement('nav');
@@ -328,20 +367,13 @@ function renderScreen16() {
 
   const backBtn = document.createElement('button');
   backBtn.className = 'btn btn--ghost';
-  backBtn.textContent = '← Back';
+  backBtn.textContent = 'Back';
   backBtn.addEventListener('click', () => showScreen('screen-15'));
   nav.appendChild(backBtn);
 
-  const nextBtn = document.createElement('button');
-  nextBtn.className = 'btn btn--primary';
-  nextBtn.textContent = 'Next →';
-  nextBtn.addEventListener('click', () => {
-    if (typeof renderScreen17 === 'function') renderScreen17();
-    showScreen('screen-17');
-  });
-  nav.appendChild(nextBtn);
-
   screen.appendChild(nav);
+
+  refreshCounter();
 }
 
 document.addEventListener('DOMContentLoaded', renderScreen16);

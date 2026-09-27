@@ -1,15 +1,15 @@
-/* ─── Screen 15: Configured Simulation Result ───────────────────────────── */
+/* ─── Screen 15: Configured simulation result ───────────────────────────── */
 
 /*
  * Compiles nine result fields from Surface 2 and Surface 3 state.
  * Evidence labels per field:
- *   business (participant-reported): Agent, Proposed execution, Downstream
+ *   business (participant-reported)  Agent, Proposed execution, Downstream
  *     system, Business fit finding
- *   demonstrated (DAL-X-computed):   Controlling trigger, Required authority,
+ *   demonstrated (DAL-X-computed)    Controlling trigger, Required authority,
  *     Reviewer decision, Authorization status, Gate test results
  */
 
-/* ── Display label helpers ────────────────────────────────────────────────── */
+/* ── Display label helpers (unchanged) ──────────────────────────────────── */
 
 function s15LookupLabel(value, options) {
   if (!value) return 'N/A';
@@ -46,7 +46,6 @@ function s15RequiredAuthority() {
   if (outcome === 'high_risk') {
     return getState('s3.trigger_rules.lead_reviewer_role') || 'Lead reviewer';
   }
-  /* needs_review or default */
   return getState('s3.trigger_rules.standard_reviewer_role') || 'Standard reviewer';
 }
 
@@ -74,16 +73,22 @@ function s15AuthorizationStatus() {
 
   if (authId) return 'Issued';
 
-  if (outcome === 'blocked')      return 'Not issued (blocked)';
-  if (decision === 'denied')      return 'Not issued (denied)';
-  if (decision === 'escalated')   return 'Not issued (escalated)';
+  if (outcome === 'blocked')             return 'Not issued (blocked)';
+  if (decision === 'denied')             return 'Not issued (denied)';
+  if (decision === 'escalated')          return 'Not issued (escalated)';
   if (decision === 'revision_requested') return 'Not issued (revision required)';
   return 'Not issued';
 }
 
 const S15_BUSINESS_RESULT_LABELS = {
+  critical_gap:                'Critical enforcement gap',
+  gap_identified:              'Enforcement gap identified',
+  gap_low_priority:            'Gap identified, lower priority',
+  not_applicable:              'DAL-X not required for this workflow',
   potential_use_case:          'Potential DAL-X use case',
   enforcement_not_established: 'DAL-X enforcement requirement not established',
+  high_risk_no_requirement:    'High-stakes workflow with no enforcement requirement',
+  urgent_investigation:        'Urgent, high-risk workflow with unresolved gaps',
   more_info_required:          'More information required',
   not_required:                'DAL-X not required for this workflow',
 };
@@ -93,55 +98,83 @@ function s15BusinessFinding() {
   return S15_BUSINESS_RESULT_LABELS[key] || 'N/A';
 }
 
-/* ── Gate test mini-table ─────────────────────────────────────────────────── */
+/* ── Panel builders ─────────────────────────────────────────────────────── */
 
-function buildGateTestsTable() {
+function buildS15Panel(headerText) {
+  const panel = document.createElement('section');
+  panel.className = 'result-panel';
+
+  const head = document.createElement('div');
+  head.className = 'result-panel__header';
+  head.textContent = headerText;
+  panel.appendChild(head);
+
+  const body = document.createElement('div');
+  body.className = 'result-panel__body';
+  panel.appendChild(body);
+
+  return { panel, body };
+}
+
+function buildS15Row(key, value, evidenceType) {
+  const row = document.createElement('div');
+  row.className = 'result-panel__row';
+
+  const keyEl = document.createElement('div');
+  keyEl.className = 'result-panel__key';
+  keyEl.textContent = key;
+  row.appendChild(keyEl);
+
+  const valWrap = document.createElement('div');
+  valWrap.className = 'result-panel__val';
+
+  const valEl = document.createElement('span');
+  valEl.className = 'result-panel__val-text';
+  valEl.textContent = value || 'N/A';
+  valWrap.appendChild(valEl);
+
+  if (evidenceType) {
+    valWrap.appendChild(document.createTextNode(' '));
+    valWrap.appendChild(createEvidenceLabel(evidenceType));
+  }
+
+  row.appendChild(valWrap);
+  return row;
+}
+
+/* ── Gate tests mini table ──────────────────────────────────────────────── */
+
+function buildGateTestsCompact() {
   const tests = getState('s3.gate_tests') || [];
 
   const wrapper = document.createElement('div');
-  wrapper.style.marginTop = 'var(--space-3)';
+  wrapper.className = 'gate-compact';
 
   if (!tests.length) {
     const empty = document.createElement('p');
-    empty.style.cssText = 'font-size:var(--text-sm);color:var(--color-text-secondary);';
+    empty.className = 'gate-compact__empty';
     empty.textContent = 'Gate tests not yet run.';
     wrapper.appendChild(empty);
     return wrapper;
   }
 
-  const table = document.createElement('table');
-  table.className = 'data-table';
-
-  const thead = document.createElement('thead');
-  const hrow  = document.createElement('tr');
-  ['Scenario', 'Decision'].forEach(text => {
-    const th = document.createElement('th');
-    th.textContent = text;
-    hrow.appendChild(th);
-  });
-  thead.appendChild(hrow);
-  table.appendChild(thead);
-
-  const tbody = document.createElement('tbody');
   tests.forEach(t => {
-    const tr = document.createElement('tr');
+    const row = document.createElement('div');
+    row.className = 'gate-compact__row';
 
-    const tdName = document.createElement('td');
-    tdName.textContent = t.name;
-    tr.appendChild(tdName);
+    const name = document.createElement('span');
+    name.className = 'gate-compact__name';
+    name.textContent = t.name;
+    row.appendChild(name);
 
-    const tdDecision = document.createElement('td');
-    tdDecision.appendChild(createStatusChip(t.chipState, t.chipLabel));
-    tr.appendChild(tdDecision);
-
-    tbody.appendChild(tr);
+    row.appendChild(createStatusChip(t.chipState, t.chipLabel));
+    wrapper.appendChild(row);
   });
-  table.appendChild(tbody);
-  wrapper.appendChild(table);
+
   return wrapper;
 }
 
-/* ── Renderer ─────────────────────────────────────────────────────────────── */
+/* ── Renderer ───────────────────────────────────────────────────────────── */
 
 function renderScreen15() {
   const screen = document.getElementById('screen-15');
@@ -150,85 +183,70 @@ function renderScreen15() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 3 · Configured DAL-X Simulation';
+  badge.textContent = 'Surface 3 · Configured DAL-X simulation';
   screen.appendChild(badge);
 
   /* Title */
   const title = document.createElement('h1');
   title.className = 'screen-title';
-  title.textContent = 'Configured Simulation Result';
+  title.textContent = 'Simulation complete';
   screen.appendChild(title);
 
-  /* Result card */
-  const card = document.createElement('div');
-  card.className = 'card';
+  /* Completion checkmark */
+  const check = document.createElement('div');
+  check.className = 'completion-check';
+  check.innerHTML =
+    '<svg viewBox="0 0 64 64" aria-hidden="true">'
+    + '<circle cx="32" cy="32" r="28" class="completion-check__ring"/>'
+    + '<path d="M20 33 L28 41 L44 24" class="completion-check__tick" fill="none"/>'
+    + '</svg>';
+  screen.appendChild(check);
 
-  const cardTitle = document.createElement('div');
-  cardTitle.className = 'card__title';
-  cardTitle.textContent = 'Simulation result';
-  card.appendChild(cardTitle);
+  /* Panel 1, use case */
+  const p1 = buildS15Panel('Use case');
+  p1.body.appendChild(buildS15Row('Agent',              s15AgentDisplay(),        'business'));
+  p1.body.appendChild(buildS15Row('Proposed execution', s15ExecutionDisplay(),    'business'));
+  p1.body.appendChild(buildS15Row('Downstream system',  s15DownstreamDisplay(),   'business'));
+  p1.body.appendChild(buildS15Row('Business fit finding', s15BusinessFinding(),   'business'));
+  screen.appendChild(p1.panel);
 
-  /* Fields 1–3: participant-reported */
-  const businessFields = [
-    ['Agent',              s15AgentDisplay()],
-    ['Proposed execution', s15ExecutionDisplay()],
-    ['Downstream system',  s15DownstreamDisplay()],
-  ];
-  businessFields.forEach(([key, val]) =>
-    card.appendChild(createLabelledField(key, val, 'business')));
+  /* Panel 2, trigger result */
+  const p2 = buildS15Panel('Trigger result');
+  p2.body.appendChild(buildS15Row(
+    'Controlling trigger',
+    getState('s3.trigger_details.controlling_rule') || 'N/A',
+    'demonstrated'
+  ));
+  p2.body.appendChild(buildS15Row('Required authority',   s15RequiredAuthority(),         'demonstrated'));
+  p2.body.appendChild(buildS15Row('Reviewer decision',    s15ReviewerDecisionDisplay(),   'demonstrated'));
+  p2.body.appendChild(buildS15Row('Authorization status', s15AuthorizationStatus(),       'demonstrated'));
+  screen.appendChild(p2.panel);
 
-  /* Divider before DAL-X computed fields */
-  const hr1 = document.createElement('hr');
-  hr1.className = 'divider';
-  card.appendChild(hr1);
+  /* Panel 3, gate tests */
+  const p3 = buildS15Panel('Gate tests');
+  p3.body.appendChild(buildGateTestsCompact());
+  const evLine = document.createElement('p');
+  evLine.className = 'result-panel__evidence-line';
+  evLine.appendChild(document.createTextNode('Evidence '));
+  evLine.appendChild(createEvidenceLabel('demonstrated'));
+  p3.body.appendChild(evLine);
+  screen.appendChild(p3.panel);
 
-  /* Fields 4–7: DAL-X computed */
-  const computedFields = [
-    ['Controlling trigger',  getState('s3.trigger_details.controlling_rule') || 'N/A'],
-    ['Required authority',   s15RequiredAuthority()],
-    ['Reviewer decision',    s15ReviewerDecisionDisplay()],
-    ['Authorization status', s15AuthorizationStatus()],
-  ];
-  computedFields.forEach(([key, val]) =>
-    card.appendChild(createLabelledField(key, val, 'demonstrated')));
-
-  /* Field 8: Gate test results, sub-section with mini-table */
-  const hr2 = document.createElement('hr');
-  hr2.className = 'divider';
-  card.appendChild(hr2);
-
-  const gateRow = document.createElement('div');
-  gateRow.className = 'field-row';
-  gateRow.style.alignItems = 'flex-start';
-
-  const gateKey = document.createElement('div');
-  gateKey.className = 'field-row__key';
-  gateKey.textContent = 'Gate test results';
-
-  const gateVal = document.createElement('div');
-  gateVal.className = 'field-row__value';
-  gateVal.style.flexDirection = 'column';
-  gateVal.appendChild(buildGateTestsTable());
-  const gateEv = document.createElement('span');
-  gateEv.style.marginTop = 'var(--space-2)';
-  gateEv.style.display = 'inline-block';
-  gateEv.appendChild(createEvidenceLabel('demonstrated'));
-  gateVal.appendChild(gateEv);
-
-  gateRow.appendChild(gateKey);
-  gateRow.appendChild(gateVal);
-  card.appendChild(gateRow);
-
-  /* Divider before business fit finding */
-  const hr3 = document.createElement('hr');
-  hr3.className = 'divider';
-  card.appendChild(hr3);
-
-  /* Field 9: Business fit finding, participant-reported */
-  card.appendChild(createLabelledField(
-    'Business fit finding', s15BusinessFinding(), 'business'));
-
-  screen.appendChild(card);
+  /* What this proved */
+  const proved = document.createElement('section');
+  proved.className = 'proved-section';
+  const provedHead = document.createElement('div');
+  provedHead.className = 'proved-section__header';
+  provedHead.textContent = 'What this proved';
+  proved.appendChild(provedHead);
+  const provedBody = document.createElement('p');
+  provedBody.className = 'proved-section__body';
+  provedBody.textContent =
+    "The simulation ran your agent's proposed execution through DAL-X trigger evaluation, "
+    + 'a simulated reviewer decision, authorization issuance, and six downstream gate tests. '
+    + "Every test result is labeled 'Demonstrated in simulation' and is not proven against your production systems.";
+  proved.appendChild(provedBody);
+  screen.appendChild(proved);
 
   /* Nav */
   const nav = document.createElement('nav');
@@ -236,13 +254,13 @@ function renderScreen15() {
 
   const backBtn = document.createElement('button');
   backBtn.className = 'btn btn--ghost';
-  backBtn.textContent = '← Back';
+  backBtn.textContent = 'Back';
   backBtn.addEventListener('click', () => showScreen('screen-14'));
   nav.appendChild(backBtn);
 
   const nextBtn = document.createElement('button');
   nextBtn.className = 'btn btn--primary';
-  nextBtn.textContent = 'Proceed to Technical Review →';
+  nextBtn.textContent = 'Continue to technical review';
   nextBtn.addEventListener('click', () => {
     if (typeof renderScreen16 === 'function') renderScreen16();
     showScreen('screen-16');

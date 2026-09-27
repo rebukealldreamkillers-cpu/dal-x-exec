@@ -1,14 +1,8 @@
-/* ─── Screen 19: Review the Reported Integration ────────────────────────── */
+/* ─── Screen 19: Jochanni Labs review ───────────────────────────────────── */
 
 /*
  * Jochanni Labs reviews ten integration items and assigns one of four
- * decisions to each. All ten decisions are written to jl.review.*.
- *
- * Decision options (display label → stored value):
- *   Confirmed for pilot planning → 'confirmed'
- *   More information required    → 'more_info'
- *   Correction required          → 'correction_required'
- *   Not applicable               → 'not_applicable'
+ * dispositions to each. All ten dispositions are written to jl.review.*.
  */
 
 /* ── Review item definitions ──────────────────────────────────────────────── */
@@ -27,49 +21,84 @@ const S19_ITEMS = [
 ];
 
 const S19_OPTIONS = [
-  { value: 'confirmed',           label: 'Confirmed for pilot planning' },
-  { value: 'more_info',           label: 'More information required'    },
-  { value: 'correction_required', label: 'Correction required'          },
-  { value: 'not_applicable',      label: 'Not applicable'               },
+  { value: 'confirmed',           label: 'Confirmed for pilot planning', tone: 'green' },
+  { value: 'more_info',           label: 'More information required',    tone: 'amber' },
+  { value: 'correction_required', label: 'Correction required',          tone: 'red'   },
+  { value: 'not_applicable',      label: 'Not applicable',               tone: 'slate' },
 ];
 
-/* ── Review item builder ──────────────────────────────────────────────────── */
+/* ── Review item card builder ────────────────────────────────────────────── */
 
-function buildReviewItem(cfg) {
-  const group = document.createElement('div');
-  group.className = 'form-group';
+function s19BuildReviewItem(cfg, index, onChange) {
+  const card = document.createElement('div');
+  card.className = 'jl-review-card';
 
-  const labelEl = document.createElement('div');
-  labelEl.className = 'form-label';
+  const head = document.createElement('div');
+  head.className = 'jl-review-card__head';
+
+  const numBadge = document.createElement('span');
+  numBadge.className = 'jl-review-card__num';
+  numBadge.textContent = String(index + 1);
+  head.appendChild(numBadge);
+
+  const labelEl = document.createElement('span');
+  labelEl.className = 'jl-review-card__label';
   labelEl.textContent = cfg.label;
-  group.appendChild(labelEl);
+  head.appendChild(labelEl);
 
-  const radioWrap = document.createElement('div');
-  radioWrap.style.cssText =
-    'display:flex;flex-wrap:wrap;gap:var(--space-3);margin-top:var(--space-2);';
+  card.appendChild(head);
+
+  const options = document.createElement('div');
+  options.className = 'jl-disp-options';
+  options.setAttribute('role', 'radiogroup');
+  options.setAttribute('aria-label', cfg.label);
 
   const saved = getState(cfg.stateKey);
+  const buttons = [];
 
   S19_OPTIONS.forEach(opt => {
-    const lbl = document.createElement('label');
-    lbl.style.cssText =
-      'display:inline-flex;align-items:center;gap:var(--space-2);'
-      + 'cursor:pointer;font-size:var(--text-sm);';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'jl-disp-option jl-disp-option--' + opt.tone;
+    btn.setAttribute('role', 'radio');
+    btn.setAttribute('aria-checked', String(saved === opt.value));
+    if (saved === opt.value) btn.classList.add('is-selected');
+    btn.textContent = opt.label;
 
-    const radio = document.createElement('input');
-    radio.type    = 'radio';
-    radio.name    = cfg.id;
-    radio.value   = opt.value;
-    radio.checked = (saved === opt.value);
-    radio.addEventListener('change', () => setState(cfg.stateKey, opt.value));
+    btn.addEventListener('click', () => {
+      setState(cfg.stateKey, opt.value);
+      buttons.forEach(other => {
+        const on = other === btn;
+        other.classList.toggle('is-selected', on);
+        other.classList.toggle('is-dimmed', !on);
+        other.setAttribute('aria-checked', String(on));
+      });
+      if (typeof onChange === 'function') onChange();
+    });
 
-    lbl.appendChild(radio);
-    lbl.appendChild(document.createTextNode(opt.label));
-    radioWrap.appendChild(lbl);
+    buttons.push(btn);
+    options.appendChild(btn);
   });
 
-  group.appendChild(radioWrap);
-  return group;
+  /* Apply dim state if a selection already exists */
+  if (saved) {
+    buttons.forEach(btn => {
+      if (!btn.classList.contains('is-selected')) btn.classList.add('is-dimmed');
+    });
+  }
+
+  card.appendChild(options);
+  return card;
+}
+
+/* ── Progress helpers ────────────────────────────────────────────────────── */
+
+function s19CountReviewed() {
+  let n = 0;
+  S19_ITEMS.forEach(item => {
+    if (getState(item.stateKey)) n++;
+  });
+  return n;
 }
 
 /* ── Renderer ─────────────────────────────────────────────────────────────── */
@@ -81,43 +110,71 @@ function renderScreen19() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Jochanni Labs Review';
+  badge.textContent = 'Jochanni Labs review';
   screen.appendChild(badge);
 
   /* Title */
   const title = document.createElement('h1');
   title.className = 'screen-title';
-  title.textContent = 'Review the Reported Integration';
+  title.textContent = 'Jochanni Labs review';
   screen.appendChild(title);
 
-  /* Operator notice */
+  /* Notice */
   const notice = document.createElement('div');
   notice.className = 'callout callout--info';
   notice.style.marginBottom = 'var(--space-6)';
   notice.textContent =
-    'Jochanni Labs reviews your reported integration answers alongside your technical team, '
-    + 'confirms what is ready, and identifies any gaps before pilot planning.';
+    'Jochanni Labs reviews the reported answers alongside your technical team, '
+    + 'confirms what is ready, and identifies gaps before pilot planning.';
   screen.appendChild(notice);
 
-  /* Review items card */
-  const card = document.createElement('div');
-  card.className = 'card';
+  /* Progress row */
+  const progWrap = document.createElement('div');
+  progWrap.className = 'jl-review-progress';
 
-  const cardTitle = document.createElement('div');
-  cardTitle.className = 'card__title';
-  cardTitle.textContent = 'Integration review:';
-  card.appendChild(cardTitle);
+  const progBar = document.createElement('div');
+  progBar.className = 'jl-review-progress__bar';
+  const progFill = document.createElement('div');
+  progFill.className = 'jl-review-progress__fill';
+  progBar.appendChild(progFill);
+  progWrap.appendChild(progBar);
+
+  const progLabel = document.createElement('span');
+  progLabel.className = 'jl-review-progress__label';
+  progWrap.appendChild(progLabel);
+
+  screen.appendChild(progWrap);
+
+  /* Review items */
+  const stack = document.createElement('div');
+  stack.className = 'jl-review-stack';
+  screen.appendChild(stack);
+
+  /* Submit row (appears when 10/10) */
+  const submitRow = document.createElement('div');
+  submitRow.className = 'jl-review-submit';
+
+  const submitBtn = document.createElement('button');
+  submitBtn.className = 'btn btn--primary';
+  submitBtn.textContent = 'Record Jochanni Labs decision';
+  submitBtn.addEventListener('click', () => {
+    if (typeof renderScreen20 === 'function') renderScreen20();
+    showScreen('screen-20');
+  });
+  submitRow.appendChild(submitBtn);
+  screen.appendChild(submitRow);
+
+  function refreshProgress() {
+    const n = s19CountReviewed();
+    const pct = Math.round((n / 10) * 100);
+    progFill.style.width = pct + '%';
+    progLabel.textContent = `${n} of 10 items reviewed`;
+    submitRow.classList.toggle('is-ready', n === 10);
+  }
 
   S19_ITEMS.forEach((cfg, i) => {
-    if (i > 0) {
-      const hr = document.createElement('hr');
-      hr.className = 'divider';
-      card.appendChild(hr);
-    }
-    card.appendChild(buildReviewItem(cfg));
+    stack.appendChild(s19BuildReviewItem(cfg, i, refreshProgress));
   });
-
-  screen.appendChild(card);
 
   /* Nav */
   const nav = document.createElement('nav');
@@ -125,20 +182,13 @@ function renderScreen19() {
 
   const backBtn = document.createElement('button');
   backBtn.className = 'btn btn--ghost';
-  backBtn.textContent = '← Back';
+  backBtn.textContent = 'Back';
   backBtn.addEventListener('click', () => showScreen('screen-18'));
   nav.appendChild(backBtn);
 
-  const nextBtn = document.createElement('button');
-  nextBtn.className = 'btn btn--primary';
-  nextBtn.textContent = 'Next →';
-  nextBtn.addEventListener('click', () => {
-    if (typeof renderScreen20 === 'function') renderScreen20();
-    showScreen('screen-20');
-  });
-  nav.appendChild(nextBtn);
-
   screen.appendChild(nav);
+
+  refreshProgress();
 }
 
 document.addEventListener('DOMContentLoaded', renderScreen19);

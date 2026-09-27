@@ -1,17 +1,9 @@
-/* ─── Screen 7: Define the Use Case ─────────────────────────────────────── */
+/* ─── Screen 7: Define the use case ─────────────────────────────────────── */
 
 /*
- * Five fields:
- *   1. AI agent: single-select dropdown (7 options + Not sure + Enter my own)
- *   2. Proposed execution: single-select dropdown (9 options + Not sure + Enter my own)
- *   3. Downstream system: single-select dropdown (8 options + Not sure + Enter my own
- *                           + "No downstream system")
- *   4. Consequence: multi-select checkboxes (7 options + Not sure + Enter my own
- *                           + "No consequential effect"); exclusive: not_sure, none
- *   5. Missing authority response: single-select, 3 fixed options only (no custom/not-sure)
- *
- * All selections are written to sessionState.s2 via the component stateKey
- * / customStateKey bindings. Screen 8 reads from s2 to produce its result.
+ * Five fields drive the risk profile of the enterprise AI agent use case.
+ * All selections persist to sessionState.s2 via component stateKey /
+ * customStateKey bindings. Screen 8 reads s2 to produce its result.
  */
 
 const S7_AGENT_OPTIONS = [
@@ -57,12 +49,186 @@ const S7_CONSEQUENCE_OPTIONS = [
   { value: 'difficult_to_reverse',label: 'Difficult to reverse' },
 ];
 
-/* Three fixed options only, spec does not include Not sure or Enter my own */
+/* Three fixed options only. Spec does not include Not sure or Enter my own. */
 const S7_AUTHORITY_OPTIONS = [
-  { value: 'must_stop',    label: 'No - there is no gate. The agent\'s action reaches the downstream system directly.'              },
-  { value: 'may_continue', label: 'We don\'t require a gate. Execution without explicit approval is acceptable for this workflow.' },
-  { value: 'unknown',      label: 'Unknown - we have no visibility into what happens between the agent and the downstream system.'  },
+  {
+    value: 'must_stop',
+    title: 'No gate exists today',
+    detail: 'The agent action reaches the downstream system with no required approval in between.',
+  },
+  {
+    value: 'may_continue',
+    title: 'No gate is required',
+    detail: 'Execution without explicit approval is acceptable for this workflow.',
+  },
+  {
+    value: 'unknown',
+    title: 'Unknown',
+    detail: 'We have no visibility into what happens between the agent and the downstream system.',
+  },
 ];
+
+/* ── Pill-style multi-select for the consequence field ──────────────────── */
+
+function buildConsequencePillGroup(initialValues, onChange) {
+  const wrap = document.createElement('div');
+  wrap.className = 'pill-group';
+
+  const state = new Set(initialValues || []);
+  const exclusiveVals = new Set(['not_sure', 'none']);
+
+  function isExclusive(v) { return exclusiveVals.has(v); }
+
+  const buttons = [];
+
+  function render() {
+    buttons.forEach(({ btn, value }) => {
+      if (state.has(value)) btn.classList.add('is-selected');
+      else btn.classList.remove('is-selected');
+    });
+  }
+
+  const allOptions = [
+    ...S7_CONSEQUENCE_OPTIONS,
+    { value: 'not_sure', label: 'Not sure' },
+    { value: 'none',     label: 'No consequential effect' },
+    { value: 'custom',   label: 'Enter my own' },
+  ];
+
+  allOptions.forEach(({ value, label }) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pill';
+    btn.textContent = label;
+    btn.addEventListener('click', () => {
+      const wasSelected = state.has(value);
+      if (isExclusive(value)) {
+        state.clear();
+        if (!wasSelected) state.add(value);
+      } else {
+        exclusiveVals.forEach(ev => state.delete(ev));
+        if (wasSelected) state.delete(value);
+        else state.add(value);
+      }
+      render();
+      onChange(Array.from(state));
+    });
+    buttons.push({ btn, value });
+    wrap.appendChild(btn);
+  });
+
+  render();
+  return { wrap, getSelected: () => Array.from(state) };
+}
+
+/* ── Large card group for the current enforcement gap field ─────────────── */
+
+function buildAuthorityCardGroup(initialValue, onChange) {
+  const wrap = document.createElement('div');
+  wrap.className = 'authority-card-group';
+
+  let selected = initialValue || '';
+  const cards = [];
+
+  function render() {
+    cards.forEach(({ card, value }) => {
+      if (value === selected) card.classList.add('is-selected');
+      else card.classList.remove('is-selected');
+    });
+  }
+
+  S7_AUTHORITY_OPTIONS.forEach(({ value, title, detail }) => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'authority-card';
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'authority-card__title';
+    titleEl.textContent = title;
+
+    const detailEl = document.createElement('div');
+    detailEl.className = 'authority-card__detail';
+    detailEl.textContent = detail;
+
+    card.appendChild(titleEl);
+    card.appendChild(detailEl);
+
+    card.addEventListener('click', () => {
+      selected = value;
+      render();
+      onChange(value);
+    });
+
+    cards.push({ card, value });
+    wrap.appendChild(card);
+  });
+
+  render();
+  return wrap;
+}
+
+/* ── Field group scaffold used around each input ────────────────────────── */
+
+function buildFieldPanel(labelText, description) {
+  const panel = document.createElement('div');
+  panel.className = 'field-panel';
+
+  const label = document.createElement('div');
+  label.className = 'field-panel__label';
+  label.textContent = labelText;
+  panel.appendChild(label);
+
+  if (description) {
+    const desc = document.createElement('p');
+    desc.className = 'field-panel__description';
+    desc.textContent = description;
+    panel.appendChild(desc);
+  }
+
+  return panel;
+}
+
+/* ── Ambient diagram (unknown authority state) ──────────────────────────── */
+
+function buildAuthorityDiagram() {
+  const wrap = document.createElement('div');
+  wrap.className = 'authority-diagram';
+  wrap.setAttribute('aria-hidden', 'true');
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="s7lineGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"  stop-color="#F97316" stop-opacity="0.05"/>
+          <stop offset="50%" stop-color="#F97316" stop-opacity="0.5"/>
+          <stop offset="100%" stop-color="#F97316" stop-opacity="0.05"/>
+        </linearGradient>
+      </defs>
+      <g class="authority-diagram__node authority-diagram__node--agent">
+        <circle cx="100" cy="40" r="26" />
+        <text x="100" y="45" text-anchor="middle">Agent</text>
+      </g>
+      <line class="authority-diagram__line" x1="100" y1="66" x2="100" y2="106"
+            stroke="url(#s7lineGrad)" />
+      <g class="authority-diagram__gate">
+        <rect x="60" y="106" width="80" height="40" rx="6" />
+        <text x="100" y="132" text-anchor="middle" class="authority-diagram__q">?</text>
+      </g>
+      <line class="authority-diagram__line" x1="100" y1="146" x2="100" y2="186"
+            stroke="url(#s7lineGrad)" />
+      <g class="authority-diagram__node authority-diagram__node--downstream">
+        <rect x="60" y="186" width="80" height="40" rx="6" />
+        <text x="100" y="211" text-anchor="middle">Downstream</text>
+      </g>
+      <circle class="authority-diagram__packet" r="4" cx="100" cy="66" />
+    </svg>
+    <p class="authority-diagram__caption">Unknown authority state</p>
+  `;
+
+  return wrap;
+}
+
+/* ── Renderer ───────────────────────────────────────────────────────────── */
 
 function renderScreen7() {
   const screen = document.getElementById('screen-7');
@@ -71,115 +237,134 @@ function renderScreen7() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 2 · Guided Business Assessment';
+  badge.textContent = 'Surface 2 · Guided business assessment';
   screen.appendChild(badge);
 
   /* Title */
   const title = document.createElement('h1');
   title.className = 'screen-title';
-  title.textContent = 'Define the Use Case';
+  title.textContent = 'Define the use case';
   screen.appendChild(title);
 
-  /* Subtitle */
-  const subtitle = document.createElement('p');
-  subtitle.className = 'screen-subtitle';
-  subtitle.textContent =
-    'Five questions that identify whether your AI workflow has an enforcement gap. '
-    + 'Answer them for your specific use case. The assessment scores your risk profile automatically.';
-  screen.appendChild(subtitle);
+  /* Context note (muted, not a card) */
+  const note = document.createElement('p');
+  note.className = 'screen-context-note';
+  note.textContent =
+    'Describe the agent, what it does, and what happens when authority is missing.';
+  screen.appendChild(note);
 
-  /* Methodology notice */
-  const methodNote = document.createElement('div');
-  methodNote.className = 'callout callout--info';
-  methodNote.style.marginBottom = 'var(--space-6)';
-  methodNote.textContent =
-    'Walk through these five questions for your specific AI workflow. '
-    + 'Your answers are self-reported. Jochanni Labs reviews and validates them with your team '
-    + 'as part of a paid engagement before any recommendation is finalized.';
-  screen.appendChild(methodNote);
+  /* Two-column layout wrapper */
+  const layout = document.createElement('div');
+  layout.className = 'assessment-layout';
 
-  /* Form card */
-  const card = document.createElement('div');
-  card.className = 'card';
+  const formCol = document.createElement('div');
+  formCol.className = 'assessment-layout__form';
+
+  const asideCol = document.createElement('aside');
+  asideCol.className = 'assessment-layout__aside';
+  asideCol.appendChild(buildAuthorityDiagram());
 
   /* 1. AI agent */
-  card.appendChild(createDropdown({
+  const agentPanel = buildFieldPanel(
+    'AI agent',
+    'Which AI system is taking this action in your environment. Example, an infrastructure agent that manages cloud resources.'
+  );
+  agentPanel.appendChild(createDropdown({
     id:              's7-agent',
-    label:           'AI agent',
-    description:     'Which AI system is taking this action in your environment? e.g. an infrastructure agent that manages cloud resources',
+    label:           '',
     options:         S7_AGENT_OPTIONS,
     stateKey:        's2.agent_type',
     customStateKey:  's2.agent_type_custom',
-    initialValue:    getState('s2.agent_type')       || '',
+    initialValue:    getState('s2.agent_type')        || '',
     initialCustom:   getState('s2.agent_type_custom') || '',
   }));
+  formCol.appendChild(agentPanel);
 
   /* 2. Proposed execution */
-  card.appendChild(createDropdown({
+  const execPanel = buildFieldPanel(
+    'Proposed execution',
+    'What action does the agent want to take. Example, deploy code to production, commit funds, or export customer data.'
+  );
+  execPanel.appendChild(createDropdown({
     id:              's7-execution',
-    label:           'Proposed execution',
-    description:     'What type of action does the agent want to take? e.g. deploy code to production, commit funds, export customer data',
+    label:           '',
     options:         S7_EXECUTION_OPTIONS,
     stateKey:        's2.proposed_execution',
     customStateKey:  's2.proposed_execution_custom',
-    initialValue:    getState('s2.proposed_execution')       || '',
+    initialValue:    getState('s2.proposed_execution')        || '',
     initialCustom:   getState('s2.proposed_execution_custom') || '',
   }));
+  formCol.appendChild(execPanel);
 
-  /* 3. Downstream system, includes "No downstream system" */
-  card.appendChild(createDropdown({
+  /* 3. Downstream system */
+  const dsPanel = buildFieldPanel(
+    'Downstream system',
+    'Which system the agent acts on. Example, your payment platform, cloud environment, or deployment pipeline.'
+  );
+  dsPanel.appendChild(createDropdown({
     id:               's7-downstream',
-    label:            'Downstream system',
-    description:      'Which system will the agent act on? e.g. your payment platform, cloud environment, or deployment pipeline',
+    label:            '',
     options:          S7_DOWNSTREAM_OPTIONS,
     stateKey:         's2.downstream_system',
     customStateKey:   's2.downstream_system_custom',
     noSelectionLabel: 'No downstream system',
-    initialValue:     getState('s2.downstream_system')       || '',
+    initialValue:     getState('s2.downstream_system')        || '',
     initialCustom:    getState('s2.downstream_system_custom') || '',
   }));
+  formCol.appendChild(dsPanel);
 
-  /* 4. Consequence: multi-select; "Not sure" and "No consequential effect"
-     are exclusive (deselect all others when chosen) */
-  card.appendChild(createMultiSelect({
-    id:               's7-consequence',
-    label:            'Consequence',
-    description:      'If this executes without approval, what could change or go wrong? Select all that apply. e.g. funds move, data leaves the building, a system goes down',
-    options:          S7_CONSEQUENCE_OPTIONS,
-    stateKey:         's2.consequences',
-    customStateKey:   's2.consequences_custom',
-    noSelectionLabel: 'No consequential effect',
-    initialValues:    getState('s2.consequences')       || [],
-    initialCustom:    getState('s2.consequences_custom') || '',
-  }));
+  /* 4. Consequence (pill-style multi-select) */
+  const consPanel = buildFieldPanel(
+    'Consequence',
+    'If this executes without approval, what could change or go wrong. Select all that apply.'
+  );
+  const initialCons = getState('s2.consequences') || [];
+  const pillGroup = buildConsequencePillGroup(initialCons, (values) => {
+    setState('s2.consequences', values);
+  });
+  consPanel.appendChild(pillGroup.wrap);
+  /* Persist current values on first render to normalise state */
+  setState('s2.consequences', pillGroup.getSelected());
+  formCol.appendChild(consPanel);
 
-  /* 5. Current enforcement gap: 3 fixed options, no custom or not-sure */
-  card.appendChild(createDropdown({
-    id:           's7-authority',
-    label:        'Current enforcement gap',
-    description:  'Between what your agent proposes and what the downstream system executes, is there currently a required approval gate that stops execution when approval is missing?',
-    options:      S7_AUTHORITY_OPTIONS,
-    stateKey:     's2.missing_authority_response',
-    allowCustom:  false,
-    allowNotSure: false,
-    initialValue: getState('s2.missing_authority_response') || '',
-  }));
+  /* 5. Current enforcement gap (large card group) */
+  const authPanel = buildFieldPanel(
+    'Current enforcement gap',
+    'Between what your agent proposes and what the downstream system executes, is there currently a required approval gate that stops execution when approval is missing.'
+  );
+  authPanel.appendChild(
+    buildAuthorityCardGroup(
+      getState('s2.missing_authority_response') || '',
+      (value) => setState('s2.missing_authority_response', value)
+    )
+  );
+  formCol.appendChild(authPanel);
 
-  screen.appendChild(card);
+  layout.appendChild(formCol);
+  layout.appendChild(asideCol);
+  screen.appendChild(layout);
 
-  /* Back / Next nav */
+  /* Methodology notice, kept for spec fidelity but restyled */
+  const methodNote = document.createElement('p');
+  methodNote.className = 'assessment-method-note';
+  methodNote.textContent =
+    'Answers are self-reported. Jochanni Labs reviews and validates them with your team '
+    + 'as part of a paid engagement before any recommendation is finalized.';
+  screen.appendChild(methodNote);
+
+  /* Back / Next nav (preserves existing navigation exactly) */
   const nav = document.createElement('nav');
   nav.className = 'screen-nav';
 
   const backBtn = document.createElement('button');
   backBtn.className = 'btn btn--ghost';
-  backBtn.textContent = '← Back';
+  backBtn.textContent = 'Back';
   backBtn.addEventListener('click', () => showScreen('screen-6'));
   nav.appendChild(backBtn);
 
   const nextBtn = document.createElement('button');
   nextBtn.className = 'btn btn--primary';
-  nextBtn.textContent = 'Next →';
+  nextBtn.textContent = 'Continue';
   nextBtn.addEventListener('click', () => {
     /* Re-render Screen 8 with current answers before navigating */
     if (typeof renderScreen8 === 'function') renderScreen8();

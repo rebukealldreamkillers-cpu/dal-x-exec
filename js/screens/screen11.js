@@ -1,19 +1,16 @@
-/* ─── Screen 11: Trigger Evaluation ─────────────────────────────────────── */
+/* ─── Screen 11: Trigger evaluation ─────────────────────────────────────── */
 
 /*
- * Evaluates s3.submission.action against the four trigger rule lists
- * recorded on Screen 9. Priority (highest to lowest):
+ * Evaluates s3.submission.action against four trigger rule lists recorded
+ * on Screen 9. Priority (highest to lowest):
  *   blocked > high_risk > needs_review > auto_approve > default (needs_review)
- *
- * Results written to s3.trigger_outcome and s3.trigger_details.*.
- * trigger_outcome is later read by Screen 16 Q2.
  *
  * Navigation:
  *   needs_review | high_risk  →  Screen 12 (human review)
  *   auto_approve | blocked    →  Screen 13 (authorization display, skip review)
  */
 
-/* ── Rule parsing ─────────────────────────────────────────────────────────── */
+/* ── Rule parsing (unchanged) ───────────────────────────────────────────── */
 
 function parseRuleList(text) {
   if (!text) return [];
@@ -24,8 +21,6 @@ function normalizeText(s) {
   return s.toLowerCase().replace(/[_-]/g, ' ').trim();
 }
 
-/* A rule matches the action if either string is a substring of the other
-   (after normalization). Handles 'deploy_code' ↔ 'Deploy code', etc. */
 function ruleMatchesAction(action, ruleText) {
   if (!ruleText) return false;
   const na = normalizeText(action);
@@ -33,7 +28,7 @@ function ruleMatchesAction(action, ruleText) {
   return na.includes(nr) || nr.includes(na);
 }
 
-/* ── Evaluation engine ────────────────────────────────────────────────────── */
+/* ── Evaluation engine (unchanged) ──────────────────────────────────────── */
 
 function evaluateTrigger() {
   const action         = getState('s3.submission.action') || '';
@@ -91,23 +86,82 @@ function evaluateTrigger() {
     getState('s3.trigger_rules.policy_reference') || '');
   setState('s3.trigger_details.required_reviewer_level', requiredLevel);
 
-  return outcome;
+  return {
+    outcome,
+    controllingRule,
+    exactMatch,
+    blockedRules, leadRules, standardRules, permittedRules,
+    blockedMatch, leadMatch, standardMatch, permittedMatch,
+  };
 }
 
-/* ── Outcome display config ───────────────────────────────────────────────── */
+/* ── Outcome display config ─────────────────────────────────────────────── */
 
 const S11_OUTCOME_CONFIG = {
-  auto_approve: { chipState: 'accepted', chipLabel: 'Auto-approved'           },
-  needs_review: { chipState: 'pending',  chipLabel: 'Needs review'            },
-  high_risk:    { chipState: 'neutral',  chipLabel: 'High risk: lead review' },
-  blocked:      { chipState: 'rejected', chipLabel: 'Blocked'                 },
+  auto_approve: { chipState: 'accepted', chipLabel: 'Auto approved',   badgeColor: 'green',  glyph: 'check' },
+  needs_review: { chipState: 'pending',  chipLabel: 'Needs review',    badgeColor: 'amber',  glyph: 'clock' },
+  high_risk:    { chipState: 'neutral',  chipLabel: 'High risk, lead review', badgeColor: 'orange', glyph: 'alert' },
+  blocked:      { chipState: 'rejected', chipLabel: 'Blocked',         badgeColor: 'red',    glyph: 'x'     },
 };
 
-/* ── Renderer ─────────────────────────────────────────────────────────────── */
+/* ── Rule row builder ───────────────────────────────────────────────────── */
+
+function buildEvalRow(color, ruleName, category, matched) {
+  const row = document.createElement('div');
+  row.className = 'eval-row';
+  if (matched) row.classList.add('eval-row--matched');
+
+  const dot = document.createElement('span');
+  dot.className = `policy-field__dot policy-field__dot--${color}`;
+  row.appendChild(dot);
+
+  const name = document.createElement('span');
+  name.className = 'eval-row__name';
+  name.textContent = ruleName;
+  row.appendChild(name);
+
+  const cat = document.createElement('span');
+  cat.className = 'eval-row__category';
+  cat.textContent = category;
+  row.appendChild(cat);
+
+  const status = document.createElement('span');
+  status.className = matched ? 'eval-row__status eval-row__status--matched' : 'eval-row__status';
+  status.textContent = matched ? 'Matched' : 'No match';
+  row.appendChild(status);
+
+  return row;
+}
+
+/* ── Outcome badge ──────────────────────────────────────────────────────── */
+
+function buildOutcomeBadge(outcome, cfg) {
+  const badge = document.createElement('div');
+  badge.className = `outcome-badge outcome-badge--${cfg.badgeColor}`;
+
+  const glyph = document.createElement('span');
+  glyph.className = 'outcome-badge__glyph';
+  glyph.setAttribute('aria-hidden', 'true');
+  if (cfg.glyph === 'check') glyph.innerHTML = '&#10003;';
+  else if (cfg.glyph === 'x') glyph.innerHTML = '&#10005;';
+  else if (cfg.glyph === 'alert') glyph.textContent = '!';
+  else glyph.textContent = '?';
+  badge.appendChild(glyph);
+
+  const label = document.createElement('span');
+  label.className = 'outcome-badge__label';
+  label.textContent = cfg.chipLabel;
+  badge.appendChild(label);
+
+  return badge;
+}
+
+/* ── Renderer ───────────────────────────────────────────────────────────── */
 
 function renderScreen11() {
-  const outcome = evaluateTrigger();
-  const cfg     = S11_OUTCOME_CONFIG[outcome] || S11_OUTCOME_CONFIG.needs_review;
+  const evalResult = evaluateTrigger();
+  const outcome    = evalResult.outcome;
+  const cfg        = S11_OUTCOME_CONFIG[outcome] || S11_OUTCOME_CONFIG.needs_review;
 
   const screen = document.getElementById('screen-11');
   screen.innerHTML = '';
@@ -115,71 +169,130 @@ function renderScreen11() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 3 · Configured DAL-X Simulation';
+  badge.textContent = 'Surface 3 · Configured DAL-X simulation';
   screen.appendChild(badge);
 
   /* Title */
   const title = document.createElement('h1');
   title.className = 'screen-title';
-  title.textContent = 'Trigger Evaluation';
+  title.textContent = 'Trigger evaluation';
   screen.appendChild(title);
 
   /* Subtitle */
   const subtitle = document.createElement('p');
   subtitle.className = 'screen-subtitle';
   subtitle.textContent =
-    'DAL-X evaluates the simulated submission using the current outcomes.';
+    'DAL-X evaluates the simulated submission against the recorded trigger rules.';
   screen.appendChild(subtitle);
 
-  /* Result card */
-  const card = document.createElement('div');
-  card.className = 'card';
+  /* Evaluating indicator */
+  const evaluating = document.createElement('div');
+  evaluating.className = 'evaluating-indicator';
+  evaluating.innerHTML =
+    '<span class="evaluating-indicator__label">Evaluating submission</span>'
+    + '<span class="evaluating-indicator__dots"><span></span><span></span><span></span></span>';
+  screen.appendChild(evaluating);
 
-  const cardTitle = document.createElement('div');
-  cardTitle.className = 'card__title';
-  cardTitle.textContent = 'Trigger evaluation result';
-  card.appendChild(cardTitle);
+  /* Rule list container */
+  const rulesWrap = document.createElement('div');
+  rulesWrap.className = 'eval-rules';
+  screen.appendChild(rulesWrap);
 
-  /* Detail rows 1–6 */
-  const details = [
-    ['Rules evaluated',         String(getState('s3.trigger_details.rules_evaluated') ?? 0)],
-    ['Rules matched',           String(getState('s3.trigger_details.rules_matched') ?? 0)],
-    ['Controlling rule',        getState('s3.trigger_details.controlling_rule') || 'N/A'],
-    ['Exact match',             getState('s3.trigger_details.exact_match')      || 'N/A'],
-    ['Policy reference',        getState('s3.trigger_details.policy_reference') || 'N/A'],
-    ['Required reviewer level', getState('s3.trigger_details.required_reviewer_level') || 'N/A'],
-  ];
-  details.forEach(([key, val]) => card.appendChild(createLabelledField(key, val)));
+  /* Outcome slot */
+  const outcomeSlot = document.createElement('div');
+  outcomeSlot.className = 'outcome-slot';
+  screen.appendChild(outcomeSlot);
 
-  /* Result row: chip instead of text */
-  const resultRow = document.createElement('div');
-  resultRow.className = 'field-row';
-  const resultKey = document.createElement('div');
-  resultKey.className = 'field-row__key';
-  resultKey.textContent = 'Result';
-  const resultVal = document.createElement('div');
-  resultVal.className = 'field-row__value';
-  resultVal.appendChild(createStatusChip(cfg.chipState, cfg.chipLabel));
-  resultRow.appendChild(resultKey);
-  resultRow.appendChild(resultVal);
-  card.appendChild(resultRow);
+  /* Assemble rules to display. Add one row per rule text. */
+  const displayRows = [];
 
-  screen.appendChild(card);
+  evalResult.blockedRules.forEach(rule => {
+    const matched = rule === evalResult.blockedMatch;
+    displayRows.push({ color: 'red',    rule, category: 'blocked',      matched });
+  });
+  evalResult.leadRules.forEach(rule => {
+    const matched = rule === evalResult.leadMatch;
+    displayRows.push({ color: 'orange', rule, category: 'high_risk',    matched });
+  });
+  evalResult.standardRules.forEach(rule => {
+    const matched = rule === evalResult.standardMatch;
+    displayRows.push({ color: 'amber',  rule, category: 'needs_review', matched });
+  });
+  evalResult.permittedRules.forEach(rule => {
+    const matched = rule === evalResult.permittedMatch;
+    displayRows.push({ color: 'green',  rule, category: 'auto_approve', matched });
+  });
+
+  if (displayRows.length === 0) {
+    displayRows.push({ color: 'slate', rule: 'No trigger rules recorded', category: 'default', matched: false });
+  }
+
+  /* Stagger the row reveal after 1.2 seconds of "evaluating" */
+  const startDelay = 1200;
+  const stagger = 200;
+
+  setTimeout(() => {
+    evaluating.classList.add('is-done');
+    displayRows.forEach((row, i) => {
+      setTimeout(() => {
+        const el = buildEvalRow(row.color, row.rule, row.category, row.matched);
+        el.style.animationDelay = '0ms';
+        rulesWrap.appendChild(el);
+      }, i * stagger);
+    });
+
+    /* Show controlling rule and outcome badge after all rows appear */
+    const finalDelay = displayRows.length * stagger + 200;
+    setTimeout(() => {
+      /* Controlling rule callout */
+      const controlling = document.createElement('div');
+      controlling.className = 'controlling-rule';
+      const cLabel = document.createElement('div');
+      cLabel.className = 'controlling-rule__label';
+      cLabel.textContent = 'Controlling rule';
+      const cVal = document.createElement('div');
+      cVal.className = 'controlling-rule__value';
+      cVal.textContent = evalResult.controllingRule;
+      controlling.appendChild(cLabel);
+      controlling.appendChild(cVal);
+      outcomeSlot.appendChild(controlling);
+
+      outcomeSlot.appendChild(buildOutcomeBadge(outcome, cfg));
+
+      /* Detail summary rows */
+      const details = document.createElement('div');
+      details.className = 'eval-detail-grid';
+
+      [
+        ['Rules evaluated',         String(getState('s3.trigger_details.rules_evaluated') ?? 0)],
+        ['Rules matched',           String(getState('s3.trigger_details.rules_matched') ?? 0)],
+        ['Exact match',             getState('s3.trigger_details.exact_match')      || 'None'],
+        ['Policy reference',        getState('s3.trigger_details.policy_reference') || 'None'],
+        ['Required reviewer level', getState('s3.trigger_details.required_reviewer_level') || 'None'],
+      ].forEach(([k, v]) => {
+        const cell = document.createElement('div');
+        cell.className = 'eval-detail-grid__cell';
+        cell.innerHTML =
+          `<div class="eval-detail-grid__key">${k}</div>`
+          + `<div class="eval-detail-grid__val">${v.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</div>`;
+        details.appendChild(cell);
+      });
+      outcomeSlot.appendChild(details);
+    }, finalDelay);
+  }, startDelay);
 
   /* Carry-forward notice */
-  const infoNote = document.createElement('div');
-  infoNote.className = 'callout callout--info';
-  infoNote.style.marginTop = 'var(--space-5)';
+  const infoNote = document.createElement('p');
+  infoNote.className = 'eval-carry-note';
   infoNote.textContent =
-    'The trigger evaluation result is stored and carried into the technical review.';
+    'This result determines whether a reviewer decision is required before an authorization can be issued.';
   screen.appendChild(infoNote);
 
   /* Evidence label */
   const evidenceLine = document.createElement('p');
   evidenceLine.style.cssText =
-    'margin-top:var(--space-5);font-size:var(--text-sm);'
-    + 'color:var(--color-text-secondary);';
-  evidenceLine.appendChild(document.createTextNode('Evidence: '));
+    'margin-top:var(--space-5);font-size:var(--text-sm);color:var(--color-text-secondary);';
+  evidenceLine.appendChild(document.createTextNode('Evidence '));
   evidenceLine.appendChild(createEvidenceLabel('demonstrated'));
   screen.appendChild(evidenceLine);
 
@@ -189,19 +302,18 @@ function renderScreen11() {
 
   const backBtn = document.createElement('button');
   backBtn.className = 'btn btn--ghost';
-  backBtn.textContent = '← Back';
+  backBtn.textContent = 'Back';
   backBtn.addEventListener('click', () => showScreen('screen-10'));
   nav.appendChild(backBtn);
 
   const nextBtn = document.createElement('button');
   nextBtn.className = 'btn btn--primary';
-  nextBtn.textContent = 'Next →';
+  nextBtn.textContent = 'Continue';
   nextBtn.addEventListener('click', () => {
     if (outcome === 'needs_review' || outcome === 'high_risk') {
       if (typeof renderScreen12 === 'function') renderScreen12();
       showScreen('screen-12');
     } else {
-      /* auto_approve or blocked, human review not required */
       if (typeof renderScreen13 === 'function') renderScreen13();
       showScreen('screen-13');
     }

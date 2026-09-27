@@ -1,17 +1,19 @@
-/* ─── Screen 12: Human Review ────────────────────────────────────────────── */
+/* ─── Screen 12: Reviewer decision ──────────────────────────────────────── */
 
 /*
  * Appears only when s3.trigger_outcome is 'needs_review' or 'high_risk'.
- * The reviewer selects one of four decisions; the choice is written to
- * s3.reviewer_decision and the corresponding decision block is shown inline.
- * All four decisions navigate to Screen 13.
+ * The reviewer selects one of four decisions. The choice is written to
+ * s3.reviewer_decision. All four decisions navigate to Screen 13.
  */
 
 const S12_DECISIONS = {
   approved: {
-    label: 'Approve',
+    label:      'Approve',
+    color:      'green',
+    summary:    'Authorize the proposed execution to proceed.',
+    consequence:'An authorization_id is issued and can be presented at the gate.',
     decision: {
-      title:             'Human Review',
+      title:             'Reviewer decision',
       state:             'Approved',
       reason:            'An authorized reviewer approved the proposed execution.',
       required_response: 'Retrieve the authorization_id.',
@@ -20,9 +22,12 @@ const S12_DECISIONS = {
     },
   },
   denied: {
-    label: 'Reject',
+    label:      'Reject',
+    color:      'red',
+    summary:    'Deny the proposed execution.',
+    consequence:'No authorization is issued. The downstream system is not called.',
     decision: {
-      title:             'Human Review',
+      title:             'Reviewer decision',
       state:             'Execution denied',
       reason:            'The reviewer rejected the proposed execution.',
       required_response: 'None for the current submission.',
@@ -31,9 +36,12 @@ const S12_DECISIONS = {
     },
   },
   escalated: {
-    label: 'Escalate',
+    label:      'Escalate',
+    color:      'violet',
+    summary:    'Send the decision to a higher reviewer level.',
+    consequence:'Execution stays blocked until the lead reviewer decides.',
     decision: {
-      title:             'Human Review',
+      title:             'Reviewer decision',
       state:             'Escalated',
       reason:            'The decision requires a higher reviewer level.',
       required_response: 'The lead reviewer must decide.',
@@ -42,9 +50,12 @@ const S12_DECISIONS = {
     },
   },
   revision_requested: {
-    label: 'Request revision',
+    label:      'Request revision',
+    color:      'amber',
+    summary:    'Return the request for corrections.',
+    consequence:'No authorization is issued. A new submission is required.',
     decision: {
-      title:             'Human Review',
+      title:             'Reviewer decision',
       state:             'Revision required',
       reason:            'The proposed execution requires corrected information.',
       required_response: 'Correct the request and create a new submission.',
@@ -60,26 +71,56 @@ function buildS12DecisionArea(selectedKey) {
   const area = document.createElement('div');
   area.id = 's12-decision-area';
 
-  /* Decision buttons */
-  const btnGroup = document.createElement('div');
-  btnGroup.style.cssText =
-    'display:flex;gap:var(--space-3);flex-wrap:wrap;margin-bottom:var(--space-5);';
+  /* Awaiting indicator, hides once a selection is made */
+  if (!selectedKey) {
+    const awaiting = document.createElement('div');
+    awaiting.className = 'reviewer-awaiting';
+    awaiting.innerHTML =
+      '<span class="reviewer-awaiting__dot"></span>'
+      + '<span class="reviewer-awaiting__label">Awaiting reviewer decision</span>';
+    area.appendChild(awaiting);
+  }
+
+  /* Decision cards, stacked full-width */
+  const cardStack = document.createElement('div');
+  cardStack.className = 'reviewer-card-stack';
+  if (selectedKey) cardStack.classList.add('reviewer-card-stack--has-selection');
 
   Object.entries(S12_DECISIONS).forEach(([key, cfg]) => {
-    const btn = document.createElement('button');
-    btn.className = selectedKey === key ? 'btn btn--primary' : 'btn btn--ghost';
-    btn.textContent = cfg.label;
-    btn.addEventListener('click', () => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = `reviewer-card reviewer-card--${cfg.color}`;
+    if (selectedKey === key) card.classList.add('is-selected');
+    if (selectedKey && selectedKey !== key) card.classList.add('is-dimmed');
+
+    const label = document.createElement('div');
+    label.className = 'reviewer-card__label';
+    label.textContent = cfg.label;
+    card.appendChild(label);
+
+    const summary = document.createElement('div');
+    summary.className = 'reviewer-card__summary';
+    summary.textContent = cfg.summary;
+    card.appendChild(summary);
+
+    const consequence = document.createElement('div');
+    consequence.className = 'reviewer-card__consequence';
+    consequence.textContent = cfg.consequence;
+    card.appendChild(consequence);
+
+    card.addEventListener('click', () => {
       setState('s3.reviewer_decision', key);
-      const existing    = document.getElementById('s12-decision-area');
+      const existing = document.getElementById('s12-decision-area');
       const replacement = buildS12DecisionArea(key);
       existing.parentNode.replaceChild(replacement, existing);
     });
-    btnGroup.appendChild(btn);
-  });
-  area.appendChild(btnGroup);
 
-  /* Decision block: only once a selection is made */
+    cardStack.appendChild(card);
+  });
+
+  area.appendChild(cardStack);
+
+  /* Decision block once a selection is made */
   if (selectedKey && S12_DECISIONS[selectedKey]) {
     area.appendChild(createDecisionBlock(S12_DECISIONS[selectedKey].decision));
   }
@@ -87,7 +128,7 @@ function buildS12DecisionArea(selectedKey) {
   return area;
 }
 
-/* ── Renderer ─────────────────────────────────────────────────────────────── */
+/* ── Renderer ───────────────────────────────────────────────────────────── */
 
 function renderScreen12() {
   const triggerOutcome = getState('s3.trigger_outcome') || 'needs_review';
@@ -103,33 +144,33 @@ function renderScreen12() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 3 · Configured DAL-X Simulation';
+  badge.textContent = 'Surface 3 · Configured DAL-X simulation';
   screen.appendChild(badge);
 
   /* Title */
   const title = document.createElement('h1');
   title.className = 'screen-title';
-  title.textContent = 'Human Review';
+  title.textContent = 'Reviewer decision';
   screen.appendChild(title);
 
-  /* Subtitle / condition */
-  const subtitle = document.createElement('p');
-  subtitle.className = 'screen-subtitle';
-  subtitle.textContent = 'This screen appears for needs_review or high_risk.';
-  screen.appendChild(subtitle);
-
-  /* Review context callout */
+  /* Review context */
   const contextNote = document.createElement('div');
   contextNote.className = 'callout callout--info';
   contextNote.style.marginBottom = 'var(--space-6)';
-
   const reviewType = isLeadReview ? 'Lead review required' : 'Standard review required';
   contextNote.textContent =
-    reviewType + '. Reviewer: ' + reviewerRole
+    reviewType + '. Reviewer role, ' + reviewerRole
     + '. Jochanni Labs is simulating the reviewer decision.';
   screen.appendChild(contextNote);
 
-  /* Decision area (buttons + optional decision block) */
+  /* Separation-of-duties note */
+  const dutyNote = document.createElement('p');
+  dutyNote.className = 'reviewer-duty-note';
+  dutyNote.textContent =
+    'A reviewer cannot approve their own submission and cannot act without creating a decision record.';
+  screen.appendChild(dutyNote);
+
+  /* Decision area, buttons plus optional decision block */
   screen.appendChild(buildS12DecisionArea(savedDecision));
 
   /* Nav */
@@ -138,13 +179,13 @@ function renderScreen12() {
 
   const backBtn = document.createElement('button');
   backBtn.className = 'btn btn--ghost';
-  backBtn.textContent = '← Back';
+  backBtn.textContent = 'Back';
   backBtn.addEventListener('click', () => showScreen('screen-11'));
   nav.appendChild(backBtn);
 
   const nextBtn = document.createElement('button');
   nextBtn.className = 'btn btn--primary';
-  nextBtn.textContent = 'Next →';
+  nextBtn.textContent = 'Continue';
   nextBtn.addEventListener('click', () => {
     if (typeof renderScreen13 === 'function') renderScreen13();
     showScreen('screen-13');

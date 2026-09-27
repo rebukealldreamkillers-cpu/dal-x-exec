@@ -2,6 +2,52 @@
 
 const screenHistory = [];
 
+/* ─── Atmosphere mapping ────────────────────────────────────────────────────
+ * Maps screen id → atmosphere class + canvas scene name.
+ * Applied by showScreen() so the visual environment shifts with the flow.
+ */
+const ATMOSPHERE_MAP = {
+  'screen-0':  { atmosphere: 'atmosphere-chaos',      scene: 'chaos'      },
+  'screen-1':  { atmosphere: 'atmosphere-demo',       scene: 'demo'       },
+  'screen-2':  { atmosphere: 'atmosphere-demo',       scene: 'demo'       },
+  'screen-3':  { atmosphere: 'atmosphere-demo',       scene: 'demo'       },
+  'screen-4':  { atmosphere: 'atmosphere-demo',       scene: 'demo'       },
+  'screen-5':  { atmosphere: 'atmosphere-demo',       scene: 'demo'       },
+  'screen-6':  { atmosphere: 'atmosphere-demo',       scene: 'demo'       },
+  'screen-7':  { atmosphere: 'atmosphere-assessment', scene: 'assessment' },
+  'screen-8':  { atmosphere: 'atmosphere-assessment', scene: 'assessment' },
+  'screen-9':  { atmosphere: 'atmosphere-simulation', scene: 'simulation' },
+  'screen-10': { atmosphere: 'atmosphere-simulation', scene: 'simulation' },
+  'screen-11': { atmosphere: 'atmosphere-simulation', scene: 'simulation' },
+  'screen-12': { atmosphere: 'atmosphere-simulation', scene: 'simulation' },
+  'screen-13': { atmosphere: 'atmosphere-simulation', scene: 'simulation' },
+  'screen-14': { atmosphere: 'atmosphere-simulation', scene: 'simulation' },
+  'screen-15': { atmosphere: 'atmosphere-simulation', scene: 'simulation' },
+  'screen-16': { atmosphere: 'atmosphere-technical',  scene: 'technical'  },
+  'screen-17': { atmosphere: 'atmosphere-technical',  scene: 'technical'  },
+  'screen-18': { atmosphere: 'atmosphere-technical',  scene: 'technical'  },
+  'screen-19': { atmosphere: 'atmosphere-review',     scene: 'review'     },
+  'screen-20': { atmosphere: 'atmosphere-review',     scene: 'review'     },
+  'screen-21': { atmosphere: 'atmosphere-review',     scene: 'review'     },
+};
+
+const ALL_ATMOSPHERES = [
+  'atmosphere-chaos', 'atmosphere-demo', 'atmosphere-assessment',
+  'atmosphere-simulation', 'atmosphere-technical', 'atmosphere-review',
+];
+
+function applyAtmosphere(id) {
+  const app = document.getElementById('app');
+  if (!app) return;
+  const cfg = ATMOSPHERE_MAP[id];
+  if (!cfg) return;
+  ALL_ATMOSPHERES.forEach(cls => app.classList.remove(cls));
+  app.classList.add(cfg.atmosphere);
+  if (typeof CanvasEngine !== 'undefined' && CanvasEngine.setScene) {
+    CanvasEngine.setScene(cfg.scene);
+  }
+}
+
 function showScreen(id, addToHistory = true) {
   const current = document.querySelector('.screen.active');
   if (addToHistory && current) {
@@ -10,9 +56,13 @@ function showScreen(id, addToHistory = true) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const target = document.getElementById(id);
   if (target) {
+    /* Force reflow so the screenEnter animation replays on repeat visits */
     target.classList.add('active');
+    // eslint-disable-next-line no-unused-expressions
+    void target.offsetWidth;
     window.scrollTo(0, 0);
   }
+  applyAtmosphere(id);
 }
 
 function goBack() {
@@ -336,5 +386,8 @@ function resetAll() {
 /* ─── Init ───────────────────────────────────────────────────────────────── */
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (typeof CanvasEngine !== 'undefined' && CanvasEngine.init) {
+    CanvasEngine.init();
+  }
   showScreen('screen-0', false);
 });

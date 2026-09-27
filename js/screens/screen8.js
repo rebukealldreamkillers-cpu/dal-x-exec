@@ -1,24 +1,6 @@
-/* ─── Screen 8: Business Result ─────────────────────────────────────────── */
+/* ─── Screen 8: Business result ─────────────────────────────────────────── */
 
-/* ── Risk weight tables ──────────────────────────────────────────────────── */
-
-/*
- * Each answer contributes an independent risk score.
- * The enforcement gap is a modifier applied against the combined score,
- * not the sole determinant of the outcome.
- *
- * Execution risk  : 0–5  (how consequential is the action itself?)
- * System risk     : 1–5  (how sensitive is the downstream system?)
- * Consequence risk: capped at 8 across all selected consequences
- * Total max       : ~18  (5 + 5 + 8)
- *
- * Score bands:
- *   Critical  ≥ 12   (e.g. commit_funds + payment_system + financial + regulatory)
- *   High       8–11   (e.g. delete_data + database + sensitive_data + regulatory)
- *   Medium     4–7    (e.g. deploy_code + deployment_pipeline + production_change)
- *   Low        1–3    (e.g. modify_records + enterprise_application)
- *   None        0     (recommendations only or no downstream)
- */
+/* ── Risk weight tables (unchanged) ─────────────────────────────────────── */
 
 const S8_EXECUTION_RISK = {
   recommendations_only:        0,
@@ -61,12 +43,15 @@ const S8_RISK_BAND_LABELS = {
   none:     'None',
 };
 
-/* ── Outcome configurations ──────────────────────────────────────────────── */
+/* Score-to-arc mapping. Max total is 18. */
+const S8_RISK_SCORE_MAX = 18;
+
+/* ── Outcome configurations (preserved) ────────────────────────────────── */
 
 const S8_OUTCOMES = {
   not_applicable: {
     decision: {
-      title:             'Business Result',
+      title:             'Business result',
       state:             'No enforcement gap applies to this workflow',
       reason:            'The agent produces recommendations only, has no downstream system, or has no consequential effect. There is no execution gap for DAL-X to enforce.',
       required_response: 'None.',
@@ -79,7 +64,7 @@ const S8_OUTCOMES = {
 
   critical_gap: {
     decision: {
-      title:             'Business Result',
+      title:             'Business result',
       state:             'Critical enforcement gap',
       reason:            'A high-stakes execution reaches a downstream system with no enforcement gate. This is the highest-priority DAL-X use case.',
       required_response: 'Identify the authority owner, downstream system owner, and confirm scope for pilot planning.',
@@ -92,7 +77,7 @@ const S8_OUTCOMES = {
 
   gap_identified: {
     decision: {
-      title:             'Business Result',
+      title:             'Business result',
       state:             'Enforcement gap identified',
       reason:            'A consequential execution reaches a downstream system without a required approval gate. The risk profile of this workflow warrants DAL-X enforcement.',
       required_response: 'Identify the authority owner and downstream system owner.',
@@ -105,7 +90,7 @@ const S8_OUTCOMES = {
 
   gap_low_priority: {
     decision: {
-      title:             'Business Result',
+      title:             'Business result',
       state:             'Gap identified, lower priority',
       reason:            'An enforcement gap exists but the risk profile of this workflow is limited. DAL-X would close the gap, but higher-stakes workflows should be assessed first.',
       required_response: 'Determine whether the risk profile warrants a pilot now or later.',
@@ -118,7 +103,7 @@ const S8_OUTCOMES = {
 
   high_risk_no_requirement: {
     decision: {
-      title:             'Business Result',
+      title:             'Business result',
       state:             'High-stakes workflow with no enforcement requirement',
       reason:            'The risk profile of this workflow is high, but the enterprise has stated no enforcement gate is required. This policy decision is flagged for review.',
       required_response: 'Confirm whether the absence of an enforcement requirement is an intentional policy decision or an oversight.',
@@ -131,7 +116,7 @@ const S8_OUTCOMES = {
 
   enforcement_not_established: {
     decision: {
-      title:             'Business Result',
+      title:             'Business result',
       state:             'No enforcement requirement for this workflow',
       reason:            'The enterprise does not require a gate before execution. DAL-X enforces a gate. If no gate is required, there is nothing to enforce.',
       required_response: 'None.',
@@ -144,8 +129,8 @@ const S8_OUTCOMES = {
 
   urgent_investigation: {
     decision: {
-      title:             'Business Result',
-      state:             'Urgent: high-risk workflow with unresolved information gaps',
+      title:             'Business result',
+      state:             'Urgent, high-risk workflow with unresolved information gaps',
       reason:            'The risk profile is high. The enforcement status of this workflow cannot be confirmed until the gaps listed below are resolved, either by completing unanswered questions or by investigating fields your organization currently does not know.',
       required_response: 'Resolve each gap listed below. Unanswered questions can be completed here. Fields answered as Unknown require organizational investigation before returning.',
       what_happens_next: 'Return here after resolving each gap and re-evaluate.',
@@ -157,7 +142,7 @@ const S8_OUTCOMES = {
 
   more_info_required: {
     decision: {
-      title:             'Business Result',
+      title:             'Business result',
       state:             'More information required',
       reason:            'The assessment cannot determine whether an enforcement gap exists. One or more questions are unanswered, or were answered as Unknown, meaning your organization does not yet have this information.',
       required_response: 'Resolve each gap listed below. Unanswered questions can be completed here. Fields answered as Unknown require your organization to investigate and establish the answer before returning.',
@@ -169,7 +154,7 @@ const S8_OUTCOMES = {
   },
 };
 
-/* ── Evaluation logic ────────────────────────────────────────────────────── */
+/* ── Evaluation logic (unchanged) ───────────────────────────────────────── */
 
 function evaluateBusinessResult() {
   const agentType    = getState('s2.agent_type')                 || '';
@@ -178,11 +163,6 @@ function evaluateBusinessResult() {
   const consequences = getState('s2.consequences')               || [];
   const authResponse = getState('s2.missing_authority_response') || '';
 
-  const isKnown = v => Boolean(v) && v !== 'not_sure';
-  const hasKnownConsequence =
-    consequences.length > 0 && !consequences.every(v => v === 'not_sure');
-
-  /* ── 1. Not applicable ──────────────────────────────────────────────── */
   if (
     execution  === 'recommendations_only' ||
     downstream === 'none'                 ||
@@ -197,7 +177,6 @@ function evaluateBusinessResult() {
     return 'not_applicable';
   }
 
-  /* ── 2. Compute risk score from all available answers ───────────────── */
   const executionRisk   = S8_EXECUTION_RISK[execution]  || 0;
   const systemRisk      = S8_SYSTEM_RISK[downstream]    || 0;
   const consequenceRisk = Math.min(
@@ -217,18 +196,6 @@ function evaluateBusinessResult() {
   setState('s2.risk_system',      systemRisk);
   setState('s2.risk_consequence', consequenceRisk);
 
-  /* ── 3. Missing required information ────────────────────────────────── */
-  /*
-   * Two distinct problem types require different responses:
-   *
-   *   unansweredFields - field was left blank or skipped entirely.
-   *     Response: go back and answer the question.
-   *
-   *   unknownFields - field was answered, but the answer is "Not sure" /
-   *     "Unknown." The user deliberately indicated their organization
-   *     lacks this knowledge. Going back and re-selecting won't help.
-   *     Response: investigate outside this tool, then return.
-   */
   const unansweredFields = [];
   const unknownFields    = [];
 
@@ -241,29 +208,26 @@ function evaluateBusinessResult() {
   if (!downstream)                     unansweredFields.push('Downstream system');
   else if (downstream === 'not_sure')  unknownFields.push('Downstream system');
 
-  if (!consequences.length)                                 unansweredFields.push('Consequence');
-  else if (consequences.every(v => v === 'not_sure'))       unknownFields.push('Consequence');
+  if (!consequences.length)                            unansweredFields.push('Consequence');
+  else if (consequences.every(v => v === 'not_sure'))  unknownFields.push('Consequence');
 
   if (!authResponse)                   unansweredFields.push('Current enforcement gap');
   else if (authResponse === 'unknown') unknownFields.push('Current enforcement gap');
 
   setState('s2.unanswered_fields', unansweredFields);
   setState('s2.unknown_fields',    unknownFields);
-  /* Keep missing_fields as combined list for other screens that reference it */
   setState('s2.missing_fields', [...unansweredFields, ...unknownFields]);
 
   if (unansweredFields.length > 0 || unknownFields.length > 0) {
     return riskScore >= 8 ? 'urgent_investigation' : 'more_info_required';
   }
 
-  /* ── 4. Enforcement gap present (no gate exists) ────────────────────── */
   if (authResponse === 'must_stop') {
     if (riskScore >= 12) return 'critical_gap';
     if (riskScore >= 4)  return 'gap_identified';
     return 'gap_low_priority';
   }
 
-  /* ── 5. No enforcement requirement ──────────────────────────────────── */
   if (authResponse === 'may_continue') {
     return riskScore >= 8 ? 'high_risk_no_requirement' : 'enforcement_not_established';
   }
@@ -271,283 +235,133 @@ function evaluateBusinessResult() {
   return 'more_info_required';
 }
 
-/* ── Verdict banner builder ──────────────────────────────────────────────── */
+/* ── Risk gauge (SVG animated arc) ──────────────────────────────────────── */
 
-function buildBusinessVerdictBanner(resultKey) {
-  const configs = {
-    not_applicable: {
-      variant: 'no',
-      verdict: 'NOT APPLICABLE',
-      label:   'DAL-X does not apply to this workflow',
-      sub:     'The agent produces recommendations only, has no downstream system, or has no consequential effect.',
-    },
-    critical_gap: {
-      variant: 'critical',
-      verdict: 'CRITICAL GAP',
-      label:   'High-stakes execution with no enforcement gate',
-      sub:     'The combination of execution type, downstream system, and consequences places this in the highest-priority enforcement gap category.',
-    },
-    gap_identified: {
-      variant: 'yes',
-      verdict: 'GAP IDENTIFIED',
-      label:   'Consequential execution with no enforcement gate',
-      sub:     'The risk profile of this workflow warrants a DAL-X enforcement gate before the downstream system executes.',
-    },
-    gap_low_priority: {
-      variant: 'inconclusive',
-      verdict: 'LOWER PRIORITY',
-      label:   'A gap exists but the risk profile is limited',
-      sub:     'DAL-X would close this gap. Based on the execution type, system, and consequences reported, higher-stakes workflows should be assessed first.',
-    },
-    high_risk_no_requirement: {
-      variant: 'inconclusive',
-      verdict: 'POLICY FLAGGED',
-      label:   'High-stakes workflow with no enforcement requirement',
-      sub:     'The risk profile is high, but no enforcement gate has been established as a requirement. This is unusual for this combination of execution type and downstream system.',
-    },
-    enforcement_not_established: {
-      variant: 'no',
-      verdict: 'NOT NEEDED',
-      label:   'No enforcement requirement for this workflow',
-      sub:     'The enterprise does not require a gate before execution. DAL-X enforces a gate. If none is required, there is nothing to enforce.',
-    },
-    urgent_investigation: {
-      variant: 'inconclusive',
-      verdict: 'URGENT',
-      label:   'High-stakes workflow with unknown enforcement status',
-      sub:     'The risk profile is high but required answers are missing. The enforcement gap cannot be confirmed without them.',
-    },
-    more_info_required: {
-      variant: 'inconclusive',
-      verdict: 'INCONCLUSIVE',
-      label:   'Required information is missing',
-      sub:     'One or more required answers are unknown. The assessment cannot determine whether an enforcement gap exists.',
-    },
-  };
-  const cfg    = configs[resultKey] || configs.more_info_required;
-  const banner = document.createElement('div');
-  banner.className = `verdict-banner verdict-banner--${cfg.variant}`;
+function buildRiskGauge(score, band) {
+  const wrap = document.createElement('div');
+  wrap.className = 'risk-gauge';
 
-  const verdict = document.createElement('div');
-  verdict.className = 'verdict-banner__verdict';
-  verdict.textContent = cfg.verdict;
+  const clamped = Math.max(0, Math.min(score, S8_RISK_SCORE_MAX));
+  const ratio = clamped / S8_RISK_SCORE_MAX;
 
-  const label = document.createElement('div');
-  label.className = 'verdict-banner__label';
-  label.textContent = cfg.label;
+  /* Arc geometry. Full sweep spans 220 degrees, from 160deg to 380deg. */
+  const startAngle = 160;
+  const endAngle   = 380;
+  const totalSweep = endAngle - startAngle;
+  const targetSweep = totalSweep * ratio;
 
-  const sub = document.createElement('div');
-  sub.className = 'verdict-banner__sub';
-  sub.textContent = cfg.sub;
+  const cx = 100, cy = 105, r = 82;
 
-  banner.appendChild(verdict);
-  banner.appendChild(label);
-  banner.appendChild(sub);
-  return banner;
+  function polar(angle) {
+    const rad = (angle - 90) * Math.PI / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
+
+  function arcPath(fromAngle, toAngle) {
+    const start = polar(fromAngle);
+    const end   = polar(toAngle);
+    const largeArc = (toAngle - fromAngle) <= 180 ? 0 : 1;
+    return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y}`;
+  }
+
+  const trackPath  = arcPath(startAngle, endAngle);
+  const filledPath = targetSweep > 0
+    ? arcPath(startAngle, startAngle + Math.max(targetSweep, 0.1))
+    : '';
+
+  /* Approximate arc length for stroke-dasharray animation */
+  const arcLen = (2 * Math.PI * r) * (totalSweep / 360);
+  const filledLen = (2 * Math.PI * r) * (Math.max(targetSweep, 0.1) / 360);
+
+  wrap.innerHTML = `
+    <svg viewBox="0 0 200 160" class="risk-gauge__svg">
+      <defs>
+        <linearGradient id="riskGaugeGrad" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0%"   stop-color="#10B981"/>
+          <stop offset="50%"  stop-color="#F59E0B"/>
+          <stop offset="100%" stop-color="#EF4444"/>
+        </linearGradient>
+      </defs>
+      <path d="${trackPath}" class="risk-gauge__track" />
+      ${filledPath ? `<path d="${filledPath}" class="risk-gauge__fill risk-gauge__fill--${band}"
+                          stroke-dasharray="${filledLen} ${arcLen}"
+                          style="stroke-dashoffset:${filledLen};" />` : ''}
+      <text x="100" y="100" text-anchor="middle" class="risk-gauge__value" data-target="${clamped}">0</text>
+      <text x="100" y="126" text-anchor="middle" class="risk-gauge__max">out of ${S8_RISK_SCORE_MAX}</text>
+    </svg>
+    <div class="risk-gauge__band risk-gauge__band--${band}">${S8_RISK_BAND_LABELS[band] || band}</div>
+  `;
+
+  /* Animate the arc reveal and the counter after mount. */
+  requestAnimationFrame(() => {
+    const fillEl = wrap.querySelector('.risk-gauge__fill');
+    if (fillEl) {
+      fillEl.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(0.16,1,0.3,1)';
+      fillEl.style.strokeDashoffset = '0';
+    }
+    const valEl = wrap.querySelector('.risk-gauge__value');
+    if (valEl) {
+      const target = parseInt(valEl.getAttribute('data-target'), 10) || 0;
+      const duration = 800;
+      const startTime = performance.now();
+      function step(now) {
+        const t = Math.min(1, (now - startTime) / duration);
+        const eased = 1 - Math.pow(1 - t, 3);
+        valEl.textContent = String(Math.round(target * eased));
+        if (t < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+  });
+
+  return wrap;
 }
 
-/* ── Risk profile panel ──────────────────────────────────────────────────── */
+/* ── Compliance exposure panel ──────────────────────────────────────────── */
 
-function s8LookupLabel(value, optionsArray) {
-  if (!value || !optionsArray) return value || 'Not specified';
-  const found = optionsArray.find(o => o.value === value);
-  return found ? found.label : value;
-}
+const S8_COMPLIANCE_MAP = {
+  financial_effect:    ['SOX', 'Reg E'],
+  regulatory_exposure: ['FINRA', 'AML', 'SOX'],
+  sensitive_data:      ['GDPR', 'CCPA'],
+  access_change:       ['SOC 2'],
+  customer_effect:     ['CFPB', 'Reg E'],
+};
 
-function s8ConsequenceSummary(values) {
-  if (!values || !values.length) return 'None';
-  const opts = typeof S7_CONSEQUENCE_OPTIONS !== 'undefined' ? S7_CONSEQUENCE_OPTIONS : [];
-  const labels = values
-    .filter(v => v !== 'not_sure' && v !== 'none')
-    .map(v => s8LookupLabel(v, opts));
-  if (!labels.length) return 'None';
-  if (labels.length <= 2) return labels.join(', ');
-  return `${labels.slice(0, 2).join(', ')} + ${labels.length - 2} more`;
-}
+function buildCompliancePanel() {
+  const consequences = getState('s2.consequences') || [];
+  const frameworks = new Set();
+  consequences.forEach(c => {
+    const list = S8_COMPLIANCE_MAP[c];
+    if (list) list.forEach(f => frameworks.add(f));
+  });
 
-function buildRiskProfilePanel() {
-  const execution    = getState('s2.proposed_execution') || '';
-  const downstream   = getState('s2.downstream_system')  || '';
-  const consequences = getState('s2.consequences')        || [];
-  const riskScore    = getState('s2.risk_score')          || 0;
-  const riskBand     = getState('s2.risk_band')           || 'none';
-  const execRisk     = getState('s2.risk_execution')      || 0;
-  const sysRisk      = getState('s2.risk_system')         || 0;
-  const consRisk     = getState('s2.risk_consequence')    || 0;
-
-  const execOpts = typeof S7_EXECUTION_OPTIONS   !== 'undefined' ? S7_EXECUTION_OPTIONS   : [];
-  const sysOpts  = typeof S7_DOWNSTREAM_OPTIONS  !== 'undefined' ? S7_DOWNSTREAM_OPTIONS  : [];
+  if (frameworks.size === 0) return null;
 
   const panel = document.createElement('div');
-  panel.style.marginTop = 'var(--space-6)';
+  panel.className = 'compliance-panel';
 
-  const heading = document.createElement('p');
-  heading.className = 'section-label';
-  heading.textContent = 'Risk profile (self-reported)';
+  const heading = document.createElement('div');
+  heading.className = 'compliance-panel__heading';
+  heading.textContent = 'Regulatory exposure areas';
   panel.appendChild(heading);
 
+  const chips = document.createElement('div');
+  chips.className = 'compliance-panel__chips';
+  Array.from(frameworks).forEach(f => {
+    const chip = document.createElement('span');
+    chip.className = 'compliance-chip';
+    chip.textContent = f;
+    chips.appendChild(chip);
+  });
+  panel.appendChild(chips);
+
   const note = document.createElement('p');
-  note.style.cssText =
-    'font-size:var(--text-xs);color:var(--color-text-muted);'
-    + 'margin-bottom:var(--space-3);line-height:1.5;';
+  note.className = 'compliance-panel__note';
   note.textContent =
-    'Scores are derived from your reported answers. '
-    + 'Jochanni Labs reviews these figures with you before any recommendation is finalized.';
+    'Based on reported consequences. Verify against your compliance program.';
   panel.appendChild(note);
 
-  const table = document.createElement('div');
-  table.style.cssText =
-    'border:1px solid var(--color-border);border-radius:8px;overflow:hidden;';
-
-  const rows = [
-    {
-      label: 'Execution type',
-      value: s8LookupLabel(execution, execOpts) || 'Not specified',
-      score: execRisk,
-      max:   5,
-    },
-    {
-      label: 'Downstream system',
-      value: s8LookupLabel(downstream, sysOpts) || 'Not specified',
-      score: sysRisk,
-      max:   5,
-    },
-    {
-      label: 'Consequences',
-      value: s8ConsequenceSummary(consequences),
-      score: consRisk,
-      max:   8,
-    },
-  ];
-
-  rows.forEach((row, i) => {
-    const rowEl = document.createElement('div');
-    rowEl.className = 'risk-profile-row';
-    if (i < rows.length - 1) rowEl.style.borderBottom = '1px solid var(--color-border)';
-
-    const keyEl = document.createElement('div');
-    keyEl.className = 'risk-profile-row__label';
-    keyEl.textContent = row.label;
-
-    const valEl = document.createElement('div');
-    valEl.className = 'risk-profile-row__value';
-    valEl.textContent = row.value;
-
-    const scoreEl = document.createElement('div');
-    scoreEl.className = 'risk-profile-row__score';
-    scoreEl.textContent = `${row.score} / ${row.max}`;
-
-    rowEl.appendChild(keyEl);
-    rowEl.appendChild(valEl);
-    rowEl.appendChild(scoreEl);
-    table.appendChild(rowEl);
-  });
-
-  /* Total row */
-  const totalRow = document.createElement('div');
-  totalRow.className = 'risk-profile-row risk-profile-row--total';
-
-  const totalKey = document.createElement('div');
-  totalKey.className = 'risk-profile-row__label';
-  totalKey.textContent = 'Total risk score';
-
-  const bandEl = document.createElement('div');
-  bandEl.className = 'risk-profile-row__value';
-  bandEl.textContent = S8_RISK_BAND_LABELS[riskBand] || riskBand;
-
-  const totalScore = document.createElement('div');
-  totalScore.className = 'risk-profile-row__score';
-  totalScore.textContent = String(riskScore);
-
-  totalRow.appendChild(totalKey);
-  totalRow.appendChild(bandEl);
-  totalRow.appendChild(totalScore);
-  table.appendChild(totalRow);
-
-  panel.appendChild(table);
-  panel.appendChild(buildRiskLegend());
   return panel;
-}
-
-/* ── Risk score legend ───────────────────────────────────────────────────── */
-
-function buildRiskLegend() {
-  const legend = document.createElement('div');
-  legend.className = 'risk-legend';
-
-  /* ── Score factors ──────────────────────────────────────────────────── */
-  const factorsHeading = document.createElement('div');
-  factorsHeading.className = 'risk-legend__heading';
-  factorsHeading.textContent = 'How the score is calculated';
-  legend.appendChild(factorsHeading);
-
-  const factorsList = document.createElement('div');
-  factorsList.className = 'risk-legend__factors';
-
-  [
-    { name: 'Execution type',     range: '0 – 5 pts', },
-    { name: 'Downstream system',  range: '1 – 5 pts', },
-    { name: 'Consequences',       range: '0 – 8 pts (capped)', },
-  ].forEach(({ name, range }) => {
-    const row = document.createElement('div');
-    row.className = 'risk-legend__factor';
-
-    const nameEl = document.createElement('span');
-    nameEl.className = 'risk-legend__factor-name';
-    nameEl.textContent = name;
-
-    const rangeEl = document.createElement('span');
-    rangeEl.className = 'risk-legend__factor-range';
-    rangeEl.textContent = range;
-
-    row.appendChild(nameEl);
-    row.appendChild(rangeEl);
-    factorsList.appendChild(row);
-  });
-
-  legend.appendChild(factorsList);
-
-  const factorNote = document.createElement('p');
-  factorNote.className = 'risk-legend__factor-note';
-  factorNote.textContent =
-    'Higher-impact actions, more sensitive downstream systems, and more severe '
-    + 'consequences each increase the total. The three factors are added together.';
-  legend.appendChild(factorNote);
-
-  /* ── Risk bands ─────────────────────────────────────────────────────── */
-  const bandsHeading = document.createElement('div');
-  bandsHeading.className = 'risk-legend__bands-heading';
-  bandsHeading.textContent = 'Risk bands';
-  legend.appendChild(bandsHeading);
-
-  const bandsRow = document.createElement('div');
-  bandsRow.className = 'risk-legend__bands';
-
-  [
-    { band: 'none',     label: 'None',     range: '0' },
-    { band: 'low',      label: 'Low',      range: '1 – 3' },
-    { band: 'medium',   label: 'Medium',   range: '4 – 7' },
-    { band: 'high',     label: 'High',     range: '8 – 11' },
-    { band: 'critical', label: 'Critical', range: '≥ 12' },
-  ].forEach(({ band, label, range }) => {
-    const chip = document.createElement('div');
-    chip.className = `risk-band-chip risk-band-chip--${band}`;
-
-    const nameEl = document.createElement('div');
-    nameEl.className = 'risk-band-chip__name';
-    nameEl.textContent = label;
-
-    const rangeEl = document.createElement('div');
-    rangeEl.className = 'risk-band-chip__range';
-    rangeEl.textContent = range;
-
-    chip.appendChild(nameEl);
-    chip.appendChild(rangeEl);
-    bandsRow.appendChild(chip);
-  });
-
-  legend.appendChild(bandsRow);
-  return legend;
 }
 
 /* ── Personalized gap statement ─────────────────────────────────────────── */
@@ -590,32 +404,43 @@ function buildPersonalizedGapCallout() {
     data_warehouse:         'data warehouse',
   };
 
-  const agent      = agentCustom      || AGENT_LABELS[agentRaw]      || agentRaw      || 'your AI agent';
-  const execution  = execCustom       || EXECUTION_LABELS[executionRaw]  || executionRaw  || 'take this action';
-  const downstream = dsCustom         || DOWNSTREAM_LABELS[downstreamRaw] || downstreamRaw || 'the downstream system';
+  const agent      = agentCustom || AGENT_LABELS[agentRaw]      || agentRaw      || 'your AI agent';
+  const execution  = execCustom  || EXECUTION_LABELS[executionRaw]  || executionRaw  || 'take this action';
+  const downstream = dsCustom    || DOWNSTREAM_LABELS[downstreamRaw] || downstreamRaw || 'the downstream system';
 
-  const callout = document.createElement('div');
-  callout.className = 'callout callout--warning';
-  callout.style.marginBottom = 'var(--space-5)';
+  const gap = document.createElement('div');
+  gap.className = 'gap-statement';
 
   const strong = document.createElement('strong');
   strong.textContent = 'This is your current exposure. ';
-  callout.appendChild(strong);
-  callout.appendChild(document.createTextNode(
+  gap.appendChild(strong);
+  gap.appendChild(document.createTextNode(
     `You described a ${agent} that can ${execution} on your ${downstream}. `
     + 'Right now, without DAL-X, nothing in that path requires authorization before execution proceeds. '
-    + 'That is happening in your environment today.'
+    + 'This is happening in your environment today.'
   ));
 
-  return callout;
+  return gap;
 }
 
-/* ── Renderer ────────────────────────────────────────────────────────────── */
+/* ── Renderer ───────────────────────────────────────────────────────────── */
 
-/* Gap outcomes that trigger lead capture */
 const S8_GAP_OUTCOMES = new Set([
   'critical_gap', 'gap_identified', 'gap_low_priority', 'urgent_investigation',
 ]);
+
+const S8_HIGH_URGENCY = new Set(['critical_gap', 'gap_identified']);
+const S8_MODERATE     = new Set(['gap_low_priority']);
+const S8_BLOCKED_PATH = new Set(['high_risk_no_requirement', 'enforcement_not_established']);
+const S8_RESOLVED     = new Set(['not_applicable']);
+
+function s8HeadingClass(resultKey) {
+  if (S8_HIGH_URGENCY.has(resultKey)) return 'screen-title screen-title--urgent';
+  if (S8_MODERATE.has(resultKey))     return 'screen-title screen-title--moderate';
+  if (S8_BLOCKED_PATH.has(resultKey)) return 'screen-title screen-title--blocked';
+  if (S8_RESOLVED.has(resultKey))     return 'screen-title screen-title--resolved';
+  return 'screen-title';
+}
 
 function renderScreen8() {
   const resultKey = evaluateBusinessResult();
@@ -625,50 +450,94 @@ function renderScreen8() {
   const screen = document.getElementById('screen-8');
   screen.innerHTML = '';
 
-  /* Verdict banner */
-  screen.appendChild(buildBusinessVerdictBanner(resultKey));
-
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Surface 2 · Guided Business Assessment';
+  badge.textContent = 'Surface 2 · Guided business assessment';
   screen.appendChild(badge);
 
   /* Title */
   const title = document.createElement('h1');
-  title.className = 'screen-title';
-  title.textContent = 'Business Result';
+  title.className = s8HeadingClass(resultKey);
+  title.textContent = cfg.decision.state;
   screen.appendChild(title);
 
-  /* Personalized exposure statement for high-urgency outcomes */
-  if (resultKey === 'critical_gap' || resultKey === 'gap_identified') {
+  const riskScore = getState('s2.risk_score') || 0;
+  const riskBand  = getState('s2.risk_band')  || 'none';
+
+  /* Gauge for high-urgency and moderate outcomes only */
+  if (S8_HIGH_URGENCY.has(resultKey) || S8_MODERATE.has(resultKey)) {
+    screen.appendChild(buildRiskGauge(riskScore, riskBand));
+  }
+
+  /* Personalized gap statement in glass card with red left border for high urgency */
+  if (S8_HIGH_URGENCY.has(resultKey)) {
     screen.appendChild(buildPersonalizedGapCallout());
   }
 
-  /* Decision state block */
-  screen.appendChild(createDecisionBlock(cfg.decision));
+  /* Compliance panel for critical_gap and gap_identified */
+  if (S8_HIGH_URGENCY.has(resultKey)) {
+    const compliance = buildCompliancePanel();
+    if (compliance) screen.appendChild(compliance);
+  }
 
-  /* Information gap panels - shown for incomplete outcomes only */
+  /* Blocked-path state panel */
+  if (S8_BLOCKED_PATH.has(resultKey)) {
+    const blockedPanel = document.createElement('div');
+    blockedPanel.className = 'blocked-state-panel';
+    const blockedHeading = document.createElement('div');
+    blockedHeading.className = 'blocked-state-panel__heading';
+    blockedHeading.textContent = 'Enforcement requirement not established';
+    blockedPanel.appendChild(blockedHeading);
+    const blockedBody = document.createElement('p');
+    blockedBody.className = 'blocked-state-panel__body';
+    blockedBody.textContent = cfg.decision.reason;
+    blockedPanel.appendChild(blockedBody);
+    screen.appendChild(blockedPanel);
+  }
+
+  /* Resolved-state confirmation for not_applicable */
+  if (S8_RESOLVED.has(resultKey)) {
+    const resolvedPanel = document.createElement('div');
+    resolvedPanel.className = 'resolved-state-panel';
+    const resolvedBody = document.createElement('p');
+    resolvedBody.className = 'resolved-state-panel__body';
+    resolvedBody.textContent = cfg.decision.reason;
+    resolvedPanel.appendChild(resolvedBody);
+    screen.appendChild(resolvedPanel);
+  }
+
+  /* "What this means" paragraph, plain text */
+  if (S8_HIGH_URGENCY.has(resultKey) || S8_MODERATE.has(resultKey)) {
+    const meansHeading = document.createElement('p');
+    meansHeading.className = 'section-label';
+    meansHeading.style.marginTop = 'var(--space-6)';
+    meansHeading.textContent = 'What this means';
+    screen.appendChild(meansHeading);
+
+    const meansPara = document.createElement('p');
+    meansPara.className = 'what-this-means';
+    meansPara.textContent = cfg.decision.reason;
+    screen.appendChild(meansPara);
+  }
+
+  /* Information gap panels for incomplete outcomes */
   if (resultKey === 'urgent_investigation' || resultKey === 'more_info_required') {
     const unanswered = getState('s2.unanswered_fields') || [];
     const unknown    = getState('s2.unknown_fields')    || [];
 
-    /*
-     * Unanswered: question was skipped entirely.
-     * Response: go back and select an answer.
-     */
     if (unanswered.length > 0) {
-      const callout = document.createElement('div');
-      callout.className = 'callout callout--warning';
-      callout.style.marginTop = 'var(--space-5)';
+      const box = document.createElement('div');
+      box.className = 'callout callout--warning';
+      box.style.marginTop = 'var(--space-5)';
 
       const heading = document.createElement('p');
       heading.style.cssText =
         'font-weight:600;font-size:var(--text-sm);margin-bottom:var(--space-3);';
       heading.textContent = unanswered.length === 1
-        ? '1 question was not answered:'
-        : `${unanswered.length} questions were not answered:`;
-      callout.appendChild(heading);
+        ? '1 question was not answered'
+        : `${unanswered.length} questions were not answered`;
+      box.appendChild(heading);
 
       const list = document.createElement('ul');
       list.style.cssText =
@@ -679,36 +548,29 @@ function renderScreen8() {
         li.textContent = field;
         list.appendChild(li);
       });
-      callout.appendChild(list);
+      box.appendChild(list);
 
       const hint = document.createElement('p');
       hint.style.cssText =
         'font-size:var(--text-xs);color:var(--color-text-secondary);margin-top:var(--space-3);';
-      hint.textContent =
-        'Use ← Back to return to the questions and select an answer for each.';
-      callout.appendChild(hint);
+      hint.textContent = 'Use Back to return to the questions and select an answer for each.';
+      box.appendChild(hint);
 
-      screen.appendChild(callout);
+      screen.appendChild(box);
     }
 
-    /*
-     * Unknown: question was answered, but the answer is "Not sure" / "Unknown."
-     * The user correctly reported what their organization knows.
-     * This is not a form error - it is an organizational knowledge gap.
-     * Response: investigate outside this tool, then return.
-     */
     if (unknown.length > 0) {
-      const callout = document.createElement('div');
-      callout.className = 'callout callout--info';
-      callout.style.marginTop = 'var(--space-5)';
+      const box = document.createElement('div');
+      box.className = 'callout callout--info';
+      box.style.marginTop = 'var(--space-5)';
 
       const heading = document.createElement('p');
       heading.style.cssText =
         'font-weight:600;font-size:var(--text-sm);margin-bottom:var(--space-3);';
       heading.textContent = unknown.length === 1
-        ? '1 field was answered as Unknown. This requires organizational investigation:'
-        : `${unknown.length} fields were answered as Unknown. These require organizational investigation:`;
-      callout.appendChild(heading);
+        ? '1 field was answered as Unknown. This requires organizational investigation.'
+        : `${unknown.length} fields were answered as Unknown. These require organizational investigation.`;
+      box.appendChild(heading);
 
       const list = document.createElement('ul');
       list.style.cssText =
@@ -719,7 +581,7 @@ function renderScreen8() {
         li.textContent = field;
         list.appendChild(li);
       });
-      callout.appendChild(list);
+      box.appendChild(list);
 
       const hint = document.createElement('p');
       hint.style.cssText =
@@ -729,24 +591,20 @@ function renderScreen8() {
         + 'It is not a form error. To complete this assessment, involve the AI agent service owner, '
         + 'the downstream system owner, or your security or IT team to establish the answer. '
         + 'Return here once each unknown is resolved.';
-      callout.appendChild(hint);
+      box.appendChild(hint);
 
-      screen.appendChild(callout);
+      screen.appendChild(box);
     }
   }
 
-  /* Risk profile panel (not shown for not_applicable with score 0) */
-  const riskScore = getState('s2.risk_score') || 0;
-  if (riskScore > 0 || resultKey !== 'not_applicable') {
-    screen.appendChild(buildRiskProfilePanel());
-  }
+  /* Decision block preserved for outcome detail */
+  screen.appendChild(createDecisionBlock(cfg.decision));
 
   /* Evidence label */
   const evidenceLine = document.createElement('p');
   evidenceLine.style.cssText =
-    'margin-top:var(--space-5);font-size:var(--text-sm);'
-    + 'color:var(--color-text-secondary);';
-  evidenceLine.appendChild(document.createTextNode('Evidence: '));
+    'margin-top:var(--space-5);font-size:var(--text-sm);color:var(--color-text-secondary);';
+  evidenceLine.appendChild(document.createTextNode('Evidence '));
   evidenceLine.appendChild(createEvidenceLabel(cfg.evidence));
   screen.appendChild(evidenceLine);
 
@@ -756,7 +614,7 @@ function renderScreen8() {
     proceedNote.className = 'callout callout--info';
     proceedNote.style.marginTop = 'var(--space-6)';
     proceedNote.textContent =
-      'Next step: You and Jochanni Labs will configure the execution simulation together, '
+      'Next step. You and Jochanni Labs will configure the execution simulation together, '
       + 'using your enterprise policy and submission fields.';
     screen.appendChild(proceedNote);
   }
@@ -767,14 +625,14 @@ function renderScreen8() {
 
   const backBtn = document.createElement('button');
   backBtn.className = 'btn btn--ghost';
-  backBtn.textContent = '← Back';
+  backBtn.textContent = 'Back';
   backBtn.addEventListener('click', () => showScreen('screen-7'));
   nav.appendChild(backBtn);
 
   if (cfg.showProceed) {
     const proceedBtn = document.createElement('button');
     proceedBtn.className = 'btn btn--primary';
-    proceedBtn.textContent = 'Proceed to Simulation →';
+    proceedBtn.textContent = 'Proceed to simulation';
     proceedBtn.addEventListener('click', () => {
       if (typeof renderScreen9 === 'function') renderScreen9();
       showScreen('screen-9');
@@ -784,12 +642,11 @@ function renderScreen8() {
 
   screen.appendChild(nav);
 
-  /* ── Lead capture modal ─────────────────────────────────────────────── */
-  /* Show for gap outcomes only; skip if lead already captured            */
+  /* Lead capture modal, preserved trigger and gating */
   if (S8_GAP_OUTCOMES.has(resultKey) && !sessionState.lead) {
     document.getElementById('lead-capture-modal')?.remove();
     document.body.appendChild(buildLeadCaptureModal(resultKey, () => {
-      /* Modal dismissed - result is already rendered beneath it */
+      /* Modal dismissed, result is already rendered beneath it */
     }));
   }
 }

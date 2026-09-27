@@ -1,74 +1,13 @@
 /* ─── Screen 21: DAL-X Simulation Result ─────────────────────────────────── */
-/* JL_BOOKING_URL is defined in config.js (loaded before this file)          */
+/* JL_BOOKING_URL, JL_CONTACT_EMAIL defined in config.js (loaded first)      */
 
-/* ── Pilot path phase definitions ────────────────────────────────────────── */
-
-const S21_PHASES = [
-  {
-    title: 'Phase 1: Setup',
-    bullets: [
-      'Create workspace.',
-      'Add reviewers.',
-      'Create shadow key.',
-      'Register one agent.',
-      'Define one action and target.',
-      'Configure enterprise trigger rules.',
-    ],
-  },
-  {
-    title: 'Phase 2: Shadow mode',
-    bullets: [
-      'Add the submission call.',
-      'Send proposed executions.',
-      'Observe rule matches.',
-      'Correct missing metadata.',
-      'Adjust trigger logic.',
-      'Confirm expected routing.',
-      'Shadow mode does not block execution.',
-    ],
-  },
-  {
-    title: 'Phase 3: Decision handling',
-    bullets: [
-      'Reviewer decides inside DAL-X.',
-      'Enterprise receives a webhook or polls.',
-      'Enterprise calls GET /api/v1/submissions/:id.',
-      'Enterprise retrieves the authorization_id.',
-      'Pending execution resumes.',
-    ],
-  },
-  {
-    title: 'Phase 4: Enforcement mode',
-    bullets: [
-      'Create the enforcement key.',
-      'Add POST /api/v1/enforcement/execute at the downstream boundary.',
-      'Send the authorization_id, action, and target.',
-      'Block every rejection and DAL-X error.',
-      'Permit execution only after DAL-X accepts.',
-      'Record the downstream result separately.',
-    ],
-  },
-];
-
-const S21_ACCEPTANCE_TESTS = [
-  { test: 'Valid active authorization',   result: 'Accepted'                                    },
-  { test: 'Wrong action',                 result: 'Rejected'                                    },
-  { test: 'Wrong target',                 result: 'Rejected'                                    },
-  { test: 'Missing authorization',        result: 'Rejected'                                    },
-  { test: 'Consumed authorization',       result: 'Rejected'                                    },
-  { test: 'Expired authorization',        result: 'Rejected'                                    },
-  { test: 'DAL-X unavailable',            result: 'Enterprise blocks execution'                 },
-  { test: 'Valid accepted execution',     result: 'Downstream result recorded separately'       },
-  { test: 'Direct call avoiding DAL-X',   result: 'Enterprise prevents the governed execution'  },
-];
-
-/* ── Scope and removed items ─────────────────────────────────────────────── */
+/* ── Scope lists ─────────────────────────────────────────────────────────── */
 
 const S21_SCOPE_IN = [
   'Authority evaluation',
   'Human review',
   'Action and target matching',
-  'Single use authorization',
+  'Single-use authorization',
   'Downstream gate rejection',
 ];
 
@@ -80,19 +19,6 @@ const S21_SCOPE_OUT = [
   'Preventing every path not integrated with DAL-X',
 ];
 
-const S21_REMOVED_ITEMS = [
-  'Full audit trail',
-  'Compliance certification',
-  'Risk score',
-  'SLA commitments',
-  'Agent capability assessment',
-  'Downstream system verification',
-  'Enterprise change management',
-  'Pilot success guarantee',
-  'Monitoring and alerting',
-  'Production readiness determination',
-];
-
 /* ── Display label maps ───────────────────────────────────────────────────── */
 
 const S21_BUSINESS_RESULT_LABELS = {
@@ -101,18 +27,24 @@ const S21_BUSINESS_RESULT_LABELS = {
   gap_low_priority:            'Gap identified, lower priority',
   high_risk_no_requirement:    'High-stakes workflow with no enforcement requirement',
   enforcement_not_established: 'No enforcement requirement for this workflow',
-  urgent_investigation:        'Urgent: high-risk workflow with incomplete answers',
+  urgent_investigation:        'Urgent high-risk workflow with incomplete answers',
   more_info_required:          'More information required',
   not_applicable:              'No enforcement gap applies',
-  /* legacy keys */
   potential_use_case:          'Potential DAL-X use case',
   not_required:                'DAL-X not required for this workflow',
+};
+
+const S21_TECHNICAL_RESULT_LABELS = {
+  structural_failure:   'Structural failure',
+  incomplete:           'Technical answers incomplete',
+  implementation_work:  'Implementation work required',
+  supports_integration: 'Technical answers support integration',
 };
 
 const S21_TRIGGER_OUTCOME_LABELS = {
   auto_approve: 'Auto-approved',
   needs_review: 'Needs review',
-  high_risk:    'High risk: escalated review',
+  high_risk:    'High risk, escalated review',
   blocked:      'Blocked',
 };
 
@@ -132,16 +64,16 @@ const S21_PILOT_DECISION_LABELS = {
 };
 
 const S21_Q_LABELS = {
-  q1:  'Q1: Submission point',
-  q2:  'Q2: Pending execution',
-  q3:  'Q3: Decision handling',
-  q4:  'Q4: Enforcement point',
-  q5:  'Q5: Blocking behavior',
-  q6:  'Q6: Bypass prevention',
-  q7:  'Q7: Submission fields',
-  q8:  'Q8: API key storage',
-  q9:  'Q9: Data handling',
-  q10: 'Q10: Downstream result',
+  q1:  'Q1 Submission point',
+  q2:  'Q2 Pending execution',
+  q3:  'Q3 Decision handling',
+  q4:  'Q4 Enforcement point',
+  q5:  'Q5 Blocking behavior',
+  q6:  'Q6 Bypass prevention',
+  q7:  'Q7 Submission fields',
+  q8:  'Q8 API key storage',
+  q9:  'Q9 Data handling',
+  q10: 'Q10 Downstream result',
 };
 
 const S21_Q_VALUE_LABELS = {
@@ -155,32 +87,54 @@ const S21_Q_VALUE_LABELS = {
   neither:        'Neither',
 };
 
-const S21_NEXT_STEPS = {
-  remediation_required: 'Decide whether the enterprise can and will correct the structural failure, then request reassessment.',
-  not_recommended:      'No next step. A DAL-X pilot is not proposed for this workflow.',
-  pilot_prerequisites:  'Correct the identified structural failure, provide the required evidence, and request reassessment.',
-  setup_tasks:          'Complete the required setup work, provide the required evidence, and request reassessment.',
-  pilot_candidate:      'Assign pilot owners and proceed to the paid pilot agreement with Jochanni Labs.',
+/* ── Verdict tone mapping ────────────────────────────────────────────────── */
+
+const S21_BUSINESS_TONE = {
+  critical_gap:                'red',
+  gap_identified:              'amber',
+  gap_low_priority:            'amber',
+  high_risk_no_requirement:    'amber',
+  enforcement_not_established: 'slate',
+  urgent_investigation:        'red',
+  more_info_required:          'amber',
+  not_applicable:              'slate',
+  potential_use_case:          'green',
+  not_required:                'slate',
+};
+
+const S21_TECHNICAL_TONE = {
+  structural_failure:   'red',
+  incomplete:           'amber',
+  implementation_work:  'amber',
+  supports_integration: 'green',
+};
+
+const S21_PILOT_TONE = {
+  pilot_candidate:      'green',
+  setup_tasks:          'amber',
+  pilot_prerequisites:  'amber',
+  remediation_required: 'slate',
+  not_recommended:      'red',
 };
 
 /* ── Display helpers ─────────────────────────────────────────────────────── */
 
 function s21LookupLabel(value, options) {
-  if (!value) return 'N/A';
+  if (!value) return 'Not provided';
   const found = (options || []).find(o => o.value === value);
   return found ? found.label : value;
 }
 
 function s21AgentDisplay() {
   const v = getState('s2.agent_type') || '';
-  if (v === 'custom')   return getState('s2.agent_type_custom') || 'N/A';
+  if (v === 'custom')   return getState('s2.agent_type_custom') || 'Not provided';
   if (v === 'not_sure') return 'Not sure';
   return s21LookupLabel(v, typeof S7_AGENT_OPTIONS !== 'undefined' ? S7_AGENT_OPTIONS : []);
 }
 
 function s21ExecutionDisplay() {
   const v = getState('s2.proposed_execution') || '';
-  if (v === 'custom')   return getState('s2.proposed_execution_custom') || 'N/A';
+  if (v === 'custom')   return getState('s2.proposed_execution_custom') || 'Not provided';
   if (v === 'not_sure') return 'Not sure';
   return s21LookupLabel(v, typeof S7_EXECUTION_OPTIONS !== 'undefined' ? S7_EXECUTION_OPTIONS : []);
 }
@@ -188,186 +142,516 @@ function s21ExecutionDisplay() {
 function s21DownstreamDisplay() {
   const v = getState('s2.downstream_system') || '';
   if (v === 'none')     return 'No downstream system';
-  if (v === 'custom')   return getState('s2.downstream_system_custom') || 'N/A';
+  if (v === 'custom')   return getState('s2.downstream_system_custom') || 'Not provided';
   if (v === 'not_sure') return 'Not sure';
   return s21LookupLabel(v, typeof S7_DOWNSTREAM_OPTIONS !== 'undefined' ? S7_DOWNSTREAM_OPTIONS : []);
 }
 
-/* ── Table builders ──────────────────────────────────────────────────────── */
+/* ── Verdict panel (three outcomes) ──────────────────────────────────────── */
 
-function buildS21Table(headers, rows) {
-  const table = document.createElement('table');
-  table.className = 'data-table';
-  table.style.marginTop = 'var(--space-3)';
+function s21BuildVerdictPanel() {
+  const panel = document.createElement('div');
+  panel.className = 'verdict-panel';
 
-  const thead = document.createElement('thead');
-  const hrow  = document.createElement('tr');
-  headers.forEach(h => {
-    const th = document.createElement('th');
-    th.textContent = h;
-    hrow.appendChild(th);
+  const heading = document.createElement('div');
+  heading.className = 'verdict-panel__heading';
+  heading.textContent = 'Verdicts at a glance';
+  panel.appendChild(heading);
+
+  const grid = document.createElement('div');
+  grid.className = 'verdict-panel__grid';
+
+  const businessKey  = getState('s2.business_result') || '';
+  const technicalKey = getState('s4.technical_result') || '';
+  const pilotKey     = getState('jl.decision') || '';
+
+  const cards = [
+    {
+      label: 'Business result',
+      value: S21_BUSINESS_RESULT_LABELS[businessKey] || 'Not completed',
+      tone:  S21_BUSINESS_TONE[businessKey] || 'slate',
+      evidence: 'business',
+    },
+    {
+      label: 'Technical result',
+      value: S21_TECHNICAL_RESULT_LABELS[technicalKey] || 'Not completed',
+      tone:  S21_TECHNICAL_TONE[technicalKey] || 'slate',
+      evidence: 'technical',
+    },
+    {
+      label: 'Pilot decision',
+      value: S21_PILOT_DECISION_LABELS[pilotKey] || 'Not completed',
+      tone:  S21_PILOT_TONE[pilotKey] || 'slate',
+      evidence: pilotKey === 'pilot_candidate' ? 'jl-reviewed' : null,
+    },
+  ];
+
+  cards.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'verdict-card verdict-card--' + c.tone;
+
+    const lbl = document.createElement('div');
+    lbl.className = 'verdict-card__label';
+    lbl.textContent = c.label;
+    card.appendChild(lbl);
+
+    const val = document.createElement('div');
+    val.className = 'verdict-card__value';
+    val.textContent = c.value;
+    card.appendChild(val);
+
+    if (c.evidence) {
+      const ev = document.createElement('div');
+      ev.className = 'verdict-card__evidence';
+      ev.appendChild(createEvidenceLabel(c.evidence));
+      card.appendChild(ev);
+    }
+
+    grid.appendChild(card);
   });
-  thead.appendChild(hrow);
-  table.appendChild(thead);
 
-  const tbody = document.createElement('tbody');
-  rows.forEach(cells => {
-    const tr = document.createElement('tr');
-    cells.forEach(text => {
-      const td = document.createElement('td');
-      td.textContent = text;
-      tr.appendChild(td);
-    });
-    tbody.appendChild(tr);
-  });
-  table.appendChild(tbody);
-  return table;
+  panel.appendChild(grid);
+  return panel;
 }
 
-/* Field row that holds a table as its value + an evidence label below it */
-function buildTableField(keyText, tableEl, evidenceType) {
-  const row = document.createElement('div');
-  row.className = 'field-row';
-  row.style.alignItems = 'flex-start';
+/* ── Collapsible section ─────────────────────────────────────────────────── */
 
-  const keyEl = document.createElement('div');
-  keyEl.className = 'field-row__key';
-  keyEl.textContent = keyText;
+function s21BuildCollapsible(title, buildBody) {
+  const section = document.createElement('section');
+  section.className = 'result-section is-expanded';
 
-  const valEl = document.createElement('div');
-  valEl.className = 'field-row__value';
-  valEl.style.flexDirection = 'column';
-  valEl.appendChild(tableEl);
+  const header = document.createElement('button');
+  header.type = 'button';
+  header.className = 'result-section__header';
+  header.setAttribute('aria-expanded', 'true');
 
-  const evSpan = document.createElement('span');
-  evSpan.style.cssText = 'margin-top:var(--space-2);display:inline-block;';
-  evSpan.appendChild(createEvidenceLabel(evidenceType));
-  valEl.appendChild(evSpan);
+  const titleEl = document.createElement('span');
+  titleEl.className = 'result-section__title';
+  titleEl.textContent = title;
+  header.appendChild(titleEl);
 
-  row.appendChild(keyEl);
-  row.appendChild(valEl);
-  return row;
-}
+  const caret = document.createElement('span');
+  caret.className = 'result-section__caret';
+  caret.setAttribute('aria-hidden', 'true');
+  caret.textContent = '▾';
+  header.appendChild(caret);
 
-function buildTechnicalAnswersTable() {
-  const rows = Object.keys(S21_Q_LABELS).map(k => {
-    const v       = getState('s4.' + k);
-    const display = S21_Q_VALUE_LABELS[v] || (v == null ? 'N/A' : v);
-    return [S21_Q_LABELS[k], display];
+  const body = document.createElement('div');
+  body.className = 'result-section__body';
+  buildBody(body);
+
+  header.addEventListener('click', () => {
+    const expanded = section.classList.toggle('is-expanded');
+    header.setAttribute('aria-expanded', String(expanded));
   });
-  return buildS21Table(['Question', 'Answer'], rows);
+
+  section.appendChild(header);
+  section.appendChild(body);
+  return section;
 }
 
-function buildBoundaryMapTable() {
-  function q(k) { return getState('s4.' + k) || null; }
-  const rows = [];
+/* ── Body builders for each section ──────────────────────────────────────── */
 
-  const q1 = q('q1');
-  if      (q1 === 'yes') rows.push(['Submission point',  'Agent submission path']);
-  else if (q1 === 'no')  rows.push(['Submission point',  'Submission point missing']);
-  else if (q1)           rows.push(['Submission point',  'Submission point unknown']);
+function s21FillUseCase(body) {
+  body.appendChild(createLabelledField('Agent',              s21AgentDisplay(),        'business'));
+  body.appendChild(createLabelledField('Proposed execution', s21ExecutionDisplay(),    'business'));
+  body.appendChild(createLabelledField('Downstream system',  s21DownstreamDisplay(),   'business'));
+  body.appendChild(createLabelledField(
+    'Business fit',
+    S21_BUSINESS_RESULT_LABELS[getState('s2.business_result')] || 'Not completed',
+    'business'
+  ));
 
-  const q2 = q('q2');
-  if      (q2 === 'yes')     rows.push(['Pending execution', 'Stored pending execution']);
-  else if (q2 === 'no')      rows.push(['Pending execution', 'Pending execution not available']);
-  else if (q2 === 'unknown') rows.push(['Pending execution', 'Pending execution unknown']);
+  const riskBand  = getState('s2.risk_band')  || '';
+  const riskScore = getState('s2.risk_score');
+  const riskLabel = riskScore != null
+    ? `${(typeof S8_RISK_BAND_LABELS !== 'undefined' && S8_RISK_BAND_LABELS[riskBand]) || riskBand} (${riskScore})`
+    : 'Not scored';
+  body.appendChild(createLabelledField('Risk score', riskLabel, 'business'));
+}
 
-  const q3 = q('q3');
-  if      (q3 === 'webhook')  rows.push(['Decision handling', 'Webhook decision path']);
-  else if (q3 === 'polling')  rows.push(['Decision handling', 'Polling path']);
-  else if (q3 === 'either')   rows.push(['Decision handling', 'Webhook and polling both available']);
-  else if (q3 === 'neither')  rows.push(['Decision handling', 'Neither webhook nor polling available']);
-  else if (q3 === 'unknown')  rows.push(['Decision handling', 'Decision handling unknown']);
+function s21FillTriggerEvaluation(body) {
+  const triggerOutcome   = getState('s3.trigger_outcome')   || '';
+  const reviewerDecision = getState('s3.reviewer_decision') || '';
+  const controllingRule  = getState('s3.trigger_details.controlling_rule') || 'Not applicable';
 
-  const q4 = q('q4');
-  if      (q4 === 'yes') rows.push(['Enforcement point',  'Enforcement check before downstream system']);
-  else if (q4 === 'no')  rows.push(['Enforcement point',  'Enforcement point missing']);
-  else if (q4)           rows.push(['Enforcement point',  'Enforcement point unknown']);
-
-  const q5 = q('q5');
-  if      (q5 === 'yes') rows.push(['Blocking behavior',  'Fail closed']);
-  else if (q5 === 'no')  rows.push(['Blocking behavior',  'Execution may continue after rejection or error']);
-  else if (q5)           rows.push(['Blocking behavior',  'Blocking behavior unknown']);
-
-  const q6 = q('q6');
-  if      (q6 === 'yes')     rows.push(['Bypass prevention', 'No alternate path']);
-  else if (q6 === 'no')      rows.push(['Bypass prevention', 'Reported bypass']);
-  else if (q6 === 'unknown') rows.push(['Bypass prevention', 'Unconfirmed bypass']);
-
-  const q10 = q('q10');
-  if      (q10 === 'yes') rows.push(['Downstream result', 'Connected to enterprise record']);
-  else if (q10 === 'no')  rows.push(['Downstream result', 'Downstream result recording missing']);
-  else if (q10)           rows.push(['Downstream result', 'Downstream result recording unknown']);
-
-  if (!rows.length) {
-    const empty = document.createElement('p');
-    empty.style.cssText =
-      'font-size:var(--text-sm);color:var(--color-text-secondary);margin-top:var(--space-3);';
-    empty.textContent = 'No technical answers recorded.';
-    return empty;
+  let reviewerText;
+  if (!reviewerDecision) {
+    if      (triggerOutcome === 'auto_approve') reviewerText = 'None (auto-approved)';
+    else if (triggerOutcome === 'blocked')      reviewerText = 'None (blocked at trigger)';
+    else                                        reviewerText = 'Not recorded';
+  } else {
+    reviewerText = S21_REVIEWER_DECISION_LABELS[reviewerDecision] || reviewerDecision;
   }
-  return buildS21Table(['Integration path', 'Map statement'], rows);
+
+  body.appendChild(createLabelledField('Controlling rule', controllingRule,                                 'demonstrated'));
+  body.appendChild(createLabelledField('Trigger outcome',  S21_TRIGGER_OUTCOME_LABELS[triggerOutcome] || 'Not recorded', 'demonstrated'));
+  body.appendChild(createLabelledField('Reviewer decision', reviewerText,                                    'demonstrated'));
+  body.appendChild(createLabelledField(
+    'Authorization',
+    getState('s3.authorization_id') ? 'Issued' : 'Not issued',
+    'demonstrated'
+  ));
 }
 
-function buildS21GateTestsTable() {
+function s21FillGateTests(body) {
   const tests = getState('s3.gate_tests') || [];
   if (!tests.length) {
     const empty = document.createElement('p');
-    empty.style.cssText =
-      'font-size:var(--text-sm);color:var(--color-text-secondary);margin-top:var(--space-3);';
-    empty.textContent = 'Gate tests not yet run.';
-    return empty;
+    empty.className = 'result-section__empty';
+    empty.textContent = 'Gate tests were not run in this session.';
+    body.appendChild(empty);
+    return;
   }
-  const rows = tests.map(t => [t.name, t.chipLabel || 'N/A']);
-  return buildS21Table(['Scenario', 'Decision'], rows);
-}
 
-/* ── Phase / acceptance test card builders ───────────────────────────────── */
+  const list = document.createElement('div');
+  list.className = 'gate-compact';
 
-function buildPhaseCard(phase) {
-  const card = document.createElement('div');
-  card.className = 'card';
-  card.style.marginTop = 'var(--space-4)';
+  tests.forEach(t => {
+    const row = document.createElement('div');
+    row.className = 'gate-compact__row';
 
-  const cardTitle = document.createElement('div');
-  cardTitle.className = 'card__title';
-  cardTitle.textContent = phase.title;
-  card.appendChild(cardTitle);
+    const name = document.createElement('span');
+    name.className = 'gate-compact__name';
+    name.textContent = t.name;
+    row.appendChild(name);
 
-  const list = document.createElement('ul');
-  list.style.cssText =
-    'margin:var(--space-3) 0 0 var(--space-5);'
-    + 'font-size:var(--text-sm);color:var(--color-text-secondary);'
-    + 'display:flex;flex-direction:column;gap:var(--space-2);';
-  phase.bullets.forEach(b => {
-    const li = document.createElement('li');
-    li.textContent = b;
-    list.appendChild(li);
+    row.appendChild(createStatusChip(t.chipState, t.chipLabel));
+    list.appendChild(row);
   });
-  card.appendChild(list);
-  return card;
+
+  body.appendChild(list);
+
+  const evLine = document.createElement('p');
+  evLine.className = 'result-section__evidence-line';
+  evLine.appendChild(document.createTextNode('Evidence '));
+  evLine.appendChild(createEvidenceLabel('demonstrated'));
+  body.appendChild(evLine);
 }
 
-function buildAcceptanceTestCard() {
-  const card = document.createElement('div');
-  card.className = 'card';
-  card.style.marginTop = 'var(--space-4)';
+function s21FillTechnicalReview(body) {
+  const wrap = document.createElement('div');
+  wrap.className = 'tech-summary-grid';
 
-  const cardTitle = document.createElement('div');
-  cardTitle.className = 'card__title';
-  cardTitle.textContent = 'Phase 5: Acceptance tests';
-  card.appendChild(cardTitle);
+  Object.keys(S21_Q_LABELS).forEach(k => {
+    const v = getState('s4.' + k);
+    const display = S21_Q_VALUE_LABELS[v] || (v == null ? 'Not answered' : v);
 
-  const rows = S21_ACCEPTANCE_TESTS.map(t => [t.test, t.result]);
-  card.appendChild(buildS21Table(['Test', 'Required result'], rows));
-  return card;
+    const row = document.createElement('div');
+    row.className = 'tech-summary-row';
+
+    const lbl = document.createElement('span');
+    lbl.className = 'tech-summary-row__label';
+    lbl.textContent = S21_Q_LABELS[k];
+    row.appendChild(lbl);
+
+    const val = document.createElement('span');
+    val.className = 'tech-summary-row__value';
+    val.textContent = display;
+    row.appendChild(val);
+
+    wrap.appendChild(row);
+  });
+
+  body.appendChild(wrap);
+
+  const techResult = getState('s4.technical_result') || '';
+  body.appendChild(createLabelledField(
+    'Technical result',
+    S21_TECHNICAL_RESULT_LABELS[techResult] || 'Not completed',
+    'technical'
+  ));
+
+  const blockers = getState('s4.structural_blockers') || [];
+  if (blockers.length) {
+    body.appendChild(createLabelledField(
+      'Structural blockers',
+      blockers.map(k => S21_Q_LABELS[k] || k).join(', '),
+      'technical'
+    ));
+  }
+
+  const implTasks = ['q7','q8','q9','q10'].filter(k => getState('s4.' + k) === 'no');
+  if (implTasks.length) {
+    body.appendChild(createLabelledField(
+      'Implementation tasks',
+      implTasks.map(k => S21_Q_LABELS[k] || k).join(', '),
+      'technical'
+    ));
+  }
 }
 
-/* ── Scope table builder ─────────────────────────────────────────────────── */
+const S21_JL_ITEMS = [
+  { key: 'submission_point',  label: 'Submission point'             },
+  { key: 'pending_execution', label: 'Pending execution handling'   },
+  { key: 'webhook_polling',   label: 'Webhook or polling method'    },
+  { key: 'enforcement_point', label: 'Downstream enforcement point' },
+  { key: 'blocking_behavior', label: 'Blocking behavior'            },
+  { key: 'bypass_paths',      label: 'Reported bypass paths'        },
+  { key: 'field_mapping',     label: 'Submission field mapping'     },
+  { key: 'api_key_storage',   label: 'API key storage'              },
+  { key: 'data_handling',     label: 'Data handling'                },
+  { key: 'downstream_result', label: 'Downstream result recording'  },
+];
 
-function buildScopeTable() {
-  const rows = S21_SCOPE_IN.map((item, i) => [item, S21_SCOPE_OUT[i] || '']);
-  return buildS21Table(['In scope', 'Outside scope'], rows);
+const S21_JL_DISP_LABELS = {
+  confirmed:           'Confirmed for pilot planning',
+  more_info:           'More information required',
+  correction_required: 'Correction required',
+  not_applicable:      'Not applicable',
+};
+
+function s21FillJLReview(body) {
+  const list = document.createElement('div');
+  list.className = 'jl-review-summary';
+
+  S21_JL_ITEMS.forEach(item => {
+    const v = getState('jl.review.' + item.key);
+    const row = document.createElement('div');
+    row.className = 'jl-review-summary__row';
+
+    const lbl = document.createElement('span');
+    lbl.className = 'jl-review-summary__label';
+    lbl.textContent = item.label;
+    row.appendChild(lbl);
+
+    const val = document.createElement('span');
+    val.className = 'jl-review-summary__value jl-review-summary__value--' + (v || 'none');
+    val.textContent = S21_JL_DISP_LABELS[v] || 'Not reviewed';
+    row.appendChild(val);
+
+    list.appendChild(row);
+  });
+
+  body.appendChild(list);
+}
+
+function s21FillPilotDecision(body) {
+  const decisionKey = getState('jl.decision') || '';
+  body.appendChild(createLabelledField(
+    'Pilot decision',
+    S21_PILOT_DECISION_LABELS[decisionKey] || 'Not completed',
+    decisionKey === 'pilot_candidate' ? 'jl-reviewed' : null
+  ));
+
+  if (decisionKey === 'pilot_prerequisites') {
+    const rec = getState('jl.prerequisite_record') || {};
+    if (rec.required_correction) body.appendChild(createLabelledField('Required correction', rec.required_correction, 'jl-reviewed'));
+    if (rec.responsible_role)    body.appendChild(createLabelledField('Responsible role',    rec.responsible_role,    'jl-reviewed'));
+    if (rec.evidence_required)   body.appendChild(createLabelledField('Evidence required',   rec.evidence_required,   'jl-reviewed'));
+  } else if (decisionKey === 'setup_tasks') {
+    const rec = getState('jl.setup_record') || {};
+    if (rec.required_work)     body.appendChild(createLabelledField('Required setup work', rec.required_work,     'jl-reviewed'));
+    if (rec.responsible_role)  body.appendChild(createLabelledField('Responsible role',    rec.responsible_role,  'jl-reviewed'));
+    if (rec.evidence_required) body.appendChild(createLabelledField('Evidence required',   rec.evidence_required, 'jl-reviewed'));
+  } else if (decisionKey === 'pilot_candidate') {
+    const b = getState('jl.pilot_business_owner')  || 'Not assigned';
+    const a = getState('jl.pilot_authority_owner') || 'Not assigned';
+    const t = getState('jl.pilot_technical_owner') || 'Not assigned';
+    body.appendChild(createLabelledField('Business owner',   b, 'jl-reviewed'));
+    body.appendChild(createLabelledField('Authority owner',  a, 'jl-reviewed'));
+    body.appendChild(createLabelledField('Technical owner',  t, 'jl-reviewed'));
+  }
+}
+
+function s21FillScope(body) {
+  const table = document.createElement('div');
+  table.className = 'scope-table';
+
+  const inCol = document.createElement('div');
+  inCol.className = 'scope-table__col scope-table__col--in';
+  const inHead = document.createElement('div');
+  inHead.className = 'scope-table__head scope-table__head--in';
+  inHead.textContent = 'In scope';
+  inCol.appendChild(inHead);
+  S21_SCOPE_IN.forEach(item => {
+    const li = document.createElement('div');
+    li.className = 'scope-table__item';
+    li.textContent = item;
+    inCol.appendChild(li);
+  });
+
+  const outCol = document.createElement('div');
+  outCol.className = 'scope-table__col scope-table__col--out';
+  const outHead = document.createElement('div');
+  outHead.className = 'scope-table__head scope-table__head--out';
+  outHead.textContent = 'Out of scope';
+  outCol.appendChild(outHead);
+  S21_SCOPE_OUT.forEach(item => {
+    const li = document.createElement('div');
+    li.className = 'scope-table__item';
+    li.textContent = item;
+    outCol.appendChild(li);
+  });
+
+  table.appendChild(inCol);
+  table.appendChild(outCol);
+  body.appendChild(table);
+}
+
+/* ── CTA cards ───────────────────────────────────────────────────────────── */
+
+function s21BuildCTASection() {
+  const wrap = document.createElement('div');
+  wrap.className = 'cta-section';
+
+  const heading = document.createElement('p');
+  heading.className = 'cta-section__heading';
+  heading.textContent = 'Take this further';
+  wrap.appendChild(heading);
+
+  const grid = document.createElement('div');
+  grid.className = 'cta-grid';
+
+  /* Email CTA */
+  const emailCard = document.createElement('div');
+  emailCard.className = 'cta-card cta-card--email';
+
+  const emailIcon = document.createElement('div');
+  emailIcon.className = 'cta-card__icon';
+  emailIcon.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>';
+  emailCard.appendChild(emailIcon);
+
+  const emailTitle = document.createElement('div');
+  emailTitle.className = 'cta-card__title';
+  emailTitle.textContent = 'Receive your result by email';
+  emailCard.appendChild(emailTitle);
+
+  const emailBody = document.createElement('p');
+  emailBody.className = 'cta-card__body';
+  emailBody.textContent = 'We send a summary of your business result, risk score, and technical review.';
+  emailCard.appendChild(emailBody);
+
+  const lead = sessionState.lead;
+
+  if (lead) {
+    const emailRow = document.createElement('div');
+    emailRow.className = 'cta-card__email-row';
+
+    const emailInput = document.createElement('input');
+    emailInput.type = 'email';
+    emailInput.className = 'form-control cta-card__email-input';
+    emailInput.value = lead.email || '';
+    emailInput.setAttribute('aria-label', 'Email address for delivery');
+    emailInput.addEventListener('input', () => {
+      sessionState.lead.email = emailInput.value.trim();
+    });
+    emailRow.appendChild(emailInput);
+
+    const emailBtn = document.createElement('button');
+    emailBtn.className = 'btn btn--primary cta-card__action';
+    emailBtn.textContent = 'Send';
+    emailBtn.addEventListener('click', () => {
+      if (typeof sendResultsByEmail === 'function') sendResultsByEmail(emailBtn);
+    });
+    emailRow.appendChild(emailBtn);
+
+    emailCard.appendChild(emailRow);
+
+    const emailErr = document.createElement('p');
+    emailErr.id = 'email-send-error';
+    emailErr.className = 'cta-card__error';
+    emailErr.style.display = 'none';
+    emailErr.innerHTML =
+        `Automatic send failed. Contact <a href="mailto:${JL_CONTACT_EMAIL}" `
+      + `style="color:var(--agent-orange)">${JL_CONTACT_EMAIL}</a> directly.`;
+    emailCard.appendChild(emailErr);
+  } else {
+    const softNote = document.createElement('p');
+    softNote.className = 'cta-card__body';
+    softNote.textContent = 'Complete the business assessment first to enable email delivery.';
+    emailCard.appendChild(softNote);
+  }
+
+  grid.appendChild(emailCard);
+
+  /* Booking CTA */
+  const bookCard = document.createElement('div');
+  bookCard.className = 'cta-card cta-card--book';
+
+  const bookIcon = document.createElement('div');
+  bookIcon.className = 'cta-card__icon';
+  bookIcon.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    + '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>';
+  bookCard.appendChild(bookIcon);
+
+  const bookTitle = document.createElement('div');
+  bookTitle.className = 'cta-card__title';
+  bookTitle.textContent = 'Schedule a pilot conversation';
+  bookCard.appendChild(bookTitle);
+
+  const bookBody = document.createElement('p');
+  bookBody.className = 'cta-card__body';
+  bookBody.textContent = 'Jochanni Labs reviews your result, validates the integration path, and scopes the pilot.';
+  bookCard.appendChild(bookBody);
+
+  const bookLink = document.createElement('a');
+  bookLink.href = JL_BOOKING_URL;
+  bookLink.target = '_blank';
+  bookLink.rel = 'noopener';
+  bookLink.className = 'btn btn--primary cta-card__action';
+  bookLink.textContent = 'Book time with Jochanni Labs';
+  bookCard.appendChild(bookLink);
+
+  grid.appendChild(bookCard);
+
+  wrap.appendChild(grid);
+  return wrap;
+}
+
+/* ── Pricing panel (pilot_candidate only) ────────────────────────────────── */
+
+function s21BuildPricingPanel() {
+  const panel = document.createElement('div');
+  panel.className = 'pilot-pricing';
+
+  const heading = document.createElement('div');
+  heading.className = 'pilot-pricing__heading';
+  heading.textContent = 'Pilot engagement';
+  panel.appendChild(heading);
+
+  const price = document.createElement('div');
+  price.className = 'pilot-pricing__price';
+  price.textContent = '$15,000 total';
+  panel.appendChild(price);
+
+  const timeline = document.createElement('div');
+  timeline.className = 'pilot-pricing__timeline';
+
+  const milestones = [
+    '$7,500 at commencement',
+    '$5,000 after shadow calibration',
+    '$2,500 after acceptance testing',
+  ];
+
+  milestones.forEach((text, i) => {
+    const step = document.createElement('div');
+    step.className = 'pilot-pricing__milestone';
+
+    const dot = document.createElement('span');
+    dot.className = 'pilot-pricing__dot';
+    dot.textContent = String(i + 1);
+    step.appendChild(dot);
+
+    const lbl = document.createElement('span');
+    lbl.className = 'pilot-pricing__milestone-label';
+    lbl.textContent = text;
+    step.appendChild(lbl);
+
+    timeline.appendChild(step);
+  });
+
+  panel.appendChild(timeline);
+
+  const scope = document.createElement('p');
+  scope.className = 'pilot-pricing__scope';
+  scope.textContent = 'Covers one agent, one action category, and one downstream system through shadow calibration, trigger logic development, and acceptance testing.';
+  panel.appendChild(scope);
+
+  return panel;
 }
 
 /* ── Renderer ─────────────────────────────────────────────────────────────── */
@@ -379,7 +663,7 @@ function renderScreen21() {
   /* Surface badge */
   const badge = document.createElement('div');
   badge.className = 'surface-badge';
-  badge.textContent = 'Assessment Result';
+  badge.textContent = 'Assessment result';
   screen.appendChild(badge);
 
   /* Title */
@@ -388,269 +672,59 @@ function renderScreen21() {
   title.textContent = 'DAL-X Simulation Result';
   screen.appendChild(title);
 
-  /* Business verdict banner */
-  const businessResult = getState('s2.business_result') || '';
-  screen.appendChild(buildBusinessVerdictBanner(businessResult));
-
-  /* Technical verdict banner (only if technical review was completed) */
-  const technicalResult = getState('s4.technical_result') || '';
-  if (technicalResult) {
-    screen.appendChild(buildTechnicalVerdictBanner(technicalResult));
-  }
-
   /* Preliminary findings notice */
-  const prelimNote = document.createElement('div');
-  prelimNote.className = 'callout callout--info';
-  prelimNote.style.marginBottom = 'var(--space-4)';
-  prelimNote.textContent =
-    'These are preliminary findings based on self-reported answers. '
-    + 'They have not been independently verified. '
-    + 'In a live engagement, Jochanni Labs reviews these findings with your team, '
-    + 'validating the reported integration path, confirming the risk profile, '
-    + 'and determining whether a pilot is appropriate before any recommendation is finalized.';
-  screen.appendChild(prelimNote);
+  const prelim = document.createElement('div');
+  prelim.className = 'callout callout--info';
+  prelim.style.marginBottom = 'var(--space-4)';
+  prelim.textContent =
+    'These findings are preliminary and based on self-reported answers. '
+    + 'In a live engagement, Jochanni Labs validates the reported integration path with your team '
+    + 'and confirms the risk profile before any recommendation is finalized.';
+  screen.appendChild(prelim);
 
-  /* ── Result card ──────────────────────────────────────────────────────── */
-  const card = document.createElement('div');
-  card.className = 'card';
+  /* Verdict panel */
+  screen.appendChild(s21BuildVerdictPanel());
 
-  const cardTitle = document.createElement('div');
-  cardTitle.className = 'card__title';
-  cardTitle.textContent = 'Simulation result';
-  card.appendChild(cardTitle);
+  /* CTA section (above the evidence sections) */
+  screen.appendChild(s21BuildCTASection());
 
-  /* Fields 1–4: business evidence */
-  card.appendChild(createLabelledField('Agent', s21AgentDisplay(), 'business'));
-
-  const hr1 = document.createElement('hr'); hr1.className = 'divider'; card.appendChild(hr1);
-  card.appendChild(createLabelledField('Proposed execution', s21ExecutionDisplay(), 'business'));
-
-  const hr2 = document.createElement('hr'); hr2.className = 'divider'; card.appendChild(hr2);
-  card.appendChild(createLabelledField('Downstream system', s21DownstreamDisplay(), 'business'));
-
-  const hr3 = document.createElement('hr'); hr3.className = 'divider'; card.appendChild(hr3);
-  card.appendChild(createLabelledField(
-    'Business fit',
-    S21_BUSINESS_RESULT_LABELS[getState('s2.business_result')] || 'N/A',
-    'business'));
-
-  const hr3b = document.createElement('hr'); hr3b.className = 'divider'; card.appendChild(hr3b);
-  const riskBand  = getState('s2.risk_band')  || '';
-  const riskScore = getState('s2.risk_score');
-  const riskLabel = riskScore != null
-    ? `${(S8_RISK_BAND_LABELS || {})[riskBand] || riskBand} (${riskScore})`
-    : 'N/A';
-  card.appendChild(createLabelledField('Risk score', riskLabel, 'business'));
-
-  /* Fields 5–8: demonstrated evidence */
-  const hr4 = document.createElement('hr'); hr4.className = 'divider'; card.appendChild(hr4);
-  card.appendChild(createLabelledField(
-    'Simulated trigger result',
-    S21_TRIGGER_OUTCOME_LABELS[getState('s3.trigger_outcome')] || 'N/A',
-    'demonstrated'));
-
-  const hr5 = document.createElement('hr'); hr5.className = 'divider'; card.appendChild(hr5);
-
-  const triggerOutcome   = getState('s3.trigger_outcome')   || '';
-  const reviewerDecision = getState('s3.reviewer_decision') || '';
-  let reviewerDecisionText;
-  if (!reviewerDecision) {
-    if      (triggerOutcome === 'auto_approve') reviewerDecisionText = 'None (auto-approved)';
-    else if (triggerOutcome === 'blocked')      reviewerDecisionText = 'None (blocked at trigger)';
-    else                                        reviewerDecisionText = 'N/A';
-  } else {
-    reviewerDecisionText = S21_REVIEWER_DECISION_LABELS[reviewerDecision] || reviewerDecision;
-  }
-  card.appendChild(createLabelledField('Simulated reviewer decision', reviewerDecisionText, 'demonstrated'));
-
-  const hr6 = document.createElement('hr'); hr6.className = 'divider'; card.appendChild(hr6);
-  card.appendChild(createLabelledField(
-    'Simulated authorization',
-    getState('s3.authorization_id') ? 'Issued' : 'Not issued',
-    'demonstrated'));
-
-  const hr7 = document.createElement('hr'); hr7.className = 'divider'; card.appendChild(hr7);
-  card.appendChild(buildTableField('Simulated gate tests', buildS21GateTestsTable(), 'demonstrated'));
-
-  /* Fields 9–12: technical evidence */
-  const hr8 = document.createElement('hr'); hr8.className = 'divider'; card.appendChild(hr8);
-  card.appendChild(buildTableField('Technical answers', buildTechnicalAnswersTable(), 'technical'));
-
-  const hr9 = document.createElement('hr'); hr9.className = 'divider'; card.appendChild(hr9);
-  card.appendChild(buildTableField('Reported boundary map', buildBoundaryMapTable(), 'technical'));
-
-  const hr10 = document.createElement('hr'); hr10.className = 'divider'; card.appendChild(hr10);
-
-  const blockers = getState('s4.structural_blockers') || [];
-  card.appendChild(createLabelledField(
-    'Structural blockers',
-    blockers.length ? blockers.map(k => S21_Q_LABELS[k] || k).join('; ') : 'None',
-    'technical'));
-
-  const hr11 = document.createElement('hr'); hr11.className = 'divider'; card.appendChild(hr11);
-
-  const implTasks = ['q7','q8','q9','q10'].filter(k => getState('s4.' + k) === 'no');
-  card.appendChild(createLabelledField(
-    'Implementation tasks',
-    implTasks.length ? implTasks.map(k => S21_Q_LABELS[k] || k).join('; ') : 'None',
-    'technical'));
-
-  screen.appendChild(card);
-
-  /* ── Spec-required notices ────────────────────────────────────────────── */
-
-  const notice1 = document.createElement('div');
-  notice1.className = 'callout callout--info';
-  notice1.style.marginTop = 'var(--space-6)';
-  notice1.textContent =
-    'The result is not called an audit, certification, compliance report, or production proof.';
-  screen.appendChild(notice1);
-
-  const notice2 = document.createElement('div');
-  notice2.className = 'callout callout--info';
-  notice2.style.marginTop = 'var(--space-4)';
-  notice2.textContent =
-    'Task ownership, dates, status tracking, and delivery management begin only after a paid pilot agreement exists.';
-  screen.appendChild(notice2);
-
-  const notice3 = document.createElement('div');
-  notice3.className = 'callout callout--info';
-  notice3.style.marginTop = 'var(--space-4)';
-  notice3.textContent =
-    'The simulation addresses the near term enterprise problem behind many “rogue agent” incidents. '
-    + 'It should not be presented as a solution to the full threat of misaligned artificial intelligence.';
-  screen.appendChild(notice3);
-
-  /* ── Simulation scope ─────────────────────────────────────────────────── */
-
-  const scopeSection = document.createElement('div');
-  scopeSection.style.marginTop = 'var(--space-6)';
-
-  const scopeHeading = document.createElement('p');
-  scopeHeading.className = 'section-label';
-  scopeHeading.textContent = 'Simulation scope';
-  scopeSection.appendChild(scopeHeading);
-  scopeSection.appendChild(buildScopeTable());
-  screen.appendChild(scopeSection);
-
-  /* ── Permanently removed items ────────────────────────────────────────── */
-
-  const removedSection = document.createElement('div');
-  removedSection.style.marginTop = 'var(--space-6)';
-
-  const removedHeading = document.createElement('p');
-  removedHeading.className = 'section-label';
-  removedHeading.textContent = 'Permanently removed from this simulation';
-  removedSection.appendChild(removedHeading);
-
-  const removedList = document.createElement('ul');
-  removedList.style.cssText =
-    'margin:var(--space-2) 0 0 var(--space-5);'
-    + 'font-size:var(--text-sm);color:var(--color-text-secondary);'
-    + 'display:flex;flex-direction:column;gap:var(--space-1);';
-  S21_REMOVED_ITEMS.forEach(item => {
-    const li = document.createElement('li');
-    li.textContent = item;
-    removedList.appendChild(li);
-  });
-  removedSection.appendChild(removedList);
-  screen.appendChild(removedSection);
-
-  /* ── Pilot path ───────────────────────────────────────────────────────── */
-
-  const pilotSection = document.createElement('div');
-  pilotSection.style.marginTop = 'var(--space-6)';
-
-  const pilotHeading = document.createElement('p');
-  pilotHeading.className = 'section-label';
-  pilotHeading.style.marginBottom = 'var(--space-2)';
-  pilotHeading.textContent = 'Pilot path';
-  pilotSection.appendChild(pilotHeading);
-
-  S21_PHASES.forEach(phase => pilotSection.appendChild(buildPhaseCard(phase)));
-  pilotSection.appendChild(buildAcceptanceTestCard());
-  screen.appendChild(pilotSection);
-
-  /* ── Conversion CTA ─────────────────────────────────────────────────── */
-  const lead = sessionState.lead;
-
-  const ctaSection = document.createElement('div');
-  ctaSection.style.marginTop = 'var(--space-8)';
-
-  if (lead) {
-    /* Lead is captured - show full booking + email CTA */
-    const ctaLabel = document.createElement('p');
-    ctaLabel.className = 'section-label';
-    ctaLabel.textContent = 'Ready to take this further?';
-    ctaSection.appendChild(ctaLabel);
-
-    const ctaCallout = document.createElement('div');
-    ctaCallout.className = 'callout callout--info';
-    ctaCallout.style.marginTop = 'var(--space-3)';
-    ctaCallout.textContent =
-      'Your assessment result is a starting point. Jochanni Labs reviews this picture with you, '
-      + 'validates the technical integration path, and configures the enforcement gate for your specific workflow. '
-      + 'The pilot engagement begins here.';
-    ctaSection.appendChild(ctaCallout);
-
-    const bookBtn = document.createElement('a');
-    bookBtn.href = JL_BOOKING_URL;
-    bookBtn.target = '_blank';
-    bookBtn.rel = 'noopener';
-    bookBtn.className = 'btn btn--primary btn--full';
-    bookBtn.style.marginTop = 'var(--space-4)';
-    bookBtn.style.display = 'flex';
-    bookBtn.style.justifyContent = 'center';
-    bookBtn.textContent = 'Schedule a conversation with Jochanni Labs →';
-    ctaSection.appendChild(bookBtn);
-
-    const emailBtn = document.createElement('button');
-    emailBtn.className = 'btn btn--secondary btn--full';
-    emailBtn.style.marginTop = 'var(--space-3)';
-    emailBtn.textContent = 'Email me my results';
-    emailBtn.addEventListener('click', () => {
-      if (typeof sendResultsByEmail === 'function') sendResultsByEmail(emailBtn);
-    });
-    ctaSection.appendChild(emailBtn);
-
-    const emailErr = document.createElement('p');
-    emailErr.id = 'email-send-error';
-    emailErr.style.cssText =
-      'display:none;font-size:var(--text-sm);color:var(--color-text-secondary);'
-      + 'margin-top:var(--space-2);';
-    emailErr.innerHTML =
-      `Could not send automatically. Email <a href="mailto:${JL_CONTACT_EMAIL}" `
-      + `style="color:var(--color-primary-light)">${JL_CONTACT_EMAIL}</a> directly.`;
-    ctaSection.appendChild(emailErr);
-
-  } else {
-    /* No lead captured - soft prompt to start from the beginning */
-    const softNote = document.createElement('div');
-    softNote.className = 'callout callout--info';
-    softNote.textContent =
-      'To receive your full result summary and connect with Jochanni Labs, '
-      + 'start the assessment from the beginning and enter your details when prompted.';
-    ctaSection.appendChild(softNote);
+  /* Pricing panel if pilot_candidate */
+  if (getState('jl.decision') === 'pilot_candidate') {
+    screen.appendChild(s21BuildPricingPanel());
   }
 
-  screen.appendChild(ctaSection);
+  /* Collapsible evidence sections */
+  screen.appendChild(s21BuildCollapsible('Use case',           s21FillUseCase));
+  screen.appendChild(s21BuildCollapsible('Trigger evaluation', s21FillTriggerEvaluation));
+  screen.appendChild(s21BuildCollapsible('Gate tests',         s21FillGateTests));
+  screen.appendChild(s21BuildCollapsible('Technical review',   s21FillTechnicalReview));
+  screen.appendChild(s21BuildCollapsible('Jochanni Labs review', s21FillJLReview));
+  screen.appendChild(s21BuildCollapsible('Pilot decision',     s21FillPilotDecision));
+  screen.appendChild(s21BuildCollapsible('Scope',              s21FillScope));
 
-  /* Nav: Back only (final screen) */
+  /* Disclaimer */
+  const disclaimer = document.createElement('p');
+  disclaimer.className = 'result-disclaimer';
+  disclaimer.textContent = 'This result is not an audit, certification, compliance report, or production proof.';
+  screen.appendChild(disclaimer);
+
+  /* Nav */
   const nav = document.createElement('nav');
   nav.className = 'screen-nav screen-nav--start';
   nav.style.marginTop = 'var(--space-6)';
 
   const backBtn = document.createElement('button');
   backBtn.className = 'btn btn--ghost';
-  backBtn.textContent = '← Back';
+  backBtn.textContent = 'Back';
   backBtn.addEventListener('click', goBack);
   nav.appendChild(backBtn);
 
   screen.appendChild(nav);
-  screen.appendChild(createBrandFooter());
+  if (typeof createBrandFooter === 'function') {
+    screen.appendChild(createBrandFooter());
+  }
 
-  /* ── Completion webhook ──────────────────────────────────────────────── */
-  /* Fire once per session when lead is present and Screen 21 is reached   */
+  /* Completion webhook (fire once per session) */
   if (sessionState.lead && !sessionState.webhookFired) {
     sessionState.webhookFired = true;
     if (typeof fireCompletionWebhook === 'function') fireCompletionWebhook();

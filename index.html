@@ -4,9 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DAL-X Execution Simulation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/immersive.css">
 </head>
 <body>
+
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
 
   <header class="app-header">
     <div class="app-header__brand" onclick="showScreen('screen-0')" role="link" aria-label="DAL-X home">
@@ -288,6 +294,9 @@
 
   <!-- Runtime config: credentials and URL constants (load before everything else) -->
   <script src="js/config.js"></script>
+
+  <!-- Immersive background canvas engine (must load before app.js) -->
+  <script src="js/canvas-engine.js"></script>
 
   <script src="js/app.js"></script>
   <script src="js/components.js"></script>

@@ -1,456 +1,360 @@
-/* ─── Screen 0: Intro / Landing ─────────────────────────────────────────── */
+/* ─── Screen 0: Immersive Landing ─────────────────────────────────────────
+ * Cinematic entry point for DAL-X-EXEC. Composed of six vertical acts:
+ *   1. Hero (viewport-height statement)
+ *   2. The Problem (three glass alert cards, live pulse indicators)
+ *   3. The Solution (Agent → DAL-X Wedge → Downstream chain)
+ *   4. How It Works (three-step glassmorphic cards)
+ *   5. The Proof (immutable authority chain statement + evidence badges)
+ *   6. Final CTA
+ *
+ * Preserves all downstream routing: primary CTAs → screen-1 (demo)
+ * and screen-7 (assessment). Business logic in the rest of the app is
+ * unchanged.
+ */
 
 function renderScreen0() {
   const screen = document.getElementById('screen-0');
+  if (!screen) return;
   screen.innerHTML = '';
 
-  /* ── Hero panel ───────────────────────────────────────────────────────── */
-  const hero = document.createElement('div');
-  hero.className = 'hero-panel';
+  screen.appendChild(buildHero());
+  screen.appendChild(buildProblemSection());
+  screen.appendChild(buildSolutionSection());
+  screen.appendChild(buildHowItWorksSection());
+  screen.appendChild(buildProofSection());
+  screen.appendChild(buildPositioningNote());
+  screen.appendChild(buildFinalCTA());
 
-  const heroBody = document.createElement('div');
-  heroBody.className = 'hero-panel__body';
+  observeAnimations(screen);
+}
 
-  const logoWrap = document.createElement('div');
-  logoWrap.className = 'hero-logo';
-  logoWrap.innerHTML = `
-    <img src="images/dal-logo.jpg" alt="DAL-X logo" class="hero-logo__img">
-    <div class="hero-logo__text">DAL<span class="hero-logo__x">-X</span></div>
-    <div class="hero-byline">by Jochanni Labs &nbsp;·&nbsp; Decision Authority Layer · Execute</div>
+/* ─── Hero ────────────────────────────────────────────────────────────── */
+
+function buildHero() {
+  const hero = document.createElement('section');
+  hero.className = 'immersive-hero';
+
+  /* Shield / logo mark */
+  const shield = document.createElement('div');
+  shield.className = 'immersive-hero__shield';
+  shield.innerHTML = `
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M12 2L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-3z"
+            stroke="#F97316" stroke-width="1.8" stroke-linejoin="round"
+            fill="rgba(249,115,22,0.12)"/>
+      <path d="M8 12l3 3 5-6"
+            stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
   `;
-  heroBody.appendChild(logoWrap);
+  hero.appendChild(shield);
 
-  const h1 = document.createElement('h1');
-  h1.className = 'hero-headline';
-  h1.innerHTML = 'Your AI workflows are executing.<br><em>Who authorized that?</em>';
-  heroBody.appendChild(h1);
+  const eyebrow = document.createElement('div');
+  eyebrow.className = 'immersive-hero__eyebrow animate-in';
+  eyebrow.textContent = 'DAL-X · Decision Authority Layer';
+  hero.appendChild(eyebrow);
 
-  const sub = document.createElement('p');
-  sub.className = 'hero-subhead';
-  sub.textContent =
-    'Most enterprises have no required approval between what an AI workflow '
-    + 'proposes and what the downstream system executes, '
-    + 'whether that workflow is a custom agent, an AI-powered product, or an automated pipeline. '
-    + 'DAL-X enforces that approval.';
-  heroBody.appendChild(sub);
+  const title = document.createElement('h1');
+  title.className = 'immersive-hero__title animate-in';
+  title.innerHTML = `
+    Your AI agents are executing.
+    <span class="immersive-hero__title-line-2">Who authorized them?</span>
+  `;
+  hero.appendChild(title);
 
-  const heroCtas = document.createElement('div');
-  heroCtas.className = 'hero-cta-group';
+  const subtitle = document.createElement('p');
+  subtitle.className = 'immersive-hero__subtitle animate-in';
+  subtitle.style.setProperty('--delay', '0.2s');
+  subtitle.textContent =
+    'DAL-X is the enforcement gate between what autonomous agents propose '
+    + 'and what downstream systems execute. No authority. No execution.';
+  hero.appendChild(subtitle);
 
-  const ctaBtn = document.createElement('button');
-  ctaBtn.className = 'btn btn--accent btn--lg';
-  ctaBtn.textContent = 'See the Demo →';
-  ctaBtn.addEventListener('click', () => showScreen('screen-1'));
-  heroCtas.appendChild(ctaBtn);
+  const ctas = document.createElement('div');
+  ctas.className = 'immersive-hero__ctas animate-in';
+  ctas.style.setProperty('--delay', '0.4s');
 
-  const skipBtn = document.createElement('button');
-  skipBtn.className = 'btn btn--hero-ghost btn--lg';
-  skipBtn.textContent = 'Preview the Assessment →';
-  skipBtn.addEventListener('click', () => showScreen('screen-7'));
-  heroCtas.appendChild(skipBtn);
+  const primary = document.createElement('button');
+  primary.className = 'btn btn--primary btn--lg';
+  primary.textContent = 'See the Demo';
+  primary.addEventListener('click', () => showScreen('screen-1'));
+  ctas.appendChild(primary);
 
-  heroBody.appendChild(heroCtas);
+  const secondary = document.createElement('button');
+  secondary.className = 'btn btn--hero-ghost btn--lg';
+  secondary.textContent = 'Request Assessment';
+  secondary.addEventListener('click', () => showScreen('screen-7'));
+  ctas.appendChild(secondary);
 
-  const disclaimer = document.createElement('p');
-  disclaimer.className = 'hero-disclaimer';
-  disclaimer.style.cssText =
-    'font-size:var(--text-xs);color:var(--color-text-muted);margin-top:var(--space-6);opacity:0.6;';
-  disclaimer.textContent = 'Simulation only. No enterprise system is connected.';
-  heroBody.appendChild(disclaimer);
+  hero.appendChild(ctas);
 
-  hero.appendChild(heroBody);
-  screen.appendChild(hero);
+  const scrollIndicator = document.createElement('div');
+  scrollIndicator.className = 'scroll-indicator';
+  scrollIndicator.innerHTML = `
+    <span>Scroll</span>
+    <span class="scroll-indicator__arrow"></span>
+  `;
+  hero.appendChild(scrollIndicator);
 
-  /* ── The problem ─────────────────────────────────────────────────────── */
-  appendSectionLabel(screen, 'The problem', 'var(--space-8)');
+  return hero;
+}
 
-  const problemHeadline = document.createElement('h2');
-  problemHeadline.style.cssText =
-    'font-size:var(--text-xl);font-weight:700;color:var(--color-text);'
-    + 'margin-bottom:var(--space-2);line-height:1.3;';
-  problemHeadline.textContent =
-    'When an AI workflow takes a high-stakes action, what stopped it from executing without approval?';
-  screen.appendChild(problemHeadline);
+/* ─── The Problem ─────────────────────────────────────────────────────── */
 
-  const problemSub = document.createElement('p');
-  problemSub.style.cssText =
-    'font-size:var(--text-sm);color:var(--color-text-secondary);'
-    + 'margin-bottom:0;line-height:1.65;';
-  problemSub.textContent =
-    'None of these incidents required a malfunction, hallucination, or compromise. '
-    + 'Each workflow operated exactly as configured. '
-    + 'The enterprise had no required approval step before the downstream system executed.';
-  screen.appendChild(problemSub);
+function buildProblemSection() {
+  const section = document.createElement('section');
+  section.className = 'immersive-section';
+
+  const headline = document.createElement('h2');
+  headline.className = 'immersive-section__headline animate-in';
+  headline.innerHTML =
+    `When an auditor asks <em>"who authorized this"</em>, there is no answer.`;
+  section.appendChild(headline);
 
   const incidents = [
     {
-      tag:      'Execution without approval',
-      headline: 'Treasury workflow commits $2.3M in wire transfers. Finance learns hours after settlement.',
-      detail:   'An AI-powered payment workflow executed vendor payments on its own. No approval was requested, no reviewer was notified, and no one could intervene before funds were committed.',
+      agent: 'Treasury Agent',
+      body:  '$2.4M wire initiated. No authority record exists.',
     },
     {
-      tag:      'Execution without approval',
-      headline: 'Infrastructure workflow modifies the live API gateway. Error rate reaches 40%.',
-      detail:   'A deployment automation applied a configuration change outside the approved release window. The change was not reviewed. It was not in scope. It executed anyway.',
+      agent: 'Infrastructure Agent',
+      body:  'Production database schema modified. No approval chain.',
     },
     {
-      tag:      'Execution without approval',
-      headline: 'Outreach workflow sends campaign to 1.4M contacts. Wrong segment. Cannot be recalled.',
-      detail:   'An AI-powered outreach tool triggered a bulk email to the full customer database instead of the intended trial cohort. Delivery was already underway before anyone was alerted.',
-    },
-  ];
-
-  const incidentGrid = document.createElement('div');
-  incidentGrid.className = 'incident-grid';
-
-  incidents.forEach(inc => {
-    const card = document.createElement('div');
-    card.className = 'incident-card';
-
-    const tag = document.createElement('div');
-    tag.className = 'incident-card__tag';
-    tag.textContent = inc.tag;
-
-    const headline = document.createElement('div');
-    headline.className = 'incident-card__headline';
-    headline.textContent = inc.headline;
-
-    const detail = document.createElement('div');
-    detail.className = 'incident-card__detail';
-    detail.textContent = inc.detail;
-
-    card.appendChild(tag);
-    card.appendChild(headline);
-    card.appendChild(detail);
-    incidentGrid.appendChild(card);
-  });
-
-  screen.appendChild(incidentGrid);
-
-  /* ── The insight ─────────────────────────────────────────────────────── */
-  const insight = document.createElement('div');
-  insight.className = 'insight-panel';
-  insight.innerHTML = `
-    <div class="insight-panel__quote">
-      <strong>These weren't AI failures. The workflows weren't broken.</strong>
-      Each one did exactly what it was configured to do.<br><br>
-      The enterprise had <em>no required approval</em> before execution.<br>
-      No one could stop it. No record was required.<br>
-      By the time anyone noticed, execution had already happened.
-    </div>
-  `;
-  screen.appendChild(insight);
-
-  /* ── How DAL-X addresses it ───────────────────────────────────────────── */
-  appendSectionLabel(screen, 'How DAL-X addresses it');
-
-  const steps = [
-    {
-      num:   '1',
-      label: 'Submit',
-      desc:  'Before acting, the workflow submits its proposed execution to DAL-X. The downstream system waits. Nothing executes yet.',
-    },
-    {
-      num:   '2',
-      label: 'Evaluate',
-      desc:  'DAL-X checks the submission against enterprise trigger rules. The result is automatic authorization, a route to a human reviewer, or an immediate block.',
-    },
-    {
-      num:   '3',
-      label: 'Enforce',
-      desc:  'The downstream system calls the DAL-X enforcement endpoint before executing. No valid authorization means the execution is blocked, regardless of how the request arrived, who sent it, or what it claimed.',
-    },
-  ];
-
-  const howItWorks = document.createElement('div');
-  howItWorks.className = 'how-it-works';
-
-  steps.forEach(s => {
-    const item = document.createElement('div');
-    item.className = 'step-item';
-
-    const num = document.createElement('div');
-    num.className = 'step-item__num';
-    num.textContent = s.num;
-
-    const content = document.createElement('div');
-
-    const label = document.createElement('div');
-    label.className = 'step-item__label';
-    label.textContent = s.label;
-
-    const desc = document.createElement('div');
-    desc.className = 'step-item__desc';
-    desc.textContent = s.desc;
-
-    content.appendChild(label);
-    content.appendChild(desc);
-    item.appendChild(num);
-    item.appendChild(content);
-    howItWorks.appendChild(item);
-  });
-
-  screen.appendChild(howItWorks);
-
-  /* Solution diagram */
-  const diagram = document.createElement('img');
-  diagram.src = 'images/dal-hero.png';
-  diagram.alt = 'DAL-X: Authority before execution.';
-  diagram.style.cssText =
-    'width:100%;display:block;border-radius:12px;margin-top:var(--space-6);';
-  screen.appendChild(diagram);
-
-  /* ── How this session is structured ─────────────────────────────────── */
-  appendSectionLabel(screen, 'How this session is structured');
-
-  const sessionSteps = [
-    {
-      num:  '1',
-      name: 'The demonstration',
-      desc: 'You pick a real-world scenario. The gate responds to four situations: missing authorization, changed action, valid authorization, reused authorization. You see exactly how DAL-X behaves before committing any further time.',
-      why:  'The concept becomes concrete. You are not taking anyone\'s word for it.',
-    },
-    {
-      num:  '2',
-      name: 'The assessment',
-      desc: 'You describe a specific AI workflow: any product or automation where the AI takes an action in a downstream system rather than just making a recommendation. Five factors are scored to determine whether an enforcement gap is present and how serious it is.',
-      why:  'The assessment identifies whether DAL-X applies to your specific workflow, not AI in general. Any workflow where automation reaches a downstream system qualifies.',
-    },
-    {
-      num:  '3',
-      name: 'The configured simulation',
-      desc: 'You define your enterprise policy: what the workflow may do autonomously, what requires review, and what must be blocked. The simulation runs your policy through the gate so you see DAL-X working for your scenario, not a generic one.',
-      why:  'This is where the engagement becomes specific to you. Jochanni Labs translates your policy into working trigger logic.',
-    },
-  ];
-
-  const sessionCard = document.createElement('div');
-  sessionCard.className = 'card';
-  sessionCard.style.marginTop = 'var(--space-4)';
-
-  sessionSteps.forEach((step, i) => {
-    if (i > 0) {
-      const hr = document.createElement('hr');
-      hr.className = 'divider';
-      sessionCard.appendChild(hr);
-    }
-
-    const item = document.createElement('div');
-    item.style.cssText =
-      'display:grid;grid-template-columns:2rem 1fr;'
-      + 'gap:var(--space-2) var(--space-5);align-items:start;';
-
-    const numEl = document.createElement('div');
-    numEl.style.cssText =
-      'font-size:1.5rem;font-weight:900;line-height:1.2;'
-      + 'color:var(--color-accent);letter-spacing:-0.02em;';
-    numEl.textContent = step.num;
-
-    const right = document.createElement('div');
-
-    const nameEl = document.createElement('div');
-    nameEl.style.cssText =
-      'font-size:var(--text-base);font-weight:700;'
-      + 'color:var(--color-text);margin-bottom:var(--space-2);';
-    nameEl.textContent = step.name;
-
-    const descEl = document.createElement('div');
-    descEl.style.cssText =
-      'font-size:var(--text-sm);color:var(--color-text-secondary);'
-      + 'line-height:1.65;margin-bottom:var(--space-3);';
-    descEl.textContent = step.desc;
-
-    const whyWrap = document.createElement('div');
-
-    const whyLabel = document.createElement('span');
-    whyLabel.style.cssText =
-      'font-size:var(--text-xs);font-weight:700;text-transform:uppercase;'
-      + 'letter-spacing:0.06em;color:var(--color-text-muted);margin-right:var(--space-2);';
-    whyLabel.textContent = 'Why it matters:';
-
-    const whyText = document.createElement('span');
-    whyText.style.cssText =
-      'font-size:var(--text-xs);color:var(--color-text-muted);line-height:1.5;';
-    whyText.textContent = step.why;
-
-    whyWrap.appendChild(whyLabel);
-    whyWrap.appendChild(whyText);
-
-    right.appendChild(nameEl);
-    right.appendChild(descEl);
-    right.appendChild(whyWrap);
-
-    item.appendChild(numEl);
-    item.appendChild(right);
-    sessionCard.appendChild(item);
-  });
-
-  screen.appendChild(sessionCard);
-
-  /* ── What you are about to see ───────────────────────────────────────── */
-  appendSectionLabel(screen, 'What you are about to see');
-
-  const demoIntro = document.createElement('p');
-  demoIntro.style.cssText =
-    'font-size:var(--text-sm);color:var(--color-text-secondary);'
-    + 'margin-bottom:var(--space-2);line-height:1.65;';
-  demoIntro.textContent =
-    'You will pick a real-world scenario on the next screen. '
-    + 'The simulation walks you through four situations at the gate and shows exactly how the gate responds to each one. '
-    + 'After the demonstration, the tool transitions into the discovery assessment. '
-    + 'The same structured questions Jochanni Labs works through with your team '
-    + 'to identify whether an enforcement gap exists in your specific environment.';
-  screen.appendChild(demoIntro);
-
-  const behaviors = [
-    {
-      state: 'rejected',
-      icon:  '✕',
-      label: 'No authorization presented',
-      body:  'No authorization exists. The gate rejects the request. The downstream system is not called.',
-    },
-    {
-      state: 'rejected',
-      icon:  '✕',
-      label: 'Wrong action submitted',
-      body:  'An authorization was issued for a different action. The gate rejects the mismatch.',
-    },
-    {
-      state: 'accepted',
-      icon:  '✓',
-      label: 'Valid, active authorization',
-      body:  'The authorization matches the action and target and has not expired. Execution is permitted.',
-    },
-    {
-      state: 'rejected',
-      icon:  '✕',
-      label: 'Authorization already consumed',
-      body:  'The same authorization is presented a second time. The gate rejects the reuse. A new authorization is required for each execution.',
+      agent: 'Procurement Agent',
+      body:  'Vendor contract committed. No review completed.',
     },
   ];
 
   const grid = document.createElement('div');
-  grid.className = 'behavior-grid';
+  grid.className = 'alert-grid';
 
-  behaviors.forEach(b => {
+  incidents.forEach((inc, i) => {
     const card = document.createElement('div');
-    card.className = `behavior-card behavior-card--${b.state}`;
+    card.className = 'alert-card animate-in animate-stagger';
+    card.style.setProperty('--delay', `${0.1 + i * 0.15}s`);
 
-    const icon = document.createElement('div');
-    icon.className = `behavior-card__icon behavior-card__icon--${b.state}`;
-    icon.textContent = b.icon;
+    const pulse = document.createElement('span');
+    pulse.className = 'alert-card__pulse';
+    card.appendChild(pulse);
 
-    const textWrap = document.createElement('div');
-    const lbl = document.createElement('div');
-    lbl.className = 'behavior-card__label';
-    lbl.textContent = b.label;
-    const desc = document.createElement('div');
-    desc.className = 'behavior-card__body';
-    desc.textContent = b.body;
+    const label = document.createElement('div');
+    label.className = 'alert-card__label';
+    label.textContent = inc.agent;
+    card.appendChild(label);
 
-    textWrap.appendChild(lbl);
-    textWrap.appendChild(desc);
-    card.appendChild(icon);
-    card.appendChild(textWrap);
+    const body = document.createElement('div');
+    body.className = 'alert-card__body';
+    body.textContent = inc.body;
+    card.appendChild(body);
+
     grid.appendChild(card);
   });
 
-  screen.appendChild(grid);
-
-  /* Scope boundary callout */
-  const scope = document.createElement('div');
-  scope.className = 'callout callout--info';
-  scope.style.marginTop = 'var(--space-2)';
-  scope.textContent =
-    'DAL-X controls execution, not model intent. '
-    + 'It does not determine why an agent proposed an action. '
-    + 'It only checks whether the enterprise authorized that specific execution '
-    + 'before the downstream system proceeded.';
-  screen.appendChild(scope);
-
-  /* ── The discovery assessment ─────────────────────────────────────────── */
-  appendSectionLabel(screen, 'The discovery assessment');
-
-  const assessIntro = document.createElement('p');
-  assessIntro.style.cssText =
-    'font-size:var(--text-sm);color:var(--color-text-secondary);'
-    + 'margin-bottom:var(--space-4);line-height:1.65;';
-  assessIntro.textContent =
-    'The discovery assessment evaluates any AI workflow: a custom-built agent, an AI-powered product, '
-    + 'or an automated pipeline, across five factors: '
-    + 'the workflow type, the action it proposes, the downstream system it acts on, '
-    + 'the consequences of unauthorized execution, and whether an enforcement gate currently exists. '
-    + 'Each factor carries independent weight. The combination determines the risk profile and whether an enforcement gap is present.';
-  screen.appendChild(assessIntro);
-
-  const assessNote = document.createElement('div');
-  assessNote.className = 'callout callout--info';
-  assessNote.style.marginBottom = 'var(--space-4)';
-  assessNote.textContent =
-    'These answers are self-reported and unvalidated. '
-    + 'In a live engagement, a Jochanni Labs consultant facilitates this session '
-    + 'alongside your technical and business stakeholders. '
-    + 'Results shown here are preliminary findings. '
-    + 'Jochanni Labs reviews them with you before any recommendation is finalized.';
-  screen.appendChild(assessNote);
-
-  /* CTA into demo */
-  const demoCard = document.createElement('div');
-  demoCard.className = 'card';
-  demoCard.style.cssText = 'margin-top:var(--space-6);text-align:center;padding:var(--space-8);';
-
-  const demoTitle = document.createElement('div');
-  demoTitle.className = 'card__title';
-  demoTitle.style.marginBottom = 'var(--space-2)';
-  demoTitle.textContent = 'Ready to see the gate work?';
-
-  const demoDesc = document.createElement('p');
-  demoDesc.style.cssText =
-    'font-size:var(--text-sm);color:var(--color-text-secondary);margin-bottom:var(--space-5);';
-  demoDesc.textContent =
-    'Choose a real-world scenario and walk through each gate response. '
-    + 'The demonstration runs in about three minutes. '
-    + 'The discovery assessment follows. Work through it at your own pace, then review the findings with Jochanni Labs.';
-
-  const demoBtn = document.createElement('button');
-  demoBtn.className = 'btn btn--primary btn--lg';
-  demoBtn.textContent = 'Start the Demonstration →';
-  demoBtn.addEventListener('click', () => showScreen('screen-1'));
-
-  demoCard.appendChild(demoTitle);
-  demoCard.appendChild(demoDesc);
-  demoCard.appendChild(demoBtn);
-  screen.appendChild(demoCard);
-
-  screen.appendChild(createBrandFooter());
+  section.appendChild(grid);
+  return section;
 }
 
-/* ─── Helpers ─────────────────────────────────────────────────────────────── */
+/* ─── The Solution ────────────────────────────────────────────────────── */
 
-function appendSectionLabel(parent, text, marginTop = 'var(--space-6)') {
-  const lbl = document.createElement('p');
-  lbl.className = 'section-label';
-  lbl.style.marginTop = marginTop;
-  lbl.textContent = text;
-  parent.appendChild(lbl);
+function buildSolutionSection() {
+  const section = document.createElement('section');
+  section.className = 'immersive-section';
+
+  const headline = document.createElement('h2');
+  headline.className = 'immersive-section__headline animate-in';
+  headline.innerHTML =
+    `DAL-X sits between what agents <em>propose</em> and what systems <em>execute</em>.`;
+  section.appendChild(headline);
+
+  const chain = document.createElement('div');
+  chain.className = 'authority-chain animate-in';
+  chain.style.setProperty('--delay', '0.2s');
+
+  chain.appendChild(buildChainNode('Agent',           'Proposes action',    false));
+  chain.appendChild(buildChainConnector());
+  chain.appendChild(buildChainNode('DAL-X Wedge',     'Enforces authority', true));
+  chain.appendChild(buildChainConnector(true));
+  chain.appendChild(buildChainNode('Downstream',      'Executes on token',  false));
+
+  section.appendChild(chain);
+  return section;
 }
 
-function createBrandFooter() {
-  const footer = document.createElement('div');
-  footer.className = 'brand-footer';
+function buildChainNode(title, sub, isWedge) {
+  const node = document.createElement('div');
+  node.className = 'chain-node' + (isWedge ? ' chain-node--wedge' : '');
+  const t = document.createElement('div');
+  t.className = 'chain-node__title';
+  t.textContent = title;
+  const s = document.createElement('div');
+  s.className = 'chain-node__sub';
+  s.textContent = sub;
+  node.appendChild(t);
+  node.appendChild(s);
+  return node;
+}
+function buildChainConnector(after) {
+  const c = document.createElement('div');
+  c.className = 'chain-connector' + (after ? ' chain-connector--after' : '');
+  return c;
+}
 
-  const img = document.createElement('img');
-  img.src = 'images/dal-logo.jpg';
-  img.alt = 'DAL-X';
-  img.className = 'brand-footer__img';
+/* ─── How It Works ─────────────────────────────────────────────────────── */
 
-  const text = document.createElement('span');
-  text.className = 'brand-footer__text';
-  text.textContent = 'DAL-X by Jochanni Labs';
+function buildHowItWorksSection() {
+  const section = document.createElement('section');
+  section.className = 'immersive-section';
 
-  footer.appendChild(img);
-  footer.appendChild(text);
-  return footer;
+  const headline = document.createElement('h2');
+  headline.className = 'immersive-section__headline animate-in';
+  headline.textContent = 'How it works';
+  section.appendChild(headline);
+
+  const steps = [
+    {
+      num:   '1',
+      label: 'Intercept',
+      desc:  'The agent submits its proposed execution to DAL-X before acting. '
+           + 'DAL-X evaluates it against enterprise-specific trigger rules.',
+    },
+    {
+      num:   '2',
+      label: 'Authorize',
+      desc:  'DAL-X evaluates the action, routes for human review when required, '
+           + 'and issues a signed single-use execution token on approval.',
+    },
+    {
+      num:   '3',
+      label: 'Enforce',
+      desc:  'The downstream system validates the token before executing. '
+           + 'No valid token, no execution. Every outcome is recorded.',
+    },
+  ];
+
+  const grid = document.createElement('div');
+  grid.className = 'steps-3col';
+
+  steps.forEach((s, i) => {
+    const card = document.createElement('div');
+    card.className = 'step-glass animate-in animate-stagger';
+    card.style.setProperty('--delay', `${0.15 + i * 0.15}s`);
+
+    const num = document.createElement('div');
+    num.className = 'step-glass__num';
+    num.textContent = s.num;
+    card.appendChild(num);
+
+    const label = document.createElement('div');
+    label.className = 'step-glass__label';
+    label.textContent = s.label;
+    card.appendChild(label);
+
+    const desc = document.createElement('div');
+    desc.className = 'step-glass__desc';
+    desc.textContent = s.desc;
+    card.appendChild(desc);
+
+    grid.appendChild(card);
+  });
+
+  section.appendChild(grid);
+  return section;
+}
+
+/* ─── The Proof ───────────────────────────────────────────────────────── */
+
+function buildProofSection() {
+  const section = document.createElement('section');
+  section.className = 'proof-statement animate-in';
+
+  const text = document.createElement('div');
+  text.className = 'proof-statement__text';
+  text.innerHTML =
+    `Every governed execution produces an <em>immutable authority chain</em>.`;
+  section.appendChild(text);
+
+  const badges = document.createElement('div');
+  badges.className = 'proof-badges';
+
+  ['demonstrated', 'business', 'technical', 'jl-reviewed', 'proven']
+    .forEach((type, i) => {
+      const label = createEvidenceLabel(type);
+      label.classList.add('animate-in', 'animate-stagger');
+      label.style.setProperty('--delay', `${0.1 + i * 0.12}s`);
+      badges.appendChild(label);
+    });
+
+  section.appendChild(badges);
+  return section;
+}
+
+/* ─── Positioning note ────────────────────────────────────────────────── */
+
+function buildPositioningNote() {
+  const section = document.createElement('section');
+  section.className = 'immersive-section';
+  section.style.paddingTop = '0';
+
+  const note = document.createElement('div');
+  note.className = 'positioning-note animate-in';
+  note.innerHTML =
+    `<strong>DAL-X controls execution, not model intent.</strong> `
+    + `It does not determine why an AI agent proposed an execution. `
+    + `It checks whether the enterprise authorized that execution `
+    + `before the downstream system proceeds.`;
+  section.appendChild(note);
+
+  return section;
+}
+
+/* ─── Final CTA ───────────────────────────────────────────────────────── */
+
+function buildFinalCTA() {
+  const section = document.createElement('section');
+  section.className = 'final-cta animate-in';
+
+  const title = document.createElement('div');
+  title.className = 'final-cta__title';
+  title.textContent = 'Ready to see DAL-X in action?';
+  section.appendChild(title);
+
+  const actions = document.createElement('div');
+  actions.className = 'final-cta__actions';
+
+  const primary = document.createElement('button');
+  primary.className = 'btn btn--primary btn--lg';
+  primary.textContent = 'Start the Demonstration';
+  primary.addEventListener('click', () => showScreen('screen-1'));
+  actions.appendChild(primary);
+
+  const secondary = document.createElement('button');
+  secondary.className = 'final-cta__secondary';
+  secondary.textContent = 'Request a Guided Assessment →';
+  secondary.addEventListener('click', () => showScreen('screen-7'));
+  actions.appendChild(secondary);
+
+  section.appendChild(actions);
+  return section;
+}
+
+/* ─── Reveal-on-scroll wiring ─────────────────────────────────────────── */
+
+function observeAnimations(root) {
+  const targets = root.querySelectorAll('.animate-in');
+  if (!('IntersectionObserver' in window)) {
+    targets.forEach(t => t.classList.add('is-visible'));
+    return;
+  }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('is-visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+
+  targets.forEach(t => io.observe(t));
 }
 
 document.addEventListener('DOMContentLoaded', renderScreen0);

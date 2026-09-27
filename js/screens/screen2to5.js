@@ -1,11 +1,129 @@
-/* ─── Screens 2–5: Gate Scenarios ───────────────────────────────────────── */
-
-/* ── Scenario-specific text generators ───────────────────────────────────── */
+/* ─── Screens 2 to 5: Gate Demonstrations ────────────────────────────────
+ * Each screen shows one enforcement outcome using an animated gate
+ * pipeline. Reads s1.* fields written by screen1.js. Preserves navigation
+ * to screen-1, screen-3, screen-4, screen-5, and screen-6.
+ */
 
 function getExampleData() {
   const key = getState('s1.example') || 'infrastructure';
   return EXAMPLES[key] || EXAMPLES.infrastructure;
 }
+
+/* ── Reusable animated pipeline ────────────────────────────────────────── */
+
+/**
+ * buildGatePipeline(config)
+ * Renders the animated agent → gate → downstream pipeline.
+ *
+ * @param {object} config
+ * @param {string} config.agentLabel
+ * @param {string} config.actionLabel
+ * @param {string} config.targetLabel
+ * @param {boolean} config.hasToken
+ * @param {boolean} config.tokenValid
+ * @param {boolean} [config.tokenConsumed]
+ * @param {boolean} [config.tokenExpired]
+ * @param {'accepted'|'rejected'} config.outcome
+ * @param {string} config.rejectionReason
+ * @param {string} config.executionNote
+ * @returns {HTMLDivElement}
+ */
+function buildGatePipeline(config) {
+  const wrap = document.createElement('div');
+  wrap.className = `gate-pipeline gate-pipeline--${config.outcome}`;
+  if (config.hasToken)      wrap.classList.add('gate-pipeline--has-token');
+  if (config.tokenConsumed) wrap.classList.add('gate-pipeline--token-consumed');
+  if (config.tokenExpired)  wrap.classList.add('gate-pipeline--token-expired');
+
+  /* Agent node */
+  const agent = document.createElement('div');
+  agent.className = 'gate-pipeline__node gate-pipeline__node--agent';
+  agent.innerHTML = `
+    <div class="gate-pipeline__node-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5" stroke="currentColor"
+              stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="gate-pipeline__node-title">Agent</div>
+    <div class="gate-pipeline__node-sub">${config.agentLabel}</div>
+  `;
+  wrap.appendChild(agent);
+
+  /* Connector: agent to gate */
+  const conn1 = document.createElement('div');
+  conn1.className = 'gate-pipeline__connector gate-pipeline__connector--in';
+
+  const packet = document.createElement('div');
+  packet.className = 'gate-pipeline__packet';
+  packet.setAttribute('aria-hidden', 'true');
+  conn1.appendChild(packet);
+
+  if (config.hasToken) {
+    const token = document.createElement('div');
+    token.className = 'gate-pipeline__token';
+    if (!config.tokenValid) token.classList.add('gate-pipeline__token--invalid');
+    token.textContent = config.tokenConsumed
+      ? 'authorization_id (used)'
+      : 'authorization_id';
+    conn1.appendChild(token);
+  }
+
+  const actionTag = document.createElement('div');
+  actionTag.className = 'gate-pipeline__action-tag';
+  actionTag.textContent = config.actionLabel;
+  conn1.appendChild(actionTag);
+
+  wrap.appendChild(conn1);
+
+  /* Gate node */
+  const gate = document.createElement('div');
+  gate.className = 'gate-pipeline__node gate-pipeline__node--gate';
+  gate.innerHTML = `
+    <div class="gate-pipeline__node-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2L3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-3z"
+              stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="gate-pipeline__node-title">DAL-X gate</div>
+    <div class="gate-pipeline__node-sub">${config.outcome === 'accepted' ? 'Accepted' : 'Rejected'}</div>
+  `;
+  wrap.appendChild(gate);
+
+  /* Connector: gate to downstream */
+  const conn2 = document.createElement('div');
+  conn2.className = 'gate-pipeline__connector gate-pipeline__connector--out';
+
+  if (config.outcome === 'accepted') {
+    const packet2 = document.createElement('div');
+    packet2.className = 'gate-pipeline__packet gate-pipeline__packet--out';
+    packet2.setAttribute('aria-hidden', 'true');
+    conn2.appendChild(packet2);
+  }
+
+  wrap.appendChild(conn2);
+
+  /* Downstream node */
+  const down = document.createElement('div');
+  down.className = 'gate-pipeline__node gate-pipeline__node--downstream';
+  down.innerHTML = `
+    <div class="gate-pipeline__node-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M7 9h10M7 13h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="gate-pipeline__node-title">Downstream</div>
+    <div class="gate-pipeline__node-sub">${config.targetLabel}</div>
+  `;
+  wrap.appendChild(down);
+
+  return wrap;
+}
+
+/* ── Build scenario configs ────────────────────────────────────────────── */
 
 function buildConfigs(ex) {
   const a  = ex.action;
@@ -13,180 +131,138 @@ function buildConfigs(ex) {
   const t  = ex.target;
   const ag = ex.agent;
   const au = ex.required_authority;
-  const c  = ex.consequence.toLowerCase();
 
   return {
     'screen-2': {
-      title: 'Missing Authorization',
-      setup:
-        `The ${ag} attempts to execute ${a} on ${t}. `
-        + `The downstream system calls the DAL-X enforcement endpoint, `
-        + `but no authorization_id was obtained first.`,
+      heading: 'No authorization presented',
+      subtext:
+        'The downstream gate received a request with no authorization. '
+        + 'DAL-X blocked it before the system acted.',
+      pipeline: {
+        agentLabel:      ag,
+        actionLabel:     a,
+        targetLabel:     t,
+        hasToken:        false,
+        tokenValid:      false,
+        tokenConsumed:   false,
+        tokenExpired:    false,
+        outcome:         'rejected',
+        rejectionReason: 'No execution authorization was provided.',
+        executionNote:   'Downstream system not reached.',
+      },
       decision: {
         state:             'Rejected',
         reason:            'No execution authorization was provided.',
         required_response: 'Submit the proposed execution to DAL-X for evaluation.',
-        what_happens_next: 'The downstream system is not called.',
+        what_happens_next: 'The downstream system was not called.',
         variant:           'rejected',
       },
-      withoutDalX:
-        `Without this gate, ${c}. `
-        + `This would have proceeded with no record that authorization was ever requested, `
-        + `reviewed, or granted. There was no way to stop it.`,
-      separationTable: null,
-      flowchart: [
-        { state: 'done',    icon: '1', label: 'AI agent proposes action',
-          detail: `${ag} wants to execute ${a} on ${t}` },
-        { state: 'skip',    icon: '–', label: 'Submit to DAL-X for evaluation',
-          detail: 'Skipped - no submission was made before execution',           dalx: true },
-        { state: 'skip',    icon: '–', label: 'Review and authorization',
-          detail: 'None obtained' },
-        { state: 'error',   icon: '✕', label: 'DAL-X enforcement gate',
-          detail: 'No authorization_id provided - required field missing',        dalx: true },
-        { state: 'block',   icon: '✕', label: 'Execution blocked',
-          detail: 'Downstream system not called' },
-      ],
-      prev:         'screen-1',
-      next:         'screen-3',
+      afterNote:
+        'The agent must submit the proposed execution to DAL-X before attempting to proceed.',
+      prev: 'screen-1',
+      next: 'screen-3',
       onBeforeNext: () => renderGateScreen('screen-3'),
     },
 
     'screen-3': {
-      title: 'Wrong Action',
-      setup:
-        `Authorization was issued for ${a}. `
-        + `The agent now presents that authorization while attempting ${wa}: `
-        + `a different action on the same target.`,
+      heading: 'Authorization scope mismatch',
+      subtext:
+        `The token was issued for ${a}. `
+        + 'The attempted action was different. DAL-X rejected it.',
+      pipeline: {
+        agentLabel:      ag,
+        actionLabel:     wa,
+        targetLabel:     t,
+        hasToken:        true,
+        tokenValid:      false,
+        tokenConsumed:   false,
+        tokenExpired:    false,
+        outcome:         'rejected',
+        rejectionReason: 'The attempted action does not match the authorized action.',
+        executionNote:   'Downstream system not reached.',
+      },
       decision: {
         state:             'Rejected',
         reason:            'The attempted action does not match the authorized action.',
         required_response: 'Submit the changed action as a new proposed execution.',
-        what_happens_next: 'The downstream system is not called.',
+        what_happens_next: 'The downstream system was not called.',
         variant:           'rejected',
       },
-      withoutDalX:
-        `Without action matching, an authorization for ${a} could be reused to execute `
-        + `${wa} instead. The ${au} approved one specific action, `
-        + `not every action the agent might attempt on ${t}.`,
-      separationTable: null,
-      flowchart: [
-        { state: 'done',    icon: '1', label: 'AI agent proposes action',
-          detail: `${ag} attempts ${wa} on ${t}` },
-        { state: 'done',    icon: '2', label: 'Submit to DAL-X for evaluation',
-          detail: `Submission made for ${a}`,                                     dalx: true },
-        { state: 'done',    icon: '3', label: 'Review and authorization',
-          detail: `${au} approved - authorization issued for ${a} only` },
-        { state: 'error',   icon: '✕', label: 'DAL-X enforcement gate',
-          detail: `Action mismatch - authorized: ${a}, attempted: ${wa}`,         dalx: true },
-        { state: 'block',   icon: '✕', label: 'Execution blocked',
-          detail: 'Downstream system not called' },
-      ],
+      afterNote:
+        'A changed action requires a new submission and a new authorization.',
       prev: 'screen-2',
       next: 'screen-4',
     },
 
     'screen-4': {
-      title: 'Valid Authorization',
-      setup:
-        `The ${au} reviewed the submission and approved it. `
-        + `The correct authorization_id, action (${a}), and target (${t}) `
-        + `are presented to the enforcement endpoint before expiration.`,
+      heading: 'Authorization accepted',
+      subtext:
+        'Correct authorization, matching action and target, submitted before expiration. '
+        + 'DAL-X accepted it.',
+      pipeline: {
+        agentLabel:      ag,
+        actionLabel:     a,
+        targetLabel:     t,
+        hasToken:        true,
+        tokenValid:      true,
+        tokenConsumed:   false,
+        tokenExpired:    false,
+        outcome:         'accepted',
+        rejectionReason: '',
+        executionNote:   'Downstream execution completed.',
+      },
       decision: {
         state:             'Accepted',
         reason:            'The authorization is active and the action and target match.',
         required_response: 'None.',
-        what_happens_next: 'The downstream call may proceed.',
+        what_happens_next: 'The downstream call proceeded.',
         variant:           'accepted',
       },
-      withoutDalX: null,
       separationTable: {
         rows: [
-          { record: 'DAL-X gate',                 result: 'Accepted',  chipState: 'accepted' },
+          { record: 'DAL-X gate',                  result: 'Accepted',  chipState: 'accepted' },
           { record: 'Simulated downstream system', result: 'Completed', chipState: 'neutral'  },
         ],
         note: 'DAL-X gate acceptance does not prove that a real downstream system completed execution.',
       },
-      flowchart: [
-        { state: 'done',    icon: '1', label: 'AI agent proposes action',
-          detail: `${ag} proposes ${a} on ${t}` },
-        { state: 'done',    icon: '2', label: 'Submit to DAL-X for evaluation',
-          detail: 'Submission accepted and routed for review',                    dalx: true },
-        { state: 'done',    icon: '3', label: 'Review and authorization',
-          detail: `${au} approved - active authorization issued` },
-        { state: 'success', icon: '✓', label: 'DAL-X enforcement gate',
-          detail: 'Authorization active, action and target match, not expired',   dalx: true },
-        { state: 'execute', icon: '✓', label: 'Execution permitted',
-          detail: 'Downstream system may proceed' },
-      ],
+      afterNote: null,
       prev: 'screen-3',
       next: 'screen-5',
     },
 
     'screen-5': {
-      title: 'Reused Authorization',
-      setup:
-        `The authorization for ${a} was consumed when the gate accepted the first request. `
-        + `The same authorization_id is now submitted again for a second attempt on ${t}.`,
+      heading: 'Authorization already consumed',
+      subtext:
+        'The same authorization was used twice. '
+        + 'Single-use tokens cannot be replayed.',
+      pipeline: {
+        agentLabel:      ag,
+        actionLabel:     a,
+        targetLabel:     t,
+        hasToken:        true,
+        tokenValid:      false,
+        tokenConsumed:   true,
+        tokenExpired:    false,
+        outcome:         'rejected',
+        rejectionReason: 'The execution authorization has already been consumed.',
+        executionNote:   'Downstream system not reached.',
+      },
       decision: {
         state:             'Rejected',
         reason:            'The execution authorization has already been consumed.',
         required_response: 'Create a new submission and obtain new authority.',
-        what_happens_next: 'The downstream system is not called.',
+        what_happens_next: 'The downstream system was not called.',
         variant:           'rejected',
       },
-      withoutDalX:
-        `Without consumption tracking, the same authorization could trigger `
-        + `additional ${a} executions on ${t}, `
-        + `each one beyond what the ${au} ever intended to approve.`,
-      separationTable: null,
-      flowchart: [
-        { state: 'done',    icon: '1', label: 'AI agent proposes action',
-          detail: `${ag} attempts ${a} on ${t} again` },
-        { state: 'done',    icon: '2', label: 'Submit to DAL-X for evaluation',
-          detail: 'Same authorization_id reused from first request',              dalx: true },
-        { state: 'done',    icon: '3', label: 'Review and authorization',
-          detail: 'Authorization already consumed on first accepted use' },
-        { state: 'error',   icon: '✕', label: 'DAL-X enforcement gate',
-          detail: 'Single-use token already consumed - cannot reuse',             dalx: true },
-        { state: 'block',   icon: '✕', label: 'Execution blocked',
-          detail: 'Downstream system not called' },
-      ],
+      afterNote:
+        'Each governed execution requires its own authorization. Reuse is blocked by design.',
       prev: 'screen-4',
       next: 'screen-6',
     },
   };
 }
 
-/* ── Scenario context strip ───────────────────────────────────────────────── */
-
-function createScenarioStrip(ex) {
-  const strip = document.createElement('div');
-  strip.className = 'scenario-strip';
-
-  const icon = document.createElement('span');
-  icon.className = 'scenario-strip__icon';
-  icon.textContent = ex.icon;
-
-  const info = document.createElement('div');
-  info.className = 'scenario-strip__info';
-
-  const label = document.createElement('div');
-  label.className = 'scenario-strip__label';
-  label.textContent = ex.label;
-
-  const meta = document.createElement('div');
-  meta.className = 'scenario-strip__meta';
-  meta.textContent =
-    `${ex.agent}  ·  ${ex.action}  →  ${ex.target}  ·  At risk: ${ex.consequence}`;
-
-  info.appendChild(label);
-  info.appendChild(meta);
-  strip.appendChild(icon);
-  strip.appendChild(info);
-  return strip;
-}
-
-/* ── Generic renderer ─────────────────────────────────────────────────────── */
+/* ── Generic renderer ─────────────────────────────────────────────────── */
 
 function renderGateScreen(screenId) {
   const ex  = getExampleData();
@@ -194,6 +270,7 @@ function renderGateScreen(screenId) {
   if (!cfg) return;
 
   const screen = document.getElementById(screenId);
+  if (!screen) return;
   screen.innerHTML = '';
 
   /* Surface badge */
@@ -202,119 +279,78 @@ function renderGateScreen(screenId) {
   badge.textContent = 'Surface 1 · Public Demonstration';
   screen.appendChild(badge);
 
-  /* Scenario context strip: always visible */
-  screen.appendChild(createScenarioStrip(ex));
+  /* Heading */
+  const heading = document.createElement('h1');
+  heading.className = 'screen-title';
+  heading.textContent = cfg.heading;
+  screen.appendChild(heading);
 
-  /* Title */
-  const title = document.createElement('h1');
-  title.className = 'screen-title';
-  title.textContent = cfg.title;
-  screen.appendChild(title);
+  /* Subtext */
+  const subtext = document.createElement('p');
+  subtext.className = 'screen-subtitle';
+  subtext.textContent = cfg.subtext;
+  screen.appendChild(subtext);
 
-  /* Setup description */
-  const setup = document.createElement('div');
-  setup.className = 'callout callout--neutral';
-  setup.textContent = cfg.setup;
-  screen.appendChild(setup);
+  /* Pipeline */
+  screen.appendChild(buildGatePipeline(cfg.pipeline));
 
-  /* Process flowchart */
-  if (cfg.flowchart) {
-    screen.appendChild(buildGateFlowchart(cfg.flowchart));
+  /* Result panel (fades in after animation) */
+  const result = document.createElement('div');
+  result.className = 'gate-pipeline__result';
+
+  /* Result summary rows */
+  const summary = document.createElement('div');
+  summary.className = 'gate-pipeline__result-summary';
+
+  if (cfg.pipeline.outcome === 'accepted') {
+    summary.appendChild(makeResultRow('DAL-X gate', 'Accepted', 'accepted'));
+    summary.appendChild(makeResultRow('Simulated downstream system', 'Completed', 'neutral'));
+  } else {
+    summary.appendChild(makeResultRow('DAL-X gate', 'Rejected', 'rejected'));
+    summary.appendChild(makeResultRow('Downstream system', 'Not reached', 'neutral'));
   }
+  result.appendChild(summary);
 
-  /* Without-gate stark note: rejection screens only */
-  if (cfg.withoutDalX) {
-    const ungatedNote = document.createElement('div');
-    ungatedNote.style.cssText =
-      'margin:var(--space-4) 0;padding:var(--space-3) var(--space-4);'
-      + 'background:rgba(248,113,113,0.08);border-left:3px solid #f87171;'
-      + 'border-radius:var(--radius);font-size:var(--text-sm);color:var(--color-text);';
-    ungatedNote.innerHTML =
-      '<strong>Without this gate: this execution completes.</strong> '
-      + 'No authorization required. No record created. No way to stop it.';
-    screen.appendChild(ungatedNote);
-  }
+  /* Decision block */
+  result.appendChild(createDecisionBlock(cfg.decision));
 
-  /* Decision state block */
-  screen.appendChild(createDecisionBlock(cfg.decision));
-
-  /* Separation table: Screen 4 only */
+  /* Separation table for screen 4 */
   if (cfg.separationTable) {
-    const tableCard = document.createElement('div');
-    tableCard.className = 'card';
-    tableCard.style.marginTop = 'var(--space-4)';
-
-    const tableTitle = document.createElement('div');
-    tableTitle.className = 'card__title';
-    tableTitle.textContent = 'Gate and downstream result';
-    tableCard.appendChild(tableTitle);
-
-    const table = document.createElement('table');
-    table.className = 'data-table';
-
-    const thead = document.createElement('thead');
-    const hrow  = document.createElement('tr');
-    ['Record', 'Result'].forEach(text => {
-      const th = document.createElement('th');
-      th.textContent = text;
-      hrow.appendChild(th);
-    });
-    thead.appendChild(hrow);
-    table.appendChild(thead);
-
-    const tbody = document.createElement('tbody');
-    cfg.separationTable.rows.forEach(({ record, result, chipState }) => {
-      const tr = document.createElement('tr');
-      const tdRecord = document.createElement('td');
-      tdRecord.textContent = record;
-      tr.appendChild(tdRecord);
-      const tdResult = document.createElement('td');
-      tdResult.appendChild(createStatusChip(chipState, result));
-      tr.appendChild(tdResult);
-      tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-    tableCard.appendChild(table);
-
-    const tableNote = document.createElement('p');
-    tableNote.style.cssText =
-      'margin-top:var(--space-4);font-size:var(--text-sm);color:var(--color-text-secondary);';
-    tableNote.textContent = cfg.separationTable.note;
-    tableCard.appendChild(tableNote);
-
-    screen.appendChild(tableCard);
+    const infoPanel = document.createElement('div');
+    infoPanel.className = 'gate-info-panel';
+    infoPanel.textContent = cfg.separationTable.note;
+    result.appendChild(infoPanel);
   }
 
-  /* Without DAL-X context: rejection screens only */
-  if (cfg.withoutDalX) {
-    const withoutNote = document.createElement('div');
-    withoutNote.className = 'callout callout--without';
-    withoutNote.style.marginTop = 'var(--space-4)';
-    withoutNote.innerHTML = '<strong>Without this gate:</strong> ' + cfg.withoutDalX;
-    screen.appendChild(withoutNote);
+  /* After note */
+  if (cfg.afterNote) {
+    const note = document.createElement('p');
+    note.className = 'gate-after-note';
+    note.textContent = cfg.afterNote;
+    result.appendChild(note);
   }
 
-  /* Evidence label */
-  const evidenceLine = document.createElement('p');
-  evidenceLine.style.cssText =
-    'margin-top:var(--space-5);font-size:var(--text-sm);color:var(--color-text-secondary);';
-  evidenceLine.appendChild(document.createTextNode('Evidence: '));
-  evidenceLine.appendChild(createEvidenceLabel('demonstrated'));
-  screen.appendChild(evidenceLine);
+  /* Evidence badge */
+  const evidence = document.createElement('div');
+  evidence.className = 'gate-evidence-line';
+  evidence.appendChild(createEvidenceLabel('demonstrated'));
+  result.appendChild(evidence);
 
-  /* Back / Next nav */
+  screen.appendChild(result);
+
+  /* Nav */
   const nav = document.createElement('nav');
   nav.className = 'screen-nav';
 
   const backBtn = document.createElement('button');
   backBtn.className = 'btn btn--ghost';
-  backBtn.textContent = '← Back';
+  backBtn.textContent = 'Back';
   backBtn.addEventListener('click', () => showScreen(cfg.prev));
   nav.appendChild(backBtn);
 
   const nextBtn = document.createElement('button');
   nextBtn.className = 'btn btn--primary';
-  nextBtn.textContent = 'Next →';
+  nextBtn.textContent = 'Continue';
   nextBtn.addEventListener('click', () => {
     if (cfg.onBeforeNext) cfg.onBeforeNext();
     showScreen(cfg.next);
@@ -324,14 +360,29 @@ function renderGateScreen(screenId) {
   screen.appendChild(nav);
 }
 
-/* ── Per-screen render functions ──────────────────────────────────────────── */
+function makeResultRow(label, value, chipState) {
+  const row = document.createElement('div');
+  row.className = 'gate-result-row';
+
+  const key = document.createElement('div');
+  key.className = 'gate-result-row__key';
+  key.textContent = label;
+  row.appendChild(key);
+
+  const val = document.createElement('div');
+  val.className = 'gate-result-row__val';
+  val.appendChild(createStatusChip(chipState, value));
+  row.appendChild(val);
+
+  return row;
+}
+
+/* ── Per-screen render functions ──────────────────────────────────────── */
 
 function renderScreen2() { renderGateScreen('screen-2'); }
 function renderScreen3() { renderGateScreen('screen-3'); }
 function renderScreen4() { renderGateScreen('screen-4'); }
 function renderScreen5() { renderGateScreen('screen-5'); }
-
-/* ── Init ─────────────────────────────────────────────────────────────────── */
 
 document.addEventListener('DOMContentLoaded', () => {
   renderScreen2();
