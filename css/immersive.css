@@ -5258,29 +5258,189 @@ pre,
   margin-left: auto;
 }
 
-/* Responsive: sidebar collapses to a short strip on narrow viewports */
-@media (max-width: 720px) {
-  #app .wedge-sidebar {
-    width: 56px;
+/* ─── Wedge improved rendering ─────────────────────────────────────────────
+ * Overrides initial wedge rules. Fixes: screen max-width, font sizes, queue
+ * column count, sidebar mobile behavior, card layout on small screens.
+ */
+
+/* 1. Widen screens — style.css caps at 800px, too narrow for the product window */
+#app .screen {
+  max-width: 1100px;
+}
+
+/* 2. Bump all base font sizes inside the product window */
+#app .wedge-panel__heading      { font-size: 14.5px; }
+#app .wedge-panel__subhead      { font-size: 13px; }
+#app .wedge-section-label       { font-size: 11.5px; letter-spacing: 0.07em; margin: 14px 0 8px; }
+#app .wedge-mono                { font-size: 13px; }
+#app .wedge-code-block          { font-size: 13px; line-height: 1.72; overflow-x: auto; }
+#app .wedge-detail-grid__key    { font-size: 12px; }
+#app .wedge-detail-grid__val    { font-size: 13.5px; }
+#app .wedge-result-line         { font-size: 13.5px; }
+#app .wedge-detail-strip        { font-size: 13.5px; }
+#app .wedge-dwell-label         { font-size: 13.5px; }
+#app .wedge-dwell-note          { font-size: 12.5px; }
+#app .wedge-dwell-elapsed       { font-size: 13px; }
+#app .wedge-reason-box          { font-size: 13.5px; }
+#app .wedge-seg-key             { font-size: 11.5px; }
+#app .wedge-seg-val             { font-size: 13px; }
+#app .wedge-drift-key           { font-size: 12px; }
+#app .wedge-drift-val           { font-size: 13.5px; }
+#app .wedge-drift-result        { font-size: 13.5px; }
+#app .wedge-timeline-time       { font-size: 12px; }
+#app .wedge-timeline-label      { font-size: 12.5px; }
+#app .wedge-timeline-detail     { font-size: 12.5px; }
+#app .wedge-auth-id-val         { font-size: 20px; }
+#app .wedge-auth-kv__key        { font-size: 12px; }
+#app .wedge-auth-kv__val        { font-size: 13.5px; }
+#app .wedge-annotation__text    { font-size: 13.5px; max-width: none; line-height: 1.6; }
+#app .wedge-endpoint            { font-size: 13px; }
+#app .wedge-queue-cell          { font-size: 13px; }
+#app .wedge-trigger-cell--name  { font-size: 13px; }
+#app .wedge-trigger-cell--mono  { font-size: 12.5px; }
+#app .wedge-controlling-flag    { font-size: 12px; }
+#app .wedge-status-banner       { font-size: 13.5px; }
+
+/* 3. More breathing room in panels and main area */
+#app .wedge-main   { padding: 24px 28px; }
+#app .wedge-panel  { padding: 20px 22px; margin-bottom: 20px; }
+#app .wedge-window__body { min-height: auto; }
+
+/* 4. Queue table: 5 columns (Age removed from JS) */
+#app .wedge-queue-row {
+  grid-template-columns: 1.4fr 1.2fr 2.2fr 1.1fr 1.7fr;
+  gap: 16px;
+  padding: 12px 16px;
+}
+
+/* 5. Trigger table: 4 columns with better proportions */
+#app .wedge-trigger-row {
+  grid-template-columns: 2.2fr 1.2fr 1.4fr 2fr;
+  gap: 14px;
+  font-size: 13px;
+  padding: 11px 14px;
+}
+
+/* 6. Wider sidebar */
+#app .wedge-sidebar { width: 180px; }
+#app .wedge-sidebar__item { font-size: 13px; height: 38px; padding: 0 18px; }
+
+/* 7. Auth kv: give keys enough room */
+#app .wedge-auth-kv { grid-template-columns: 160px 1fr; }
+
+/* ─── Tablet (768 – 959 px) ─────────────────────────────────────────────── */
+@media (min-width: 768px) and (max-width: 959px) {
+  #app .wedge-sidebar { display: none; }
+  #app .wedge-main    { padding: 20px 22px; }
+  /* Drop Agent column on tablet: hide 2nd queue cell + rework grid to 4 cols */
+  #app .wedge-queue-row {
+    grid-template-columns: 1.4fr 2.4fr 1.2fr 1.8fr;
   }
-  #app .wedge-sidebar__item {
-    padding: 0 8px;
+  #app .wedge-queue-row > .wedge-queue-cell:nth-child(2) {
+    display: none;
+  }
+}
+
+/* ─── Mobile (< 768 px) ─────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+
+  /* Widen screen padding to edge */
+  #app .screen { padding-left: 12px; padding-right: 12px; }
+
+  /* Hide sidebar entirely */
+  #app .wedge-sidebar { display: none !important; }
+
+  /* Compact topbar */
+  #app .wedge-window__workspace-name { display: none; }
+  #app .wedge-main { padding: 16px 14px; }
+  #app .wedge-panel { padding: 14px 14px; margin-bottom: 14px; }
+
+  /* Queue: card layout — each row is a self-contained card */
+  #app .wedge-queue-row--header { display: none; }
+  #app .wedge-queue-row:not(.wedge-queue-row--header) {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px;
+    border-bottom: 1px solid var(--glass-border);
+    border-left: none;
+    border-radius: 0;
+  }
+  #app .wedge-queue-row--active {
+    border-left: 3px solid var(--agent-orange) !important;
+    padding-left: 11px !important;
+  }
+  /* Label each queue cell with a data-driven prefix via nth-child */
+  #app .wedge-queue-cell::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+  #app .wedge-queue-cell { flex-direction: column; align-items: flex-start; gap: 2px; }
+
+  /* Trigger: each row as a vertical card */
+  #app .wedge-trigger-row--header { display: none !important; }
+  #app .wedge-trigger-row:not(.wedge-trigger-row--header) {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+    padding: 14px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+  /* Rule name spans full width */
+  #app .wedge-trigger-cell--name { grid-column: 1 / -1; }
+  /* Match condition spans full width */
+  #app .wedge-trigger-cell--mono { grid-column: 1 / -1; font-size: 11.5px; }
+  /* Add label prefixes from data-label */
+  #app .wedge-trigger-cell::before {
+    content: attr(data-label);
+    display: block;
     font-size: 10px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 2px;
   }
-  #app .wedge-detail-grid {
-    grid-template-columns: 1fr;
-    gap: 2px 0;
-  }
-  #app .wedge-queue-row,
-  #app .wedge-trigger-row {
-    grid-template-columns: 1fr;
-    gap: 4px;
-  }
-  #app .wedge-seg-row {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
+  #app .wedge-trigger-cell--flag:empty { display: none; }
+
+  /* Auth ID: fit on small screen */
+  #app .wedge-auth-id-val { font-size: 15px; letter-spacing: 0; }
+  #app .wedge-auth-card   { padding: 14px 14px; }
+  #app .wedge-auth-kv     { grid-template-columns: 1fr; gap: 2px; padding: 8px 0; }
+  #app .wedge-auth-kv__key { margin-bottom: 1px; }
+
+  /* Detail grid: single column */
+  #app .wedge-detail-grid { grid-template-columns: 1fr; gap: 2px 0; }
+
+  /* Segregation row: vertical */
+  #app .wedge-seg-row { grid-template-columns: 1fr; gap: 10px; }
+
+  /* Drift info: 2-col key-value (fits narrow) */
+  #app .wedge-drift-info { grid-template-columns: 80px 1fr; gap: 4px 10px; }
+
+  /* Timeline: give more room to labels */
+  #app .wedge-timeline-entry { grid-template-columns: 58px 12px 1fr; gap: 6px; }
+
+  /* Enforcement: single column */
+  #app .wedge-enforcement-grid { grid-template-columns: 1fr; }
+
+  /* Code blocks: scroll horizontally if needed */
+  #app .wedge-code-block { font-size: 11.5px; padding: 10px 10px; }
+
+  /* Annotation list: single column */
+  #app .wedge-annotations-list { grid-template-columns: 1fr; gap: 10px; }
+
+  /* Decision buttons: full width */
+  #app .wedge-decision-buttons { flex-direction: column; gap: 8px; }
+  #app .wedge-decision-btn { width: 100%; text-align: center; }
+
+  /* Step indicator: compact */
+  #app .wedge-step { margin: 4px 0 10px; }
+
+  /* Tab bar: scrollable */
+  #app .wedge-tab-bar { overflow-x: auto; }
+  #app .wedge-tab { padding: 7px 10px; font-size: 10.5px; }
 }

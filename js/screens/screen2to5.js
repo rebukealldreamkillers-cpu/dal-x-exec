@@ -49,7 +49,7 @@ function renderScreen2() {
 
     const header = document.createElement('div');
     header.className = 'wedge-queue-row wedge-queue-row--header';
-    ['Submission', 'Agent', 'Content preview', 'Severity', 'Age', 'Status'].forEach(h => {
+    ['Submission', 'Agent', 'Content preview', 'Severity', 'Status'].forEach(h => {
       const c = document.createElement('div');
       c.className = 'wedge-queue-cell';
       c.textContent = h;
@@ -142,21 +142,25 @@ function buildQueueRow(cfg) {
 
   const c1 = document.createElement('div');
   c1.className = 'wedge-queue-cell wedge-queue-cell--mono';
+  c1.dataset.label = 'Submission';
   c1.textContent = cfg.id;
   row.appendChild(c1);
 
   const c2 = document.createElement('div');
   c2.className = 'wedge-queue-cell';
+  c2.dataset.label = 'Agent';
   c2.textContent = cfg.agent;
   row.appendChild(c2);
 
   const c3 = document.createElement('div');
   c3.className = 'wedge-queue-cell wedge-queue-cell--preview';
+  c3.dataset.label = 'Content';
   c3.textContent = cfg.preview;
   row.appendChild(c3);
 
   const c4 = document.createElement('div');
   c4.className = 'wedge-queue-cell';
+  c4.dataset.label = 'Severity';
   const chip = document.createElement('span');
   chip.className = 'wedge-sev-chip';
   if (cfg.severityClass === 'high') {
@@ -169,15 +173,11 @@ function buildQueueRow(cfg) {
   if (cfg.annNum) c4.appendChild(annBadge(cfg.annNum));
   row.appendChild(c4);
 
-  const c5 = document.createElement('div');
-  c5.className = 'wedge-queue-cell';
-  c5.textContent = cfg.age;
-  if (cfg.annOnAge) c5.appendChild(annBadge(cfg.annOnAge));
-  row.appendChild(c5);
-
   const c6 = document.createElement('div');
   c6.className = 'wedge-queue-cell wedge-queue-cell--status';
+  c6.dataset.label = 'Status';
   c6.textContent = cfg.status;
+  if (cfg.annOnAge) c6.appendChild(annBadge(cfg.annOnAge));
   row.appendChild(c6);
 
   return row;

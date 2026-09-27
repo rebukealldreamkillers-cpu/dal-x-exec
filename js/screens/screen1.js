@@ -373,11 +373,13 @@ function buildTriggerTable(rows) {
 
     const c1 = document.createElement('div');
     c1.className = 'wedge-trigger-cell wedge-trigger-cell--name';
+    c1.dataset.label = 'Rule';
     c1.textContent = row.name;
     rEl.appendChild(c1);
 
     const c2 = document.createElement('div');
     c2.className = 'wedge-trigger-cell';
+    c2.dataset.label = 'Severity';
     const sevChip = document.createElement('span');
     sevChip.className = 'wedge-sev-chip';
     if (row.severity === 'HIGH_RISK') {
@@ -391,17 +393,21 @@ function buildTriggerTable(rows) {
 
     const c3 = document.createElement('div');
     c3.className = 'wedge-trigger-cell wedge-trigger-cell--flag';
+    c3.dataset.label = 'Status';
     if (row.controlling) {
       const flag = document.createElement('span');
       flag.className = 'wedge-controlling-flag';
-      flag.textContent = '← CONTROLLING';
+      flag.textContent = 'CONTROLLING';
       c3.appendChild(flag);
       if (row.annNum) c3.appendChild(annBadge(row.annNum));
+    } else {
+      c3.textContent = '';
     }
     rEl.appendChild(c3);
 
     const c4 = document.createElement('div');
     c4.className = 'wedge-trigger-cell wedge-trigger-cell--mono';
+    c4.dataset.label = 'Match condition';
     c4.textContent = row.detail;
     rEl.appendChild(c4);
 
