@@ -98,7 +98,7 @@ function buildWedgeWindow(activeKey, mainBuilder) {
 
 /*
  * buildStepIndicator(num, label)
- * "Step 1 of 6 — Intercept" style label above the product window.
+ * "Step 1 of 6 - Intercept" style label above the product window.
  */
 function buildStepIndicator(num, label) {
   const wrap = document.createElement('div');
@@ -207,8 +207,8 @@ function buildDemoOrientation() {
   const why = document.createElement('p');
   why.className = 'demo-orientation__why';
   why.textContent =
-    'Consequential AI agents — those registered to enterprise systems that move money, '
-    + 'modify infrastructure, or commit your organization to action — are executing today. '
+    'Consequential AI agents - those registered to enterprise systems that move money, '
+    + 'modify infrastructure, or commit your organization to action - are executing today. '
     + 'When an auditor, regulator, or board asks "who authorized this," there is no answer. '
     + 'DAL-X exists to make that answer verifiable: every governed execution produces '
     + 'a signed authority record tied to a specific human decision.';
@@ -218,7 +218,7 @@ function buildDemoOrientation() {
   scope.className = 'demo-orientation__scope';
   scope.textContent =
     'DAL-X does not govern every AI agent. It governs the ones your enterprise '
-    + 'has registered — agents with the authority to act on your behalf in downstream systems.';
+    + 'has registered - agents with the authority to act on your behalf in downstream systems.';
   wrap.appendChild(scope);
 
   return wrap;

@@ -473,7 +473,7 @@ function createStatusChip(state, label) {
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   GATE PROCESS FLOWCHART  (Screens 2–5)
+   GATE PROCESS FLOWCHART  (Screens 2-5)
    Vertical stepper showing the end-to-end DAL-X process with each step
    carrying a state: 'done' | 'skip' | 'error' | 'success' | 'block' | 'execute'
    DAL-X integration points are flagged with dalx: true.

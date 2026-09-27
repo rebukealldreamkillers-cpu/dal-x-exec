@@ -1,22 +1,22 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   canvas-engine.js — Animated background visualization for DAL-X-EXEC.
+   canvas-engine.js - Animated background visualization for DAL-X-EXEC.
 
    Renders a fixed full-viewport canvas beneath the UI whose particles
    and imagery change per scene. Scenes are switched via
    CanvasEngine.setScene(name) as the user progresses through screens.
 
    Exposed API:
-     CanvasEngine.init()               — attach canvas and start RAF loop
-     CanvasEngine.setScene(name)       — instantly transition to a scene
-     CanvasEngine.transitionScene(a,b,ms) — crossfade between scenes
+     CanvasEngine.init()               - attach canvas and start RAF loop
+     CanvasEngine.setScene(name)       - instantly transition to a scene
+     CanvasEngine.transitionScene(a,b,ms) - crossfade between scenes
 
    Scenes:
-     'chaos'      — screen 0: unauthorized executions flood past
-     'demo'       — screens 1–6: DAL-X wedge blocks unauthorized packets
-     'assessment' — screens 7–8: analytical hex grid, calmer motion
-     'simulation' — screens 9–15: teal authority-chain streams
-     'technical'  — screens 16–18: subtle matrix columns
-     'review'     — screens 19–21: gold particles rising, chain glow
+     'chaos'      - screen 0: unauthorized executions flood past
+     'demo'       - screens 1-6: DAL-X wedge blocks unauthorized packets
+     'assessment' - screens 7-8: analytical hex grid, calmer motion
+     'simulation' - screens 9-15: teal authority-chain streams
+     'technical'  - screens 16-18: subtle matrix columns
+     'review'     - screens 19-21: gold particles rising, chain glow
 ════════════════════════════════════════════════════════════════════════════ */
 
 const CanvasEngine = (() => {

@@ -128,7 +128,7 @@ const S8_OUTCOMES = {
   },
 
   urgent_investigation: {
-    /* Rendered by buildIncompleteScreen — not through createDecisionBlock */
+    /* Rendered by buildIncompleteScreen - not through createDecisionBlock */
     isIncomplete: true,
     urgentRisk:   true,
     evidence:     'business',
@@ -136,7 +136,7 @@ const S8_OUTCOMES = {
   },
 
   more_info_required: {
-    /* Rendered by buildIncompleteScreen — not through createDecisionBlock */
+    /* Rendered by buildIncompleteScreen - not through createDecisionBlock */
     isIncomplete: true,
     urgentRisk:   false,
     evidence:     'business',
@@ -435,7 +435,7 @@ function s8HeadingClass(resultKey) {
 /* ── Incomplete assessment renderer ─────────────────────────────────────── */
 /*
  * Used for urgent_investigation and more_info_required outcomes.
- * These are not final decisions — they mean the visitor left questions
+ * These are not final decisions - they mean the visitor left questions
  * blank or marked them Unknown. Show exactly what is missing and what
  * to do about each type, then let the visitor go back and fix it.
  */
@@ -457,12 +457,12 @@ function buildIncompleteScreen(screen, resultKey, cfg) {
   title.textContent = 'Assessment incomplete';
   screen.appendChild(title);
 
-  /* Context paragraph — different for urgent vs. standard */
+  /* Context paragraph - different for urgent vs. standard */
   const context = document.createElement('p');
   context.className = 'incomplete-context';
   if (cfg.urgentRisk) {
     context.textContent =
-      'The answers you provided score as high risk — but the assessment cannot reach a final result '
+      'The answers you provided score as high risk, but the assessment cannot reach a final result '
       + 'until every question has a confirmed answer. Go back and complete the fields shown below.';
   } else {
     context.textContent =
@@ -477,7 +477,7 @@ function buildIncompleteScreen(screen, resultKey, cfg) {
     riskNote.className = `s8-risk-note s8-risk-note--${riskBand}`;
     riskNote.innerHTML =
       `<span class="s8-risk-note__score">${riskScore}</span>`
-      + `<span class="s8-risk-note__label">Partial risk score — ${S8_RISK_BAND_LABELS[riskBand] || riskBand} based on answers given so far</span>`;
+      + `<span class="s8-risk-note__label">Partial risk score - ${S8_RISK_BAND_LABELS[riskBand] || riskBand} based on answers given so far</span>`;
     screen.appendChild(riskNote);
   }
 
@@ -544,7 +544,7 @@ function buildIncompleteScreen(screen, resultKey, cfg) {
     screen.appendChild(section);
   }
 
-  /* Nav — back only */
+  /* Nav - back only */
   const nav = document.createElement('nav');
   nav.className = 'screen-nav screen-nav--start';
 
@@ -565,7 +565,7 @@ function renderScreen8() {
   const screen = document.getElementById('screen-8');
   screen.innerHTML = '';
 
-  /* Incomplete outcomes get their own renderer — no decision block */
+  /* Incomplete outcomes get their own renderer - no decision block */
   if (cfg.isIncomplete) {
     buildIncompleteScreen(screen, resultKey, cfg);
     return;
