@@ -67,7 +67,8 @@ function buildHero() {
   subtitle.textContent =
     'DAL-X is the enforcement gate between what consequential AI agents propose '
     + 'and what downstream systems execute. Not for every agent. '
-    + 'For agents that move money, modify infrastructure, or commit your enterprise to action.';
+    + 'For agents that move money, modify infrastructure, or commit your enterprise to action. '
+    + 'No authority, no execution.';
   hero.appendChild(subtitle);
 
   const ctas = document.createElement('div');
