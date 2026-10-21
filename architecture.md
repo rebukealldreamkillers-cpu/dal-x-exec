@@ -298,4 +298,4 @@ These controls are implied by the data model but are not enforced in code as of 
 
 ### simulation.dal-x.com
 
-The simulation site computes gate outcomes in the browser and makes no DAL-X calls. It is an illustration, not a live gate. Labeling it as an illustration is planned in PILOT-00. Wiring screens 1 to 6 to a DAL-X sandbox is planned in PILOT-14.
+The simulation site computes gate outcomes in the browser and makes no DAL-X calls. It is an illustration, not a live gate. Screens 1 to 6 carry a notice saying so (PILOT-00, done 2026-10-21). Wiring screens 1 to 6 to a DAL-X sandbox is planned in PILOT-14.

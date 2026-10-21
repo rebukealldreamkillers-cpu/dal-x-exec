@@ -34,7 +34,7 @@ This copy of the guide predates the current integration contract. The maintained
 - Execution tokens are bearer tokens, not bound to the downstream service that presents them (planned, PILOT-03 and PILOT-05).
 - Drift is evaluated one submission at a time. A payment split into several below an approval threshold is not detected (planned, PILOT-12).
 
-**simulation.dal-x.com** computes gate outcomes in the browser and makes no DAL-X calls. It illustrates the flow; it does not exercise a live gate (labeling planned in PILOT-00, live wiring of screens 1 to 6 to a sandbox planned in PILOT-14).
+**simulation.dal-x.com** computes gate outcomes in the browser and makes no DAL-X calls. It illustrates the flow; it does not exercise a live gate (screens 1 to 6 labelled as an illustration in PILOT-00, done 2026-10-21; live wiring of screens 1 to 6 to a sandbox planned in PILOT-14).
 
 ---
 
