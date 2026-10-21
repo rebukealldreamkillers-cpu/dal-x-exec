@@ -12,6 +12,7 @@ function renderScreen6() {
   screen.innerHTML = '';
 
   screen.appendChild(buildSurfaceBadge());
+  screen.appendChild(buildIllustrationNotice());
   screen.appendChild(buildStepIndicator(6, 'Enforcement'));
 
   const win = buildWedgeWindow('timeline', main => {

@@ -17,6 +17,7 @@ function renderScreen2() {
   screen.innerHTML = '';
 
   screen.appendChild(buildSurfaceBadge());
+  screen.appendChild(buildIllustrationNotice());
   screen.appendChild(buildStepIndicator(2, 'Queue'));
 
   const win = buildWedgeWindow('queue', main => {
@@ -191,6 +192,7 @@ function renderScreen3() {
   screen.innerHTML = '';
 
   screen.appendChild(buildSurfaceBadge());
+  screen.appendChild(buildIllustrationNotice());
   screen.appendChild(buildStepIndicator(3, 'Workbench'));
 
   const win = buildWedgeWindow('workbench', main => {
@@ -444,6 +446,7 @@ function renderScreen4() {
   screen.innerHTML = '';
 
   screen.appendChild(buildSurfaceBadge());
+  screen.appendChild(buildIllustrationNotice());
   screen.appendChild(buildStepIndicator(4, 'Decision'));
 
   const win = buildWedgeWindow('workbench', main => {
@@ -616,6 +619,7 @@ function renderScreen5() {
   screen.innerHTML = '';
 
   screen.appendChild(buildSurfaceBadge());
+  screen.appendChild(buildIllustrationNotice());
   screen.appendChild(buildStepIndicator(5, 'Authorization'));
 
   const win = buildWedgeWindow('tokens', main => {

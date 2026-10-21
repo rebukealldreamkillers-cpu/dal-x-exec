@@ -193,6 +193,14 @@ a {
   margin-bottom: var(--space-4);
 }
 
+.illustration-notice {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  border-left: 2px solid var(--color-border-strong);
+  padding-left: var(--space-3);
+  margin: 0 0 var(--space-4);
+}
+
 /* ─── Demo orientation ───────────────────────────────────────────────────── */
 .demo-orientation {
   background: var(--color-surface);

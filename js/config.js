@@ -4,7 +4,7 @@
 const JL_BOOKING_URL = 'https://calendly.com/kevin-jochannilabs';
 
 /* Fallback contact email shown if email send fails */
-const JL_CONTACT_EMAIL = 'kmoore1962@yahoo.com';
+const JL_CONTACT_EMAIL = 'kevin@jochannilabs.com';
 
 /*
  * EmailJS credentials - create a free account at https://www.emailjs.com/

@@ -173,6 +173,21 @@ function buildSurfaceBadge() {
   return badge;
 }
 
+/*
+ * buildIllustrationNotice()
+ * Shown under the surface badge on screens 1 to 6. The gate outcomes on these
+ * screens are computed in the browser; no request reaches a DAL-X gate.
+ * Remove when the screens are wired to a live sandbox (PILOT-14).
+ */
+function buildIllustrationNotice() {
+  const notice = document.createElement('p');
+  notice.className = 'illustration-notice';
+  notice.setAttribute('role', 'note');
+  notice.textContent =
+    'Illustration of DAL-X gate decisions. Responses on this page are not produced by a live DAL-X gate.';
+  return notice;
+}
+
 /* ── Screen 1 render ───────────────────────────────────────────────────── */
 
 /*
@@ -230,6 +245,7 @@ function renderScreen1() {
   screen.innerHTML = '';
 
   screen.appendChild(buildSurfaceBadge());
+  screen.appendChild(buildIllustrationNotice());
   screen.appendChild(buildDemoOrientation());
   screen.appendChild(buildStepIndicator(1, 'Intercept'));
 
