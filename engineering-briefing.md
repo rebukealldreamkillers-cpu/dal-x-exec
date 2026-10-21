@@ -41,11 +41,11 @@ DAL-X is not:
 
 DAL-X is:
 - An interception layer for registered agents operating in areas of consequential exposure
-- An authority checkpoint that determines whether the agent possesses delegated authority, requires human approval, or must be denied
+- An authority checkpoint that routes each proposed action to human authority or blocks it
 - A token issuer that proves authority was granted within the registered mandate
 - A gate that blocks execution if no valid token exists
 
-Human review is not required for every action. Valid delegated authority may permit execution without human intervention. DAL-X evaluates the proposed action, then authorizes, routes for review, escalates, or denies based on the trigger logic established for that agent.
+Human review is required for every execution today. Auto-release is suspended: an action the trigger logic classifies as within delegated authority still enters the Review Queue, and no submission is released without a human decision. DAL-X evaluates the proposed action, then routes it for review, escalates it, or blocks it based on the trigger logic established for that agent.
 
 > No DAL-X authority. No execution.
 
@@ -71,14 +71,15 @@ Registered autonomous agent
   → proposes consequential action
   → submits to DAL-X (intercept)
   → DAL-X evaluates against enterprise-specific trigger logic
-  → DAL-X authorizes, routes for human review, escalates, or denies
+  → DAL-X routes for human review, escalates, or blocks
+  → a human reviewer approves or rejects
   → authorized actions receive a constrained execution token
   → downstream system validates token before executing
   → execution proceeds only if token is valid
 ```
 
 **What the enterprise now has:**
-An immutable record of every governed agent action, the authority evaluation applied, who reviewed it where required, what was authorized within what scope, and proof that enforcement ran at the execution boundary.
+An append-only record of every governed agent action, the authority evaluation applied, who reviewed it where required, what was authorized within what scope, and proof that enforcement ran at the execution boundary.
 
 ---
 
@@ -91,24 +92,34 @@ An immutable record of every governed agent action, the authority evaluation app
 Add this call wherever the registered agent generates an output that moves toward execution — before it executes.
 
 ```http
-POST https://www.decisionauthoritylayer.ai/api/v1/submissions
+POST https://www.decisionauthoritylayer.ai/api/v1/runtime/ingest-agent-output
 Authorization: Bearer dalx_...
 
 {
-  "submitter": "treasury-agent-v1",
-  "output_content": "Transfer $47,500 to account 8821-A",
-  "execution_intent": {
-    "action": "payment_transfer",
-    "target": "core-banking-system",
-    "amount_cents": 4750000,
-    "currency": "USD"
-  },
-  "source_identifier": "txn-ref-20240823-001"
+  "agent_key":        "treasury-agent-v1",
+  "source_system":    "treasury-ops",
+  "workflow_name":    "vendor-payments",
+  "model_name":       "claude-sonnet",
+  "model_version":    "2026-09",
+  "output_summary":   "Transfer $47,500 to account 8821-A",
+  "requested_action": "payment_transfer",
+  "execution_target": "core-banking-system",
+  "amount":           47500,
+  "currency":         "USD",
+  "payload": {
+    "attemptedAction":         "payment_transfer",
+    "actionTarget":            "core-banking-system",
+    "recipientOrCounterparty": "Acme Supplies Ltd",
+    "recipientAccountRef":     "8821-A",
+    "paymentType":             "wire"
+  }
 }
 ```
 
+`agent_key` must match an active registered agent. `amount` is in major units; DAL-X stores it in cents. The enforcement gate later requires all seven payment intent fields (action, target, amount, currency, recipient, recipient account reference, payment type). On this route they are read from `payload` only when `payload.attemptedAction` is present. `POST /api/v1/submissions` remains supported but is not the public integration path.
+
 **What DAL-X does with this:**
-Evaluates the proposed action against trigger logic built for this registered agent — its business mandate, permitted actions, risk thresholds, regulatory obligations, and required authority chain. DAL-X then authorizes the action, routes it for human review, escalates it, or denies it.
+Evaluates the proposed action against trigger logic built for this registered agent: its business mandate, permitted actions, risk thresholds, regulatory obligations, and required authority chain. DAL-X then routes it for human review, escalates it, or blocks it. Execution stays blocked until a human reviewer approves.
 
 **Integration scope:**
 Submission instrumentation may require approximately one engineering day after the agent scope, submission schema, and enterprise-specific trigger logic have been established.
@@ -119,23 +130,23 @@ The API call may take one day. The DAL-X integration does not.
 
 ## SLIDE 5 — WHAT HAPPENS INSIDE DAL-X
 
-**Headline:** Authority evaluation, immutable decision, signed token.
+**Headline:** Authority evaluation, append-only decision record, signed token.
 
 **Body:**
 
 Once a submission enters DAL-X:
 
 **Step 1 — Authority evaluation**
-Enterprise-specific trigger logic evaluates whether the proposed action falls within the agent's registered mandate and delegated authority. DAL-X authorizes the action, routes it for human review, escalates it, or denies it. Actions within delegated authority boundaries may be authorized without human intervention.
+Enterprise-specific trigger logic evaluates whether the proposed action falls within the agent's registered mandate and delegated authority. DAL-X routes it for human review, escalates it, or blocks it. Auto-release is suspended, so actions within delegated authority boundaries also wait for a human decision.
 
 **Step 2 — Review queue (where required)**
 Where trigger logic requires human authority, a reviewer sees the submission, the agent's output, the authority evaluation, and any drift evidence. They choose: approve, reject, escalate, or request revision. A reason is required. Reviewers cannot approve their own submissions. They cannot act without creating a decision record.
 
 **Step 3 — Decision record**
-The decision is written as an immutable record. It cannot be edited. It timestamps who decided, what was authorized within what scope, and what evidence was present at the time of the decision.
+The decision is written as an append-only record. It timestamps who decided, what was authorized within what scope, and what evidence was present at the time of the decision. Append-only is enforced by application code and convention today: no database trigger prevents UPDATE or DELETE, and the audit hash chain detects tampering but its head is not anchored outside the database (planned, PILOT-07).
 
 **Step 4 — Execution token**
-On authorization, DAL-X issues a signed, single-use, time-bound execution token constrained to this specific action, scope, and target. The token is returned to the caller.
+On a reviewer's approval, DAL-X issues a signed, single-use, 15-minute execution authorization constrained to this specific action, scope, and target. The integration reads its `authorization_id` from `GET /api/v1/submissions/:id`. The token is a bearer token: it is not bound to the downstream service that presents it (planned, PILOT-03 and PILOT-05).
 
 The enterprise owns the authority requirements and decision records. Jochanni Labs translates those requirements into agent-specific trigger logic. The enterprise validates and approves that logic before enforcement activates.
 
@@ -158,7 +169,7 @@ Authorization: Bearer dalx_enforcement_...
   "execution_request_id": "sub_01J...",
   "execution_target":     "core-banking-system",
   "attempted_action":     "payment_transfer",
-  "execution_token":      "dalx_exec_eyJ..."
+  "authorization_id":     "3e7f8d9a-1234-5678-abcd-ef0123456789"
 }
 ```
 
@@ -194,7 +205,7 @@ An execution receipt is written on every attempt — authorized or rejected. Pro
 
 **Body:**
 
-Shadow mode lets you add the submission call without activating the enforcement gate.
+Shadow mode lets you add the submission call without activating the enforcement gate. Today a shadow key takes effect only on `POST /api/v1/submissions`. The public runtime ingest route does not run shadow evaluation: every accepted call creates a live, blocked review item.
 
 **What shadow mode does:**
 - The registered agent's proposed actions flow into DAL-X and are evaluated
@@ -209,7 +220,7 @@ Shadow mode lets you add the submission call without activating the enforcement 
 - Drift detection baselines are established from actual behavior
 
 **How shadow mode transitions to enforcement:**
-After calibration, the enterprise creates an enforcement key used by the integration governing the approved action category and replaces the shadow key during a controlled deployment. Shadow and enforcement keys are separate. The transition is deliberate, scoped, and documented.
+After calibration, an admin moves the shadow submission key to enforcement, or replaces it with an enforced submission key, during a controlled deployment. The service at the execution boundary receives a separate enforcement key. A key cannot hold both submit and enforcement scope. The transition is deliberate, scoped, and documented.
 
 **Integration effort in shadow mode:** One API call from the registered agent. No downstream enforcement gate required at this stage.
 
@@ -222,7 +233,7 @@ After calibration, the enterprise creates an enforcement key used by the integra
 **Body:**
 
 **Shadow mode instrumentation**
-- Add `POST /v1/submissions` from the registered agent before execution
+- Add `POST /api/v1/runtime/ingest-agent-output` from the registered agent before execution
 - Register the agent in the DAL-X workspace with its identifier and mandate
 - Estimated instrumentation effort: approximately 1 engineering day
 
@@ -242,7 +253,7 @@ Enforcement requires token validation at the point where execution is triggered.
 
 | Flow type | Enforcement path |
 |-----------|-----------------|
-| Synchronous (agent executes inline) | Agent submits and receives a pending decision state when human authority is required. The application preserves the proposed action, releases the synchronous request, and resumes through webhook notification or polling after authorization is granted. |
+| Synchronous (agent executes inline) | Agent submits and receives a pending decision state when human authority is required. The application preserves the proposed action, releases the synchronous request, and resumes through polling after a reviewer grants authorization. A decision webhook normally arrives within about a minute but is not guaranteed inside the 15-minute authorization window, so polling remains the fallback. |
 | Already async or event-driven | Integrates cleanly: submit, receive token on authorization, validate at execution boundary. |
 | Batch or scheduled execution | Typically straightforward: submit batch, review window, execute on authority. |
 
@@ -262,7 +273,7 @@ This slide is required. Enterprise pilots must understand the distinction before
 
 **What DAL-X enforces on its own infrastructure today:**
 
-The enforcement gateway (`POST /v1/enforcement/execute`) is in production and correctly enforces:
+The enforcement gateway (`POST /api/v1/enforcement/execute`) is in production and correctly enforces:
 
 - Ed25519 token signature verification — unsigned or tampered tokens are rejected
 - Token binding — token must match the specific agent, submission, target, and approved payload hash
@@ -270,7 +281,17 @@ The enforcement gateway (`POST /v1/enforcement/execute`) is in production and co
 - Single-use consumption — replayed tokens are rejected and evidenced
 - Payload hash binding — altered payloads are rejected even with a valid token
 
-Every outcome — accepted or rejected — produces an immutable execution receipt, a downstream event record, drift events where applicable, and a governance timeline entry. This enforcement posture is proven against real database state.
+Every outcome, accepted or rejected, produces an execution receipt, a downstream event record, drift events where applicable, and a governance timeline entry. This enforcement posture is proven against real database state.
+
+**What DAL-X does not enforce today** (as of 2026-10-21):
+
+- Agent identity is self-asserted: `agent_key` is sent in the request body and is not bound to the API key (planned, PILOT-02).
+- Agent execution target limits are stored but not enforced (planned, PILOT-02).
+- No code path sets an agent to suspended, and the enforcement gate does not check agent status (planned, PILOT-04).
+- Audit records are append-only by convention, with no external anchor for the hash chain head (planned, PILOT-07).
+- Execution tokens are bearer tokens, not bound to the downstream service (planned, PILOT-03 and PILOT-05).
+- Drift is evaluated one submission at a time. A payment split into several below an approval threshold is not detected (planned, PILOT-12).
+- Offline token verification by the downstream system is not built. The online gate above is the only verification mode (planned, PILOT-05).
 
 ---
 
@@ -278,7 +299,7 @@ Every outcome — accepted or rejected — produces an immutable execution recei
 
 **1. The downstream system must call the enforcement gateway before executing.**
 
-DAL-X cannot intercept a call that goes directly to your downstream system. If your agent holds credentials to call your payment processor, ERP system, or database write path directly — and uses them — DAL-X has no visibility and no ability to block. Your downstream system must be modified to call `POST /v1/enforcement/execute` before every governed action executes, and must refuse to proceed if `execution_allowed` is not `true`.
+DAL-X cannot intercept a call that goes directly to your downstream system. If your agent holds credentials to call your payment processor, ERP system, or database write path directly, and uses them, DAL-X has no visibility and no ability to block. Your downstream system must be modified to call `POST /api/v1/enforcement/execute` before every governed action executes, and must refuse to proceed if `execution_allowed` is not `true`.
 
 This is not a DAL-X feature. It is an architectural requirement your engineering team must implement and own.
 
@@ -294,7 +315,7 @@ If the downstream system has multiple paths to execution — happy path, retry p
 
 **What the acceptance test proves:**
 
-The day-30 acceptance test demonstrates the complete governance loop through the DAL-X enforcement simulator: agent output, authority evaluation, decision record, token issuance, enforcement gateway validation, execution receipt, and governance timeline. This proves DAL-X's enforcement posture is correct.
+The day-30 acceptance test demonstrates the complete governance loop through `POST /api/v1/enforcement/execute`, receipt verification, and execution confirmation: agent output, authority evaluation, decision record, token issuance, enforcement gateway validation, execution receipt, and governance timeline. This proves DAL-X's enforcement posture is correct.
 
 It does not prove that your production downstream system calls the enforcement gateway. That is the production activation work that follows the pilot.
 
@@ -311,12 +332,12 @@ DAL-X does not govern every AI-generated action in the enterprise. It governs th
 **What the evidence package contains**
 - Complete governance timeline proving authority existed before execution
 - Decision records linking each action to the human who authorized it
-- Drift detection log showing behavioral deviation identified before authority was granted
+- Drift detection log showing behavioral deviation identified before authority was granted, evaluated per submission
 - Execution receipts confirming downstream enforcement
 - Authority chain from submission through token to receipt — exportable for audit
 
 **What this replaces**
-Without DAL-X, this evidence must be assembled manually from agent logs, approval email threads, and execution records across separate systems — if it exists at all. For a single regulatory inquiry, that reconstruction costs multiples of the pilot fee. For a pattern of inquiries, it becomes a recurring operational liability.
+Without DAL-X, this evidence must be assembled manually from agent logs, approval email threads, and execution records across separate systems, if it exists at all. For a single regulatory inquiry, that reconstruction can take weeks of staff time. For a pattern of inquiries, it becomes a recurring operational liability.
 
 This evidence answers the question regulators, auditors, and boards are asking: *who authorized this action, under what authority, and how do we know it was enforced before execution occurred?*
 
@@ -357,11 +378,4 @@ Real agent submissions flow into DAL-X. Trigger logic tuned against actual behav
 **Phase 3 — Acceptance test (day 30)**
 A restricted acceptance test key activates enforcement for the selected agent and action category within a controlled test scope. The DAL-X governance loop runs end-to-end — agent output, authority evaluation, decision record, token issuance, downstream validation, execution receipt, and governance timeline. Upon successful completion, the enterprise receives the pilot evidence report and a production activation recommendation.
 
-**Pilot fee: $15,000**
-
-Payment structure:
-- $7,500 at commencement
-- $5,000 after shadow calibration complete
-- $2,500 after acceptance testing complete
-
-The enterprise pays for the pilot work and evidence. Production activation is a separate decision made after testing.
+Production activation is a separate decision made after testing.

@@ -7,6 +7,37 @@
 
 ---
 
+## Current Behavior Notice (2026-10-21)
+
+This copy of the guide predates the current integration contract. The maintained version is `docs/integration-guide.md` in the DAL-X application repository. Where a section below conflicts with this notice, this notice is correct.
+
+**Public ingest path.** Registered agents submit through `POST /api/v1/runtime/ingest-agent-output`. `POST /api/v1/submissions` remains supported but is not the public integration path. Shadow-mode keys take effect only on `POST /api/v1/submissions`; the runtime ingest route does not run shadow evaluation and creates a live, blocked review item for every accepted call.
+
+**Human authority is required for every execution.** Auto-release is suspended. No submission is released without a human decision, and no execution token is returned at submission time. A submission classified `auto_approve` enters the Review Queue as `needs_review`. A submission classified `blocked` waits in the Review Queue, where a lead reviewer or admin may approve or reject it. An API key cannot approve a submission: `POST /api/v1/runtime/submissions/:id/authority-decision` returns `403 human_authority_required` for `approve`.
+
+**Complete execution intent.** `POST /api/v1/enforcement/execute` rejects a submission whose stored execution intent is missing any of seven fields: action, target, amount, currency, recipient, recipient account reference, payment type. On the runtime ingest route these fields are read from `payload` (`attemptedAction`, `actionTarget`, `recipientOrCounterparty`, `recipientAccountRef`, `paymentType`, with top-level `amount` and `currency`) only when `payload.attemptedAction` is present.
+
+**After the gate accepts.** The gate issues a receipt and executes nothing. The system that acts calls `POST /api/v1/receipts/:id/verify` before acting, then reports the outcome to `POST /api/v1/enforcement/confirm-execution` with the observed execution. Without a confirmation the request closes 30 minutes after acceptance.
+
+**API key scopes.** Submission keys hold `submit`. Enforcement keys hold `enforcement` only; key creation refuses `enforcement` combined with `submit` or `sandbox`. `POST /api/v1/downstream-simulator/execute` returns 404 in production.
+
+**Decision webhooks are a notice, not a guarantee.** Poll `GET /api/v1/submissions/:id` to learn of an approval in time to execute. A webhook grants no execution authority.
+
+**Verification modes.** Online verification through `POST /api/v1/enforcement/execute` is built and live. Offline verification of the signed token by the downstream system is not built (contract planned in PILOT-03, implementation in PILOT-05).
+
+**Controls not enforced today:**
+
+- Agent identity is self-asserted: `agent_key` is sent in the request body and is not bound to the API key (planned, PILOT-02).
+- Agent execution target limits (`allowed_execution_targets`) are stored but not enforced (planned, PILOT-02).
+- No code path sets an agent to suspended, and the enforcement gate does not check agent status (planned, PILOT-04).
+- Audit tables are append-only by convention. No database trigger prevents UPDATE or DELETE, and the hash chain head is not anchored outside the database (planned, PILOT-07).
+- Execution tokens are bearer tokens, not bound to the downstream service that presents them (planned, PILOT-03 and PILOT-05).
+- Drift is evaluated one submission at a time. A payment split into several below an approval threshold is not detected (planned, PILOT-12).
+
+**simulation.dal-x.com** computes gate outcomes in the browser and makes no DAL-X calls. It illustrates the flow; it does not exercise a live gate (labeling planned in PILOT-00, live wiring of screens 1 to 6 to a sandbox planned in PILOT-14).
+
+---
+
 ## 1. Introduction
 
 DAL-X (Decision Authority Layer) is an execution authority enforcement system. It intercepts proposed actions from registered autonomous agents, evaluates them against enterprise-specific trigger logic, and either authorizes execution, routes the action for human review, escalates, or denies.
@@ -27,17 +58,16 @@ Between those two points, DAL-X handles authority evaluation, human review routi
 ```
 Enterprise Autonomous Agent
   │
-  │  POST /api/v1/submissions          ← Integration Point 1: Intercept
+  │  POST /api/v1/runtime/ingest-agent-output   ← Integration Point 1: Intercept
   ▼
 DAL-X Authority Evaluation
   │
-  ├─ auto_released  ─────────────────── authorization_id returned in submission response
-  ├─ needs_review   ─────────────────── enters human review queue
+  ├─ needs_review   ─────────────────── enters human review queue (auto-release is suspended)
   │       │
   │       ▼  Reviewer approves in DAL-X web app
-  │   Webhook fires → GET /api/v1/submissions/:id → authorization_id (UUID)
+  │   Poll GET /api/v1/submissions/:id → authorization_id (UUID)
   │
-  └─ auto_blocked / rejected ─────────── no authorization issued, action denied
+  └─ blocked / rejected ─────────────── no authorization unless a lead reviewer or admin approves
 
 Agent (or calling service) holds the authorization_id
   │
@@ -63,16 +93,16 @@ DAL-X is not a generic AI governance platform with a default ruleset. Every rule
 
 ### 3.1 What Trigger Logic Does
 
-When a submission arrives at `POST /api/v1/submissions`, DAL-X runs every active trigger rule for your workspace against it. The engine evaluates the rules in parallel, collects all matches, and assigns the highest-severity match as the controlling outcome. That outcome determines what happens next:
+When a submission arrives at DAL-X, DAL-X runs every active trigger rule for your workspace against it. The engine evaluates the rules in parallel, collects all matches, and assigns the highest-severity match as the controlling outcome, which determines what happens next:
 
 | Severity outcome | What happens |
 |-----------------|-------------|
-| `auto_approve` | Authorization issued immediately — no reviewer queue |
+| `auto_approve` | Auto-release is suspended: enters the reviewer queue as `needs_review` |
 | `needs_review` | Submission enters reviewer queue |
 | `high_risk` | Submission enters reviewer queue with lead-review flag |
-| `blocked` | Submission rejected at intake — no authorization ever issued |
+| `blocked` | Execution blocked; enters the queue for lead reviewers and admins, who may approve or reject |
 
-If no rule matches, DAL-X applies the **conservative default: `needs_review`**. The engine never silently approves an unmatched submission. An `auto_approve` outcome requires a rule that explicitly authorizes it.
+If no rule matches, DAL-X applies the **conservative default: `needs_review`**. The engine never silently approves an unmatched submission. While auto-release is suspended, no rule outcome releases a submission without a human decision.
 
 ### 3.2 The 12 Rule Categories
 
@@ -93,9 +123,9 @@ Every rule is tagged with one category. Categories define what kind of risk is b
 | `ambiguous_ownership` | Unowned action items | "Someone will," "you'll hear from us" |
 | `policy_required` | Custom rules that don't fit the above | Enterprise-specific policy enforcement, internal approval thresholds |
 
-### 3.3 The 5 Condition Types
+### 3.3 Condition Types
 
-Rules evaluate against submission fields using one of five condition types. Understanding these determines how you structure your submission payload — particularly the `metadata` field.
+Rules evaluate against submission fields using one of eight condition types. The five below are the most common; the others are `metadata_keyword`, `source_authority`, and `evidence_present`. Understanding these determines how you structure your submission payload, particularly the `metadata` field.
 
 **`keyword` — case-insensitive substring match**
 ```json
@@ -187,7 +217,7 @@ Without the field mapping, rules cannot target the right data. A `currency_thres
 
 ### 3.5 The Starter Rule Pack
 
-DAL-X provisions 25 starter rules to every new workspace at onboarding. These are detection patterns for calibration — not enterprise authority logic. No starter rule should be treated as safe for immediate enforcement activation without first mapping it to the registered agent's mandate and validating it against shadow submissions from that specific agent.
+A new workspace is not provisioned with rules automatically. Rules are created by a workspace admin or owner, or loaded by Jochanni Labs during onboarding. The rules below are common starting patterns for calibration, not enterprise authority logic. No starter rule should be treated as safe for immediate enforcement activation without first mapping it to the registered agent's mandate and validating it against shadow submissions from that specific agent.
 
 Financial services agents almost always require customization of:
 
@@ -231,12 +261,12 @@ Severity is set on the rule that fires. When multiple rules match a submission, 
 
 | Severity | Queue behavior | Authorization issued? | When to use |
 |----------|----------------|---------------|-------------|
-| `auto_approve` | No queue entry — immediate | Yes, immediately | Actions within established delegated authority limits. Requires explicit rule. |
+| `auto_approve` | Queue entry as `needs_review`. Auto-release is suspended. | Only after human approval | Actions within established delegated authority limits. The classification is kept on the record for the reviewer. |
 | `needs_review` | Queue entry — any active reviewer can act | Only after human approval | Standard review threshold. The default if no rule matches. |
-| `high_risk` | Queue entry — 15-second minimum time on screen, confirmation modal required | Only after lead reviewer approves | High-consequence actions requiring elevated authority |
-| `blocked` | No queue entry — rejected at intake | Never | Hard denials. No override path. |
+| `high_risk` | Queue entry. The workbench shows a 5-second minimum review timer (browser only, not enforced server-side) | Only after human approval | High-consequence actions requiring elevated authority |
+| `blocked` | Queue entry, visible to lead reviewers and admins only | Only if a lead reviewer or admin approves | Actions the rules stop. A lead reviewer or admin may approve (override the block) or reject (confirm the block). |
 
-The `auto_approve` outcome does not skip the audit trail. A decision record is still written with `reviewer_kind: 'auto'`. The governance timeline still records the full chain. The difference is that no human is in the review path.
+A `blocked` submission writes a decision record at intake with `reviewer_kind: 'auto'`. If a lead reviewer later decides it, that decision is a second record.
 
 ### 3.8 Testing Rules During Shadow Mode
 
@@ -275,8 +305,9 @@ Two API key types are required for a complete integration:
 
 | Key type | Scope field | Used for |
 |----------|-------------|----------|
-| Shadow key | `{ "submit": true }`, `shadow_mode: true` | Submission during calibration |
-| Enforcement key | `{ "submit": true, "enforcement": true }`, `shadow_mode: false` | Production enforcement |
+| Shadow key | `{ "submit": true }`, `shadow_mode: true` | Submission during calibration (`POST /api/v1/submissions` only) |
+| Submission key, enforced | `{ "submit": true }`, `shadow_mode: false` | Submission and `GET /api/v1/submissions/:id` in production |
+| Enforcement key | `{ "enforcement": true }` | `enforcement/execute`, `refresh-token`, `receipts/:id/verify`, `confirm-execution`. Cannot be combined with `submit` or `sandbox`. |
 
 Keys are workspace-scoped. One workspace per enterprise pilot.
 
@@ -304,10 +335,10 @@ Two distinct identifiers are created when a submission is authorized. Understand
 
 | Identifier | Format | Retrieved from | Used for |
 |------------|--------|----------------|----------|
-| `authorization_id` | UUID (e.g., `3e7f8d9a-...`) | Submission response (auto-released) or `GET /api/v1/submissions/:id` (after human review) | The `authorization_id` parameter in the `enforcement/execute` call |
+| `authorization_id` | UUID (e.g., `3e7f8d9a-...`) | `GET /api/v1/submissions/:id` after a reviewer approves | The `authorization_id` parameter in the `enforcement/execute` call |
 | `execution_token` | Signed string (`dalx_exec_eyJ...`) | Returned to the DAL-X web app UI on human approval — not transmitted to the integration | The `execution_token` parameter in the refresh-token call only |
 
-**In the auto-released path:** The `authorization_id` is available immediately via `GET /api/v1/submissions/:id` under `execution_authorization.authorization_id`.
+**Auto-released path:** suspended. No submission is released without a human decision.
 
 **In the human review path:** The `execution_token` signed string is returned to the DAL-X web application when the reviewer approves. It is **not** transmitted in the webhook payload and is **not** accessible to the integration. Your integration retrieves only the `authorization_id` UUID by calling `GET /api/v1/submissions/:id` after receiving the webhook.
 
@@ -319,6 +350,7 @@ Two distinct identifiers are created when a submission is authorized. Understand
 | Single-use | Yes — consumed after one successful validation |
 | Scope binding | Authorization is bound to a specific `action`, `target`, and payload hash |
 | Scope mismatch | Returns `REJECTED` with `scope_mismatch` reason |
+| Holder binding | None. The authorization is a bearer credential and is not bound to the downstream service that presents it (planned, PILOT-03 and PILOT-05). |
 | Expired authorization | Returns `REJECTED` with `Token has expired` — a new approval decision is required |
 
 ### 4.6 Network Requirements
@@ -342,8 +374,7 @@ Two distinct identifiers are created when a submission is authorized. Understand
 Enterprise agent output content   →  DAL-X submission endpoint
 DAL-X evaluation result           →  returned in submission response body
 Human review (where required)     →  occurs inside the DAL-X web application
-Authorization ID (UUID)           →  returned in submission response (auto-released)
-                                      or via GET /api/v1/submissions/:id (after human review)
+Authorization ID (UUID)           →  via GET /api/v1/submissions/:id after a reviewer approves
 Enforcement result                 →  returned synchronously by the enforcement/execute endpoint
 Audit trail                       →  stored within DAL-X; accessible via the web application timeline
 ```
@@ -407,9 +438,9 @@ Store it as `DALX_SHADOW_KEY` in your secrets manager. Inject it as an environme
 
 Provide the following for each agent being registered:
 
-- Agent identifier string (this is your `submitter` field — must be stable and unique per agent)
+- Agent identifier string (this is your `agent_key`; it must be stable and unique per agent. It is asserted in the request body and not yet bound to the API key, planned in PILOT-02)
 - Agent's authorized actions (what action categories it is permitted to initiate)
-- Execution targets (which downstream systems it can trigger)
+- Execution targets (which downstream systems it can trigger; stored on the agent record but not enforced until PILOT-02)
 - Authority requirement per action category (auto-approve thresholds, review requirements, escalation conditions)
 - Regulatory or internal policy requirements applicable to this agent
 
@@ -429,39 +460,49 @@ Find the point in the agent's execution path where it produces output that moves
 const DALX_API_URL = 'https://www.decisionauthoritylayer.ai'
 const DALX_KEY = process.env.DALX_SHADOW_KEY  // injected from secrets manager
 
-interface SubmissionResult {
-  id: string          // DAL-X submission ID — store this, you'll need it
-  status: string      // see status values below
-  created_at: string
+interface IngestResult {
+  event_id:         string   // runtime event record
+  submission_id:    string   // DAL-X submission ID: store this, you'll need it
+  execution_status: string   // 'execution_blocked' for every accepted call
+  review_status:    string   // 'needs_review' | 'high_risk' | 'blocked'
 }
 
 async function submitToDalx(
-  agentOutput: string,
-  action: string,
-  target: string,
-  sourceRef: string,
-  contextNote?: string,
-): Promise<SubmissionResult> {
-  const response = await fetch(`${DALX_API_URL}/api/v1/submissions`, {
+  outputSummary: string,
+  action: string,       // e.g. 'payment_transfer'
+  target: string,       // e.g. 'core-banking-system'
+  amount: number,       // major units, e.g. 47500
+  currency: string,     // e.g. 'USD'
+  recipient: string,
+  recipientAccountRef: string,
+  paymentType: string,
+  sourceRef: string,    // your internal transaction/job ID
+): Promise<IngestResult> {
+  const response = await fetch(`${DALX_API_URL}/api/v1/runtime/ingest-agent-output`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${DALX_KEY}`,
-      'Content-Type': 'application/json',
-      'X-Request-Id': crypto.randomUUID(),  // optional but aids log correlation
+      'Authorization':   `Bearer ${DALX_KEY}`,
+      'Content-Type':    'application/json',
+      'Idempotency-Key': sourceRef,              // prevents duplicate submissions on retry
     },
     body: JSON.stringify({
-      submitter:         'treasury-agent-v1',      // stable agent identifier
-      output_content:    agentOutput,              // what the agent proposed
-      input_context:     contextNote ?? null,      // optional: upstream context
-      execution_intent: {
-        action: action,   // e.g. 'payment_transfer'
-        target: target,   // e.g. 'core-banking-system'
-      },
-      source_identifier: sourceRef,               // your internal transaction/job ID
-      idempotency_key:   sourceRef,               // prevents duplicate submissions on retry
-      metadata: {
-        // add structured fields here for trigger rule matching
-        // e.g., amount: 47500.00 (numeric — enables metadata_equality routing rules)
+      agent_key:        'treasury-agent-v1',     // must match an active registered agent
+      source_system:    'treasury-ops',
+      workflow_name:    'vendor-payments',
+      model_name:       'your-model-name',
+      model_version:    'your-model-version',
+      output_summary:   outputSummary,           // what the agent proposed
+      requested_action: action,
+      execution_target: target,
+      amount,
+      currency,
+      payload: {
+        // Read into the stored execution intent only when attemptedAction is present.
+        attemptedAction:         action,
+        actionTarget:            target,
+        recipientOrCounterparty: recipient,
+        recipientAccountRef,
+        paymentType,
       },
     }),
   })
@@ -479,22 +520,19 @@ async function submitToDalx(
 
 | Status | Meaning | What to do |
 |--------|---------|------------|
-| `auto_released` | Auto-approved by rule — authorization available immediately | Call GET /api/v1/submissions/:id to retrieve authorization_id |
-| `auto_blocked` | Blocked by rule — no authorization will be issued | Halt execution, log reason |
-| `needs_review` | In human review queue | Await decision (poll or webhook) |
-| `high_risk` | High-risk, in review queue | Await decision |
-| `escalated` | Escalated — requires elevated reviewer | Await decision |
+| `review_status: needs_review` | In human review queue (includes submissions classified `auto_approve`) | Await decision (poll) |
+| `review_status: high_risk` | High-risk, in review queue | Await decision |
+| `review_status: blocked` | Blocked by rule; only a lead reviewer or admin may approve | Halt execution, await decision |
 
-> **During shadow mode:** All statuses are returned but no execution is blocked. Calibration data accumulates in the DAL-X workspace. The review queue is visible in the DAL-X web application but no downstream effect occurs. If the submission call itself fails (network error, DAL-X 5xx) in shadow mode, log the error and allow existing execution to continue.
+Every accepted call returns `execution_status: execution_blocked`. The route does not return `auto_released` or an execution token.
+
+> **During shadow mode:** Shadow keys take effect only on `POST /api/v1/submissions`; the runtime ingest route above creates live review items. In shadow mode no execution is blocked. Calibration data accumulates in the DAL-X workspace. The review queue is visible in the DAL-X web application but no downstream effect occurs. If the submission call itself fails (network error, DAL-X 5xx) in shadow mode, log the error and allow existing execution to continue.
 
 ---
 
 **Step 5: Handle idempotency on retries**
 
-If your agent retries on transient failures, use `idempotency_key` to prevent duplicate submissions. DAL-X deduplicates on this key within a 24-hour window per API key.
-
-- Same `idempotency_key` + same payload → returns the original submission record (HTTP 200)
-- Same `idempotency_key` + different payload → returns HTTP 409 `idempotency_key_collision`
+If your agent retries on transient failures, send an `Idempotency-Key` header to prevent duplicate submissions. On the runtime ingest route DAL-X stores the first response for 24 hours and returns it for any later call with the same key in the workspace, without creating new records. Authentication and agent validation still run on every call.
 
 Use a stable, unique value per logical action attempt (your internal transaction or job reference ID works well).
 
@@ -502,7 +540,7 @@ Use a stable, unique value per logical action attempt (your internal transaction
 
 **Step 6: Handle rate limiting**
 
-DAL-X returns `429` when the rate limit is exceeded. The response includes `Retry-After` and `X-RateLimit-*` headers.
+DAL-X returns `429` when the rate limit is exceeded. The runtime ingest route allows 10 non-sandbox submissions per agent key per minute and returns `rate_limited` with `retry_after_seconds: 60`. `POST /api/v1/submissions` includes `Retry-After` and `X-RateLimit-*` headers.
 
 ```typescript
 async function submitWithRetry(/* same params */): Promise<SubmissionResult> {
@@ -530,9 +568,7 @@ async function submitWithRetry(/* same params */): Promise<SubmissionResult> {
 
 When a submission is authorized, DAL-X issues an `authorization_id` (UUID). This is the value your integration passes as `authorization_id` in the `enforcement/execute` call. There is no step where your integration calls a "fetch decision" or "approve" endpoint — the reviewer acts in the DAL-X web application and the authorization is issued there. Your integration retrieves the result.
 
-**Path A — Submission auto-released (no human review required)**
-
-Call `GET /api/v1/submissions/:id` to retrieve the authorization:
+**Path A: Submission auto-released.** Suspended. Auto-release does not run, so every submission follows Path B. The response shape below is what `GET /api/v1/submissions/:id` returns after a reviewer approves:
 
 ```http
 GET https://www.decisionauthoritylayer.ai/api/v1/submissions/:id
@@ -562,7 +598,7 @@ The reviewer acts in the DAL-X web application. Your integration is notified via
 
 ---
 
-**Webhook option (recommended for production)**
+**Webhook option (notice only; poll to learn of an approval in time to execute)**
 
 Register a webhook endpoint in the DAL-X workspace (Settings → Webhooks). DAL-X POSTs a decision event to your endpoint when the reviewer acts.
 
@@ -574,7 +610,7 @@ Register a webhook endpoint in the DAL-X workspace (Settings → Webhooks). DAL-
 | `decision.rejected` | Submission rejected — no authorization |
 | `decision.escalated` | Submission escalated to elevated reviewer |
 | `decision.revision_requested` | Reviewer requested revision |
-| `decision.auto_approved` | Auto-approved by rule |
+| `decision.auto_approved` | Auto-approved by rule (not emitted while auto-release is suspended) |
 | `decision.auto_blocked` | Blocked by rule at intake |
 
 **Verified webhook payload structure:**
@@ -814,9 +850,9 @@ async function executePendingAction(pendingAction: PendingAction) {
 
 **What `enforcement/execute` proves:**
 
-DAL-X records that its enforcement gateway accepted the authorization — authority was valid, scope matched, the token was not consumed or expired, and drift checks passed. This creates an execution receipt (`receipt_id`) and transitions the submission state to `execution_completed`.
+DAL-X records that its enforcement gateway accepted the authorization: authority was valid, scope matched, the token was not consumed or expired, and drift checks passed. This creates an execution receipt (`receipt_id`) and moves the submission to `awaiting_execution_confirmation`.
 
-DAL-X does not record what your downstream system did after you called it. The receipt proves the enforcement gate ran and accepted the request. Your downstream system's response proves execution completed.
+The system that acts verifies the receipt with `POST /api/v1/receipts/:id/verify` before acting, then reports what it applied to `POST /api/v1/enforcement/confirm-execution`. A matching report records `executed`; a mismatch records `execution_reversed` and a drift event. Without a report the request closes after 30 minutes.
 
 **Rejection reasons from the enforcement gateway:**
 
@@ -853,7 +889,7 @@ Content-Type: application/json
 }
 ```
 
-Or using the signed token (auto-released path):
+Alternatively, use the signed token, where one is held:
 
 ```http
 POST https://www.decisionauthoritylayer.ai/api/v1/enforcement/refresh-token
@@ -901,7 +937,7 @@ Before acceptance testing begins, confirm all of the following with the Jochanni
 
 **Step 11: Create the enforcement API key**
 
-Do not reuse the shadow key. Create a separate enforcement key with `enforcement` scope and `shadow_mode: false`:
+Do not reuse the shadow key. Create a separate enforcement key with `enforcement` scope only. Key creation refuses `enforcement` combined with `submit` or `sandbox`, so the service that submits an action is never the one that presents it at the gate:
 
 ```http
 POST https://www.decisionauthoritylayer.ai/api/app/api-keys
@@ -909,14 +945,12 @@ Authorization: Bearer <admin-session-token>
 Content-Type: application/json
 
 {
-  "name": "treasury-agent-enforcement",
-  "scopes": { "submit": true, "enforcement": true },
-  "shadow_mode": false,
-  "enforcement_categories": ["payment_transfer"]
+  "name": "payments-boundary-enforcement",
+  "scopes": { "enforcement": true }
 }
 ```
 
-The `enforcement_categories` array scopes which `execution_intent.action` values this key governs. Set this to exactly the action categories approved for enforcement during calibration.
+The agent keeps a submission key (`submit` scope, shadow mode off). Enforcement categories, where used, are set on a shadow submission key for a staged rollout; because the agent declares its own action, they are not a control.
 
 Store the cleartext key as `DALX_ENFORCEMENT_KEY` in your secrets manager. Configure it in the test environment only at this stage — do not deploy to production systems yet.
 
@@ -927,10 +961,10 @@ Store the cleartext key as `DALX_ENFORCEMENT_KEY` in your secrets manager. Confi
 The acceptance test must prove the complete authority chain. All tests must pass before proceeding to production deployment.
 
 1. Agent generates a test payment output within the pilot scope
-2. Submit to DAL-X via `POST /api/v1/submissions` — confirm receipt with a submission ID
+2. Submit to DAL-X via `POST /api/v1/runtime/ingest-agent-output` with a complete execution intent; confirm a submission ID is returned
 3. Submission appears in the DAL-X review queue — confirm in the web application
 4. Reviewer approves the submission in the DAL-X web application with a reason
-5. Webhook fires (or poll confirms) — call `GET /api/v1/submissions/:id` — confirm `execution_authorization.status: "active"` and store the `authorization_id`
+5. Poll `GET /api/v1/submissions/:id`; confirm `execution_authorization.status: "active"` and store the `authorization_id`
 6. Call `POST /api/v1/enforcement/execute` with the `authorization_id` — confirm `execution_allowed: true` and record the `receipt_id`
 7. Downstream execution proceeds in the test environment
 8. Confirm an execution receipt is recorded in DAL-X (`receipt_id` visible on the execution detail page)
@@ -977,7 +1011,7 @@ This requires Admin or Owner role. The activation event records:
 
 **Step 14: Deploy enforcement to production**
 
-1. Update `DALX_SHADOW_KEY` references in production configuration to use `DALX_ENFORCEMENT_KEY`
+1. Confirm the agent service uses an enforced submission key and the execution boundary uses `DALX_ENFORCEMENT_KEY`
 2. Confirm the enforcement gate (Step 8) is deployed to the production downstream execution boundary
 3. Deploy in a controlled window — avoid peak trading hours or high-throughput windows
 4. Monitor the DAL-X workspace system events and review queue immediately after deployment
@@ -1089,7 +1123,7 @@ Do not implement a bypass path in enforcement mode that allows execution to proc
 | Submit a governed action | Returns submission ID and status |
 | Submit same action twice with same `idempotency_key` | Returns original submission (HTTP 200) |
 | Submit same `idempotency_key` with different payload | Returns `409 idempotency_key_collision` |
-| GET /submissions/:id after auto-release | Returns `execution_authorization.authorization_id` |
+| GET /submissions/:id after reviewer approval | Returns `execution_authorization.authorization_id` |
 | Validate a valid active authorization_id | Returns `ACCEPTED` |
 | Validate an authorization_id with wrong action | Returns `REJECTED` with scope mismatch |
 | Validate an authorization_id with wrong target | Returns `REJECTED` with scope mismatch |
@@ -1231,7 +1265,7 @@ Trigger logic is versioned. Any change to trigger rules is recorded in DAL-X wit
 
 - Review the proposed change with the Jochanni Labs team
 - Use the dry-run tool (`POST /api/app/dry-run`, admin/owner only) to re-evaluate existing submissions against the proposed rule change — it returns a diff of what fired originally versus what would fire now, without modifying any records
-- Confirm that the change does not reclassify actions that should remain auto-released as `needs_review`, or vice versa
+- Confirm that the change does not reclassify actions between `needs_review`, `high_risk`, and `blocked` in ways the risk function has not approved
 - Record the approval of the trigger rule version change in the DAL-X governance timeline
 
 ### 9.5 Periodic evidence review
@@ -1239,7 +1273,7 @@ Trigger logic is versioned. Any change to trigger rules is recorded in DAL-X wit
 The DAL-X pilot evidence report is generated at the end of the acceptance test period. For ongoing operations:
 
 - Export the governance timeline for any regulatory inquiry that requires authority chain evidence
-- Decision records are append-only and immutable — they cannot be edited or deleted
+- Decision records are append-only by convention. No database trigger prevents UPDATE or DELETE today; the audit hash chain detects tampering but its head is not anchored outside the database (planned, PILOT-07)
 - The audit export is available via Settings → Audit Export in the DAL-X workspace, or via `GET /api/app/audit/export?format=csv|json|signed`
 
 ---
