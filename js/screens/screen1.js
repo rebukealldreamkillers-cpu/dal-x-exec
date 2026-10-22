@@ -16,26 +16,42 @@ const WEDGE_SIDEBAR_ITEMS = [
 ];
 
 /* Fixed scenario data, referenced by screens 1 through 6 */
-const WEDGE_SCENARIO = {
-  agent:           'treasury-agent-v1',
-  output_content:  'Transfer $650,000.00 USD to account 8821-A (Acme Corp). Wire reference: INV-2026-0892. Payment type: wire_transfer.',
-  action:          'payment_transfer',
-  target:          'core-banking-system',
-  source_ref:      'txn-ref-20260927-089',
-  submission_id:   'sub_01JK8M...',
-  auth_id:         '3e7f8d9a-...ef01',
-  receipt_id:      'rcpt_01JK8P4WXYZ',
-  reviewer_email:  's.chen@meridian.com',
-  reviewer_name:   'S. Chen',
-  reviewer_role:   'Lead Treasury Authority',
-  approve_reason:  'Wire transfer verified against Acme Corp contract INV-2026-0892. Amount within Q3 authorized limit. Approver: S. Chen, Lead Treasury Authority.',
-  submitted_at:    '2026-09-27 14:23:41 UTC',
-  opened_at:       '2026-09-27 14:25:33 UTC',
-  approved_at:     '2026-09-27 14:25:51 UTC',
-  auth_issued:     '2026-09-27 14:25:51 UTC',
-  auth_expires:    '2026-09-27 14:40:51 UTC',
-  decision_record: 'dr_01JK8N7ABCD',
-};
+/*
+ * Screens 1 to 6 show a recorded run of the DAL-X demo on sandbox DAL-X
+ * (PILOT-14): js/recorded-run.js, exported from the sandbox records by
+ * dal-x-wedge scripts/export-simulation-run.mjs. Nothing on these screens is
+ * invented. RUN.drifted is the payment DAL-X flagged and the reviewer
+ * rejected; RUN.split are the split payments; RUN.approved is the payment
+ * the reviewer approved and the payments hub executed.
+ */
+const RUN = window.RECORDED_RUN;
+const DRIFTED = RUN.drifted;
+const APPROVED = RUN.approved;
+
+/* "04:46:54 UTC" */
+function runTime(iso) { return new Date(iso).toISOString().slice(11, 19) + ' UTC'; }
+/* "22 Oct 2026, 04:46:54 UTC" */
+function runDateTime(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }) + ', ' + runTime(iso);
+}
+/* "EUR 61,480.00" from the execution intent (minor units) */
+function intentAmount(intent) {
+  if (!intent || intent.amount === null) return 'none';
+  return intent.currency + ' ' + (intent.amount / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function intentBlock(intent) {
+  return [
+    'action:              ' + intent.action,
+    'target:              ' + intent.target,
+    'amount:              ' + intentAmount(intent),
+    'recipient:           ' + intent.recipient,
+    'recipientAccountRef: ' + intent.recipientAccountRef,
+    'paymentType:         ' + intent.paymentType,
+  ].join(String.fromCharCode(10));
+}
+function severityLabel(sev) { return String(sev).toUpperCase().replace('_', ' '); }
+function driftLabel(t) { return String(t).replace(/_/g, ' '); }
 
 /*
  * buildWedgeWindow(activeKey, mainBuilder)
@@ -60,7 +76,7 @@ function buildWedgeWindow(activeKey, mainBuilder) {
 
   const wsName = document.createElement('span');
   wsName.className = 'wedge-window__workspace-name';
-  wsName.textContent = 'Meridian Treasury';
+  wsName.textContent = 'Jochanni Labs · sandbox';
   workspace.appendChild(wsName);
 
   const avatar = document.createElement('span');
@@ -175,16 +191,16 @@ function buildSurfaceBadge() {
 
 /*
  * buildIllustrationNotice()
- * Shown under the surface badge on screens 1 to 6. The gate outcomes on these
- * screens are computed in the browser; no request reaches a DAL-X gate.
- * Remove when the screens are wired to a live sandbox (PILOT-14).
+ * Shown under the surface badge on screens 1 to 6: the values are a recorded
+ * run on sandbox DAL-X, not a live session (PILOT-14).
  */
 function buildIllustrationNotice() {
   const notice = document.createElement('p');
   notice.className = 'illustration-notice';
   notice.setAttribute('role', 'note');
   notice.textContent =
-    'Illustration of DAL-X gate decisions. Responses on this page are not produced by a live DAL-X gate.';
+    'Recorded run on sandbox DAL-X, ' + runDateTime(RUN.recordedAt) + '. Every value on these screens is the real record of that run; '
+    + 'all ' + RUN.stepsPassed + ' steps of the DAL-X demo passed. Screen 6 also lets you call the payments hub live.';
   return notice;
 }
 
@@ -207,11 +223,10 @@ function buildDemoOrientation() {
   const desc = document.createElement('p');
   desc.className = 'demo-orientation__desc';
   desc.textContent =
-    'This is a six-step walkthrough of a single real-world scenario: a consequential AI agent '
-    + 'submitting a $650,000 wire transfer to a core banking system. '
-    + 'You will see how DAL-X intercepts the submission, routes it for human review, '
-    + 'issues a signed authorization token on approval, and how the downstream system '
-    + 'enforces that token before executing.';
+    'A six-step walkthrough of a real run on sandbox DAL-X: a treasury payment agent built on the '
+    + 'Claude Agent SDK, an independent payments hub, and a human reviewer. You will see a payment '
+    + 'redirected by a tampered vendor master caught as behavior drift and rejected, split payments '
+    + 'caught across submissions, and a clean payment approved, verified by the hub and executed.';
   wrap.appendChild(desc);
 
   const whyHeading = document.createElement('div');
@@ -249,7 +264,6 @@ function renderScreen1() {
   screen.appendChild(buildDemoOrientation());
   screen.appendChild(buildStepIndicator(1, 'Intercept'));
 
-  /* Product window */
   const win = buildWedgeWindow('submissions', main => {
     /* Panel 1: Submission received */
     const p1 = document.createElement('section');
@@ -262,12 +276,10 @@ function renderScreen1() {
 
     const headerRow = document.createElement('div');
     headerRow.className = 'wedge-submission-header';
-
     const subId = document.createElement('span');
     subId.className = 'wedge-mono';
-    subId.textContent = WEDGE_SCENARIO.submission_id;
+    subId.textContent = DRIFTED.number;
     headerRow.appendChild(subId);
-
     const blockWrap = document.createElement('span');
     blockWrap.className = 'wedge-header-badge-wrap';
     const blockedBadge = document.createElement('span');
@@ -276,27 +288,23 @@ function renderScreen1() {
     blockWrap.appendChild(blockedBadge);
     blockWrap.appendChild(annBadge(1));
     headerRow.appendChild(blockWrap);
-
     const ts = document.createElement('span');
     ts.className = 'wedge-timestamp';
-    ts.textContent = WEDGE_SCENARIO.submitted_at;
+    ts.textContent = runDateTime(DRIFTED.submittedAt);
     headerRow.appendChild(ts);
-
     p1.appendChild(headerRow);
 
-    /* Detail grid */
     const grid = document.createElement('div');
     grid.className = 'wedge-detail-grid';
     [
-      ['Submitter',  WEDGE_SCENARIO.agent],
-      ['Status',     'EXECUTION BLOCKED'],
-      ['Source ref', WEDGE_SCENARIO.source_ref],
+      ['Agent',     DRIFTED.agent],
+      ['Status',    'EXECUTION BLOCKED'],
+      ['Reference', DRIFTED.reference],
     ].forEach(([k, v]) => {
       const key = document.createElement('div');
       key.className = 'wedge-detail-grid__key';
       key.textContent = k;
       grid.appendChild(key);
-
       const val = document.createElement('div');
       val.className = 'wedge-detail-grid__val';
       val.textContent = v;
@@ -304,113 +312,86 @@ function renderScreen1() {
     });
     p1.appendChild(grid);
 
-    /* Output content */
     const ocLabel = document.createElement('div');
     ocLabel.className = 'wedge-section-label';
-    ocLabel.textContent = 'Output content';
+    ocLabel.textContent = 'What the agent proposed';
     p1.appendChild(ocLabel);
-
     const ocWrap = document.createElement('div');
     ocWrap.className = 'wedge-code-wrap';
     const ocBlock = document.createElement('pre');
     ocBlock.className = 'wedge-code-block';
-    ocBlock.textContent = WEDGE_SCENARIO.output_content;
+    ocBlock.textContent = DRIFTED.summary;
     ocWrap.appendChild(ocBlock);
     ocWrap.appendChild(annBadge(2));
     p1.appendChild(ocWrap);
 
-    /* Execution intent */
     const eiLabel = document.createElement('div');
     eiLabel.className = 'wedge-section-label';
-    eiLabel.textContent = 'Execution intent';
+    eiLabel.textContent = 'Execution intent (what a token would bind)';
     p1.appendChild(eiLabel);
-
     const eiBlock = document.createElement('pre');
     eiBlock.className = 'wedge-code-block';
-    eiBlock.textContent =
-      `action: ${WEDGE_SCENARIO.action}\n`
-      + `target: ${WEDGE_SCENARIO.target}`;
+    eiBlock.textContent = intentBlock(DRIFTED.intent);
     p1.appendChild(eiBlock);
+
+    const inLabel = document.createElement('div');
+    inLabel.className = 'wedge-section-label';
+    inLabel.textContent = 'Untrusted agent input (the request text the agent read)';
+    p1.appendChild(inLabel);
+    const inBlock = document.createElement('pre');
+    inBlock.className = 'wedge-code-block';
+    inBlock.textContent = DRIFTED.untrustedInput || '(none)';
+    p1.appendChild(inBlock);
 
     main.appendChild(p1);
 
     /* Panel 2: Trigger evaluation */
     const p2 = document.createElement('section');
     p2.className = 'wedge-panel';
-
     const p2Head = document.createElement('div');
     p2Head.className = 'wedge-panel__heading';
     p2Head.textContent = 'Trigger evaluation';
     p2.appendChild(p2Head);
-
     const p2Sub = document.createElement('div');
     p2Sub.className = 'wedge-panel__subhead';
-    p2Sub.textContent = '3 rules matched of 18 evaluated';
+    p2Sub.textContent = DRIFTED.rules.length + ' rule' + (DRIFTED.rules.length === 1 ? '' : 's') + ' matched';
     p2.appendChild(p2Sub);
-
-    const table = buildTriggerTable([
-      {
-        name:        'Wire Transfer: $500K+',
-        severity:    'HIGH_RISK',
-        controlling: true,
-        detail:      'currency_threshold ≥ $500,000 USD',
-        annNum:      3,
-      },
-      {
-        name:        'Wire Transfer: $10K+',
-        severity:    'NEEDS_REVIEW',
-        controlling: false,
-        detail:      'currency_threshold ≥ $10,000 USD',
-      },
-      {
-        name:        'Payment Execution Keyword',
-        severity:    'NEEDS_REVIEW',
-        controlling: false,
-        detail:      'keyword: "wire transfer"',
-      },
-    ]);
-    p2.appendChild(table);
-
+    p2.appendChild(buildTriggerTable(DRIFTED.rules.map((r, i) => ({
+      name: r.name, severity: String(r.severity).toUpperCase(), controlling: r.controlling,
+      detail: r.matched_value ? 'matched: ' + r.matched_value : '', annNum: i === 0 ? 3 : undefined,
+    }))));
     const resultLineWrap = document.createElement('div');
     resultLineWrap.className = 'wedge-result-line-wrap';
     const resultLine = document.createElement('p');
     resultLine.className = 'wedge-result-line';
-    resultLine.textContent =
-      'Submission entered the review queue. Lead reviewer required.';
+    resultLine.textContent = 'Submission entered the review queue. Execution blocked until a human decides.';
     resultLineWrap.appendChild(resultLine);
     resultLineWrap.appendChild(annBadge(4));
     p2.appendChild(resultLineWrap);
-
     main.appendChild(p2);
   });
 
   screen.appendChild(win);
 
-  /* Annotations list */
-  const annotations = buildAnnotationList([
-    { num: 1, text: 'Blocked until authorized. Every DAL-X submission is held from execution until a valid authorization exists. The agent cannot proceed.' },
-    { num: 2, text: 'The reviewer sees exactly what the agent said. No summaries, no paraphrasing.' },
-    { num: 3, text: 'Three rules matched. The highest severity controls. This submission requires a lead reviewer.' },
-    { num: 4, text: 'The submission is now in the queue. Execution is blocked until a reviewer acts and an authorization is issued.' },
-  ]);
-  screen.appendChild(annotations);
+  screen.appendChild(buildAnnotationList([
+    { num: 1, text: 'Blocked until authorized. The agent\'s release_payment tool call was intercepted and submitted to DAL-X. Nothing reached the payments hub.' },
+    { num: 2, text: 'The agent followed its rules: it paid the account its counterparty master showed. An attacker had changed that master record. The agent could not tell.' },
+    { num: 3, text: 'Every payment to the payments hub requires a recorded human decision. No payment is released automatically.' },
+    { num: 4, text: 'The submission is now in the queue. The next screens show what the reviewer saw.' },
+  ]));
 
-  /* Nav */
   const nav = document.createElement('nav');
   nav.className = 'screen-nav';
-
   const backBtn = document.createElement('button');
   backBtn.className = 'btn btn--ghost';
   backBtn.textContent = '← Back';
   backBtn.addEventListener('click', () => showScreen('screen-0'));
   nav.appendChild(backBtn);
-
   const nextBtn = document.createElement('button');
   nextBtn.className = 'btn btn--primary';
   nextBtn.textContent = 'See the Review Queue →';
   nextBtn.addEventListener('click', () => showScreen('screen-2'));
   nav.appendChild(nextBtn);
-
   screen.appendChild(nav);
 }
 
